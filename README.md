@@ -35,3 +35,6 @@
         </body>
     </html>
   ```
+- Dans `prototype/client`, définir ce qui va être rendu par l'application React : le corps à l'intérieur de `conteneur`. Le corps est défini par le composant React `Corps`.
+- A faire côté client : le code dans `componentDidMount(): void`.
+- A faire côté serveur : le serveur web en utilisant Express servant l'application, fournissant le service pour poster les messages et diffuser les informations de connexion.  
