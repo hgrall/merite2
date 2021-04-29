@@ -17,7 +17,8 @@ export class Corps extends React.Component<{}, Etat> {
       // - poster un message de connexion (service rest, requête post)
       // - établir une connexion SSE et recevoir les avertissements de connexion
       // - afficher ces messages
-
+      console.log("Le composant est monté.");
+      
     }
 
     render() {
