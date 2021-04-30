@@ -67,7 +67,7 @@ export interface ServeurApplications<E, S> {
      * Spécifie le traitement d'une requête GET.
      * Requête :
      * - méthode http : GET
-     * - url : chemin?code=xxx
+     * - url : chemin/code
      * 
      * L'entrée pour le traitement est d'un format sous-type de E. 
      * Elle est calculée à partir de la requête : partie requête 
@@ -85,7 +85,7 @@ export interface ServeurApplications<E, S> {
      * Spécifie le traitement d'une requête POST.
      * Requête :
      * - méthode http : POST
-     * - url : chemin?code=xxx
+     * - url : chemin/xxx
      * 
      * L'entrée pour le traitement est d'un format sous-type de E. 
      * Elle est calculée à partir de la requête : partie requête 
@@ -102,7 +102,7 @@ export interface ServeurApplications<E, S> {
      * Spécifie le traitement d'une requête PUT.
      * Requête :
      * - méthode http : PUT
-     * - url : chemin?code=xxx
+     * - url : chemin/xxx
      * 
      * L'entrée pour le traitement est d'un format sous-type de E. 
      * Elle est calculée à partir de la requête : partie requête 
@@ -125,13 +125,13 @@ export interface ServeurApplications<E, S> {
  * Lorsqu'une requête GET d'authentification arrive, 
  * - la fonction entreeAuth produit un E, 
  * - la fonction de traitement de l'authentification 
- *   est appliquée à ce E, et produit un F,
- * - ce F est renvoyé en réponse. 
+ *   est appliquée à ce E, et produit un S,
+ * - ce S est renvoyé en réponse. 
  * Lorsqu'une requête de type X (GET, POST ou PUT) arrive,
  * - la fonction entreeX produit un E, 
  * - la fonction de traitement pour X
- *   est appliquée à ce E, et produit un F,
- * - ce F est renvoyé en réponse. 
+ *   est appliquée à ce E, et produit un S,
+ * - ce S est renvoyé en réponse. 
  * 
  * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
  * @param S format JSON pour les sorties (allant au client, sortant du serveur)
@@ -153,7 +153,7 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
     /**
      * Constructeur initialisant l'application Express et le port avec celui passé en argument.
      * @param entreeAuth
-     * @param entreeGet 
+     * @param entreeGET 
      * @param entreePOST 
      * @param entreePUT 
 
@@ -161,7 +161,7 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
      */
     constructor(
         private entreeAuth : (requete : express.Request) => E,
-        private entreeGet : (requete : express.Request) => E,
+        private entreeGET : (requete : express.Request) => E,
         private entreePOST : (requete : express.Request) => E,   
         private entreePUT : (requete : express.Request) => E,
         private port: number) {
@@ -189,6 +189,16 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
     }
 
     specifierTraitementRequeteAuthentification(chemin: string, traitement: (entree: E) => S): void {
+        this.appli.get(
+            chemin,
+            (requete: express.Request,
+                reponse: express.Response,
+                suite: express.NextFunction) => {
+                    let entree = this.entreeAuth(requete);
+                    let sortie = traitement(entree);
+                    reponse.json(sortie);
+                }
+        );
         throw new Error('Method not implemented.');
     }
     specifierApplicationAServir(code: string, chemin: string, repertoire: string, application: string): void {
@@ -202,34 +212,6 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
     }
     specifierTraitementRequetePUT(code: string, chemin: string, traitement: (entree: E) => S): void {
         throw new Error('Method not implemented.');
-    }
-
-
-    /**
-     * Paramètre l'application Express pour réagir à une requête GET
-     * sur le chemin indiqué.
-     * @param chemin chemin de la requête Http.
-     * @param reaction procédure de réaction.
-     */
-    private enregistrerReponseARequeteGET(
-        chemin: string, reaction: (i: Interaction) => void): void {
-        this.appli.get(chemin,
-            (requete: express.Request,
-                reponse: express.Response,
-                suite: express.NextFunction) => {
-                reaction(new InteractionExpress(requete, reponse, suite));
-            });
-    }
-    /**
-     * TODO
-     */
-    specifierRessourceAServir(
-        chemin: string, repertoire: string, ressource: string): void {
-        this.enregistrerReponseARequeteGET(chemin, (i: Interaction) => {
-            console.log("* " + dateMaintenant().representationLog()
-                + " - Service de " + ressource + " en " + chemin);
-            i.servirFichier(repertoire, ressource);
-        });
     }
 }
 
