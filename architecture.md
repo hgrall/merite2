@@ -1,20 +1,22 @@
 # Protocole général
 
 Interaction initiale
-- navigateur -> serveur : demande de la page d'accueil
+- navigateur -> serveur : demande de la page d'accueil avec formulaire du code d'accès
 - serveur -> navigateur : envoi de la page d'accueil 
 
 Page d'accueil
-- accueil : affichage de l'accès contrôlé par un code
+- accueil : affichage de la page d'authentification par un code d'accès
 - accueil -> serveur : vérification du code entré
-- serveur : 
-  - si le code est valide, pour le premier code reçu, initialisation des jeux associés à ce code (par jeu : configuration, réseau, serveur de connexions) 
+- serveur : vérification de la validité du code d'accès en s'appuyant sur une variable d'environnement sous  heroku (ou des constantes localement)
+  - si le code est valide, pour le premier code reçu :
+    - initialisation des jeux associés à ce code, spécifique de chaque école : par jeu, une configuration, un réseau
+    - initialisation des serveurs de connexion (un serveur par jeu) : par serveur, un port (à vérifier, l'usage d'un port unique semblant possible), un réseau de noeuds à connecter, initialement complet, un réseau de neuds connectés, initialement vide
 - serveur -> accueil : envoi du résultat de la vérification du code
 - accueil : 
-  - si le code n'est pas valide, aucun changement
-  - si le code est valide, affichage du menu
+  - si le code n'est pas valide, affichage d'alerte avec le message d'erreur
+  - si le code est valide, affichage du menu permettant de choisir le jeu (la partie d'administration pouvant être placée dans une page dédiée, permettant de modifier la configuration des jeux, de les réinitialiser et d'observer leur état)
 - accueil -> serveur : demande d'un jeu
-- serveur -> accueil : envoi d'un jeu
+- serveur -> accueil : envoi d'un jeu (sans aucune vérification, pour simplifier)
 
 Jeu
 - jeu : au montage, en vue de l'établissement d'une connexion longue avec le serveur, enregistrement des traitements suivant le type des évènements reçus
@@ -27,12 +29,27 @@ Jeu
   - à l'ouverture, si possible, retrait d'un noeud du réseau à connecter (associé au code et au jeu) et ajout d'un noeud dans le réseau connecté
   - à la fermeture, retrait du noeud du réseau connecté (associé au code et au jeu) et ajout du noeud dans le réseau à connecter
 - serveur -> jeu : accusé de réception de la connexion longue
-- serveur -> jeu : envoi de la configuration initiale si l'ajout au réseau est possible, d'un message d'erreur sinon
+- serveur -> jeu : envoi de la configuration initiale et des informations de connexion si l'ajout au réseau est possible, d'un message d'erreur sinon
 - serveur -> autres jeux : diffusion des informations de connexion et de déconnexion 
-- jeu source vers serveur : envoi d'un message de jeu
-- serveur vers jeu destinataire : transfert du message reçu en utilisant la connexion longue
+- jeu source -> serveur : envoi d'un message de jeu
+- serveur : vérification du message suivant le protocole associé au jeu
+- serveur -> jeu destinataire : si le message est valide, transfert du message reçu en utilisant la connexion longue 
+- serveur -> jeu source : si le message est invalide, envoi d'un message d'erreur
 
 # Composants
 
 Serveur d'applications - Voir `bibliotheque/communication/serveurApplications`
-- 
+- servir une application (html + js) en enregistrant le traitement d'une requête GET
+- servir une API (json) en enregistrant le traitement de requêtes GET, PUT ou POST
+- servir des connexions longues en enregistrant les traitements à l'ouverture, la fermeture et en permettant la communication du serveur vers le client
+- contrôler l'accès
+- générer des serveurs de connexions agrégeant ce serveur d'applications
+- démarrer en écoutant un port
+  
+Serveur de connexion (agrégeant le serveur d'applications)
+- gérer les connexions vivantes
+- enregistrer le traitement d'une demande de jeu
+- enregistrer le traitement d'un message entrant (json)
+- enregistrer le traitement d'une ouverture de connexion
+- enregistrer le traitement d'une fermeture de connexion
+- envoyer un message (json) à un client connecté
