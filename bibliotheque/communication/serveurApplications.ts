@@ -192,8 +192,7 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
         this.appli.get(
             chemin,
             (requete: express.Request,
-                reponse: express.Response,
-                suite: express.NextFunction) => {
+                reponse: express.Response) => {
                     let entree = this.entreeAuth(requete);
                     let sortie = traitement(entree);
                     reponse.json(sortie);
@@ -202,15 +201,45 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
         throw new Error('Method not implemented.');
     }
     specifierApplicationAServir(code: string, chemin: string, repertoire: string, application: string): void {
+        this.appli.get(
+            chemin,
+            (requete: express.Request, response: express.Response) => {
+                response.sendFile(application,chemin);
+            }
+        );
         throw new Error('Method not implemented.');
     }
     specifierTraitementRequeteGET(code: string, chemin: string, traitement: (entree: E) => S): void {
+        this.appli.get(
+            chemin,
+            (requete: express.Request, response: express.Response) => {
+                let entree = this.entreeGET(requete);
+                let sortie = traitement(entree);
+                response.json(sortie);
+            }
+        )
         throw new Error('Method not implemented.');
     }
     specifierTraitementRequetePOST(code: string, chemin: string, traitement: (entree: E) => S): void {
+        this.appli.post(
+            chemin,
+            (requete: express.Request, response: express.Response) => {
+                let entree = this.entreePOST(requete);
+                let sortie = traitement(entree);
+                response.json(sortie);
+            }
+        )
         throw new Error('Method not implemented.');
     }
     specifierTraitementRequetePUT(code: string, chemin: string, traitement: (entree: E) => S): void {
+        this.appli.put(
+            chemin,
+            (requete:express.Request, response: express.Response) => {
+                let entree = this.entreePUT(requete);
+                let sortie = traitement(entree);
+                response.json(sortie);
+            }
+        )
         throw new Error('Method not implemented.');
     }
 }
