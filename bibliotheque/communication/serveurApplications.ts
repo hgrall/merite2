@@ -115,7 +115,12 @@ export interface ServeurApplications<E, S> {
      * */ 
     specifierTraitementRequetePUT(code : string, chemin : string, traitement : ((entree : E) => S)) : void;
 
-    
+    genererServeurConnexions(code : string, chemin : string) : ServeurConnexion<E, S>;
+}
+
+interface ServeurConnexion<E, S> {
+    serveurApplications() : ServeurApplications<E, S>;
+    specifierTraitement()
 }
 
 /**
@@ -213,5 +218,7 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
     specifierTraitementRequetePUT(code: string, chemin: string, traitement: (entree: E) => S): void {
         throw new Error('Method not implemented.');
     }
+
+    
 }
 
