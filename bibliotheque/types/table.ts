@@ -150,7 +150,7 @@ class ModuleTable {
 
     /**
      * Nombre de clés dans la table indexée.
-     * @param t table.
+     * @param    t table.
      * @returns un entier naturel égal au nombre d'associations.
      */
     nombreCles<T>(t: { [cle: string]: T }): number {

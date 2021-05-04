@@ -1,6 +1,4 @@
 import * as chai from 'chai';
-import * as mocha from 'mocha';
-
 import { TableMutable, creerTableMutableVide } from "../../bibliotheque/types/table";
 import { testUnitaire } from '../utilitaires';
 import { creerTypeNonSerialisable, TypeNonSerialisable, TypeSerialisable } from './exemplesTypes';

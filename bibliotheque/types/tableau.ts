@@ -497,7 +497,7 @@ export class TableauMutableParEnveloppe<T>
  * @param conversionInEx fonction de conversion de TIN vers T.
  */
 export function creerTableauMutableVide<T>() {
-    return new TableauMutableParEnveloppe();
+    return new TableauMutableParEnveloppe<T>();
 }
 
 /**

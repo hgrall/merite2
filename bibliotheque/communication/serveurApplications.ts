@@ -7,9 +7,6 @@ const jsonParser = bodyParser.json()
 import {
     dateMaintenant
 } from "../types/date";
-/*
-import { TableMutable } from '../types/table';
-*/
 
 /**
  * Serveur d'applications Web. 
@@ -135,17 +132,17 @@ export interface ServeurApplications<EConcret, SConcret> {
      * Requête :
      * - méthode http : PUT
      * - url : prefixe/code/suffixe
-     * 
-     * L'entrée pour le traitement est d'un format sous-type de E. 
-     * Elle est calculée à partir de la requête : partie requête 
-     * formée d'associations (clé, valeur) de l'URL, 
+     *
+     * L'entrée pour le traitement est d'un format sous-type de E.
+     * Elle est calculée à partir de la requête : partie requête
+     * formée d'associations (clé, valeur) de l'URL,
      * en-tête de la requête http et corps de la requête.
-     * 
+     *
      * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
      * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête PUT adressée à ce chemin
-     * */ 
+     * */
     specifierTraitementRequetePUT<E, S>(
         prefixe : string, code : string, suffixe : string,
         traitement : ((entree : E) => S),
@@ -174,7 +171,6 @@ export interface ServeurApplications<EConcret, SConcret> {
      * */
     specifierTraitementRequeteGETLongue<E, S>(
         prefixe : string, code : string, suffixe : string,
-        traitement : (entree : E) => void,
         traductionEntree : (e : EConcret) => E,
         traitementFlux :
             (canalEntree : EConcret, canalSortie : SConcret) => void,
@@ -182,6 +178,34 @@ export interface ServeurApplications<EConcret, SConcret> {
 
 }
 
+/**
+ * Interface provisoire décrivant un réseau de communication.
+ * Un réseau est un graphe entre des noeuds, pouvant 
+ * posséder plusieurs composantes connexes. Les noeuds 
+ * sont localisés sur le serveur ou sur les clients.
+ * Chaque jeu (associé à un code) possède son graphe propre :
+ * - un graphe pour les tchats en anneau,
+ * - un graphe pour les tchats en étoile,
+ * - un graphe pour le jeu de distribution,
+ * - etc. 
+ */
+/*interface Reseau<S> {
+    estVide() : boolean;
+    estComplet() : boolean;
+    envoyer(clientDestinataire: string, message : S) : void;
+    ajouterNoeud(noeud: S): void;
+}
+
+interface ServeurConnexion<E, S> {
+    code() : string;
+    chemin() : string;
+    serveurApplications() : ServeurApplications<E, S>;
+    specifierTraitementRequeteEntrante(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementOuvertureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementFermetureConnexionLongue(sousChemin : string, traitement : (() => void)) : void;
+    reseauConnecte() : Reseau<S>
+}
+*/
 /**
  * Serveur d'applications web implémenté grâce à Express
  * (cf. http://expressjs.com/en/api.html).
@@ -217,9 +241,9 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
     /**
      * Constructeur initialisant l'application Express et le port avec celui passé en argument.
      * @param entreeAuth
-     * @param entreeGET 
-     * @param entreePOST 
-     * @param entreePUT 
+     * @param entreeGET
+     * @param entreePOST
+     * @param entreePUT
 
      * @param port port utilisé par le serveur.
      */
@@ -232,6 +256,8 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
         this.appli = express();
         this.port = port;
     }
+
+
     // genererServeurConnexions(code: string, chemin: string): ServeurConnexions<E, S> {
     //     // TODO
     //     throw new Error('Method not implemented.');
@@ -245,11 +271,13 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 console.log("* " + dateMaintenant().representationLog()
                     + " - Le serveur écoute le port " + this.port + " de l'hôte (local ou heroku).");
             });
+        this.appli.use(bodyParser.json());
     }
+
     /**
-     * Paramètre l'application Express pour utiliser 
-     * le répertoire passé en argument comme réservoir 
-     * pour les scripts embarqués. 
+     * Paramètre l'application Express pour utiliser
+     * le répertoire passé en argument comme réservoir
+     * pour les scripts embarqués.
      * @param rep chemin relatif vers le répertoire des scripts embarqués.
      */
     specifierRepertoireScriptsEmbarques(rep: string): void {
@@ -258,21 +286,21 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
 
     specifierTraitementRequeteAuthentification<E, S>(
         prefixe: string,
-        traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.get(
             prefixe,
             (requete: express.Request,
-                reponse: express.Response) => {
-                    const entree = traductionEntree(requete);
-                    const sortie = traitement(entree);
-                    traductionSortie(sortie, reponse);
-                    reponse.json(sortie);
-                }
+             reponse: express.Response) => {
+                const entree = traductionEntree(requete);
+                const sortie = traitement(entree);
+                traductionSortie(sortie, reponse);
+            }
         );
     }
+
     specifierApplicationAServir(code: string, chemin: string, repertoire: string, application: string): void {
         this.appli.get(
             chemin,
@@ -282,11 +310,12 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
             }
         );
     }
+
     specifierTraitementRequeteGET<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.get(
             prefixe + "/" + code + "/" + suffixe,
             jsonParser,
@@ -294,15 +323,15 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
-                reponse.json(sortie);
             }
         )
     }
+
     specifierTraitementRequetePOST<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.post(
             prefixe + "/" + code + "/" + suffixe,
             jsonParser,
@@ -310,44 +339,39 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
-                reponse.json(sortie);
             }
         )
     }
+
     specifierTraitementRequetePUT<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.put(
             prefixe + "/" + code + "/" + suffixe,
-            (requete:express.Request, reponse: express.Response) => {
+            (requete: express.Request, reponse: express.Response) => {
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
-                reponse.json(sortie);
             }
         );
     }
 
-// TODO: TRAITEMENT FERMETURE
     specifierTraitementRequeteGETLongue<E, S>(
-        prefixe: string, code: string, suffixe: string,
-        traitement: (entree: E) => void, traductionEntree: (e: express.Request) => E,
+        prefixe: string, code: string, suffixe: string, traductionEntree: (e: express.Request) => E,
         traitementFlux: (canalEntree: express.Request, canalSortie: express.Response) => void):
         void {
-        console.log("prefixe:" +prefixe);
-        console.log("code:" +code);
-        console.log("suffixe:" +suffixe);
+        console.log("prefixe:" + prefixe);
+        console.log("code:" + code);
+        console.log("suffixe:" + suffixe);
         this.appli.get(
             prefixe + "/" + code + "/" + suffixe,
             jsonParser,
             (requete: express.Request, reponse: express.Response) => {
                 const entree = traductionEntree(requete);
-                traitement(entree);
                 traitementFlux(requete, reponse);
             }
         )
     }
 }
-
