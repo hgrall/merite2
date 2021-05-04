@@ -14,24 +14,33 @@ import { TableMutable } from '../types/table';
  * 
  * Une application est une page Web contenant du code Javascript.
  * Spécification :
- * - FAIT : servir une application (html + js) en enregistrant le 
- * traitement d'une requête GET
+ * - servir des applications (html + js) en enregistrant le 
+ * traitement d'une requête GET,
  * - servir une API (json) en enregistrant le traitement 
- * de requêtes GET, PUT ou POST
- * - servir des connexions longues en enregistrant 
- * les traitements à l'ouverture, la fermeture et 
- * en permettant la communication du serveur vers le client
- * - contrôler l'accès
+ * de requêtes GET, PUT ou POST,
+ * - contrôler l'accès,
  * - générer des serveurs de connexions agrégeant 
- * ce serveur d'applications
- * - FAIT démarrer en écoutant un port
+ * ce serveur d'applications,
+ * - démarrer en écoutant un port.
  * 
+ * Le serveur utilise
+ * - un répertoire pour les scripts,
+ * - un préfixe pour les chemins,
+ * - un code pour contrôler les accès,
+ * - des chemins de la forme `préfixe/code/suffixe` pour 
+ * désigner les ressources.
+ *  
  * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
  * @param S format JSON pour les sorties (allant au client, sortant du serveur)
  */
 export interface ServeurApplications<E, S> {
     /**
      * Démarre le serveur.
+     * 
+     * Celui-ci écoute un port (TCP), déterminé statiquement lors
+     * d'une installation locale ou déterminé dynamiquement par
+     * lors d'une installation distante chez un hébergeur (comme
+     * Heroku). 
      */
     demarrer(): void;
 
@@ -45,14 +54,14 @@ export interface ServeurApplications<E, S> {
      * Spécifie le traitement des requêtes d'authentification.
      * Requête d'authentification :
      * - méthode http : GET
-     * - url : chemin?code=xxx
+     * - url : prefixe?code=xxx
      * 
      * L'entrée pour le traitement est du format suivant :
      * - { code : string }
-     * @param chemin chemin de l'URL
+     * @param prefixe chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête d'authentification
      */
-    specifierTraitementRequeteAuthentification(chemin: string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequeteAuthentification(prefixe: string, traitement : ((entree : E) => S)) : void;
 
 
     /**
@@ -60,14 +69,14 @@ export interface ServeurApplications<E, S> {
      * et un chemin. L'application est désignée par son nom et son
      * répertoire.
      */
-    specifierApplicationAServir(code : string,
-        chemin : string, repertoire: string, application : string): void;
+    specifierApplicationAServir(prefixe : string, code : string,
+        suffixe : string, repertoire: string, application : string): void;
     
     /**
      * Spécifie le traitement d'une requête GET.
      * Requête :
      * - méthode http : GET
-     * - url : chemin/code
+     * - url : prefixe/code/suffixe
      * 
      * L'entrée pour le traitement est d'un format sous-type de E. 
      * Elle est calculée à partir de la requête : partie requête 
@@ -75,47 +84,81 @@ export interface ServeurApplications<E, S> {
      * en-tête de la requête http. Conformément à l'usage, 
      * le corps de la requête est supposé vide.
      *  
+     * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
-     * @param chemin chemin de l'URL
+     * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête GET adressée à ce chemin
      * */ 
-    specifierTraitementRequeteGET(code : string, chemin : string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequeteGET(prefixe : string, code : string,
+        suffixe : string, traitement : ((entree : E) => S)) : void;
 
     /**
      * Spécifie le traitement d'une requête POST.
      * Requête :
      * - méthode http : POST
-     * - url : chemin/xxx
+     * - url : prefixe/code/suffixe
      * 
      * L'entrée pour le traitement est d'un format sous-type de E. 
      * Elle est calculée à partir de la requête : partie requête 
      * formée d'associations (clé, valeur) de l'URL, 
      * en-tête de la requête http et corps de la requête.
      * 
+     * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
-     * @param chemin chemin de l'URL
+     * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête POST adressée à ce chemin
      * */ 
-    specifierTraitementRequetePOST(code : string, chemin : string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequetePOST(prefixe : string, code : string,
+        suffixe : string, traitement : ((entree : E) => S)) : void;
 
     /**
      * Spécifie le traitement d'une requête PUT.
      * Requête :
      * - méthode http : PUT
-     * - url : chemin/xxx
+     * - url : prefixe/code/suffixe
      * 
      * L'entrée pour le traitement est d'un format sous-type de E. 
      * Elle est calculée à partir de la requête : partie requête 
      * formée d'associations (clé, valeur) de l'URL, 
      * en-tête de la requête http et corps de la requête.
      * 
+     * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
-     * @param chemin chemin de l'URL
+     * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête PUT adressée à ce chemin
      * */ 
-    specifierTraitementRequetePUT(code : string, chemin : string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequetePUT(prefixe : string, code : string,
+        suffixe : string, traitement : ((entree : E) => S)) : void;
 
-    
+    genererServeurConnexions(prefixe : string, code : string,
+        suffixe : string) : ServeurConnexion<E, S>;
+}
+
+/**
+ * Interface provisoire décrivant un réseau de communication.
+ * Un réseau est un graphe entre des noeuds, pouvant 
+ * posséder plusieurs composantes connexes. Les noeuds 
+ * sont localisés sur le serveur ou sur les clients.
+ * Chaque jeu (associé à un code) possède son graphe propre :
+ * - un graphe pour les tchats en anneau,
+ * - un graphe pour les tchats en étoile,
+ * - un graphe pour le jeu de distribution,
+ * - etc. 
+ */
+interface Reseau<S> {
+    estVide() : boolean;
+    estComplet() : boolean;
+    envoyer(clientDestinataire: string, message : S) : void; 
+}
+
+interface ServeurConnexion<E, S> {
+    code() : string;
+    chemin() : string;
+    serveurApplications() : ServeurApplications<E, S>;
+    specifierTraitementRequeteEntrante(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementOuvertureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementFermetureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void; 
+    reseauConnecte() : Reseau<S>
 }
 
 /**
@@ -168,6 +211,10 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
         this.appli = express();
         this.port = port;
     }
+    genererServeurConnexions(code: string, chemin: string): ServeurConnexion<E, S> {
+        // TODO
+        throw new Error('Method not implemented.');
+    }
     /**
      * Configure le routage des requêtes à partir des spécifications de traitement et initialise le serveur Http à partir de l'application Express et du port.
      */
@@ -198,49 +245,50 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
                     reponse.json(sortie);
                 }
         );
-        throw new Error('Method not implemented.');
     }
     specifierApplicationAServir(code: string, chemin: string, repertoire: string, application: string): void {
         this.appli.get(
             chemin,
             (requete: express.Request, response: express.Response) => {
-                response.sendFile(application,chemin);
+                // TODO : ajouter répertoire
+                response.sendFile(application, chemin);
             }
         );
-        throw new Error('Method not implemented.');
     }
-    specifierTraitementRequeteGET(code: string, chemin: string, traitement: (entree: E) => S): void {
+    specifierTraitementRequeteGET(prefixe : string, code : string,
+        suffixe : string, traitement: (entree: E) => S): void {
         this.appli.get(
-            chemin,
+            prefixe + "/" + code + "/" + suffixe,
             (requete: express.Request, response: express.Response) => {
                 let entree = this.entreeGET(requete);
                 let sortie = traitement(entree);
                 response.json(sortie);
             }
         )
-        throw new Error('Method not implemented.');
     }
-    specifierTraitementRequetePOST(code: string, chemin: string, traitement: (entree: E) => S): void {
+    specifierTraitementRequetePOST(prefixe : string, code : string,
+        suffixe : string,  traitement: (entree: E) => S): void {
         this.appli.post(
-            chemin,
+            prefixe + "/" + code + "/" + suffixe,
             (requete: express.Request, response: express.Response) => {
                 let entree = this.entreePOST(requete);
                 let sortie = traitement(entree);
                 response.json(sortie);
             }
         )
-        throw new Error('Method not implemented.');
     }
-    specifierTraitementRequetePUT(code: string, chemin: string, traitement: (entree: E) => S): void {
+    specifierTraitementRequetePUT(prefixe : string, code : string,
+        suffixe : string, traitement: (entree: E) => S): void {
         this.appli.put(
-            chemin,
+            prefixe + "/" + code + "/" + suffixe,
             (requete:express.Request, response: express.Response) => {
                 let entree = this.entreePUT(requete);
                 let sortie = traitement(entree);
                 response.json(sortie);
             }
-        )
-        throw new Error('Method not implemented.');
+        );
     }
+
+    
 }
 
