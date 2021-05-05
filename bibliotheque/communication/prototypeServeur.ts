@@ -144,17 +144,14 @@ export class PrototypeServeur<E, S> implements ServeurConnexion<E, S>{
         this.serveurApplications().specifierTraitementRequeteGET("/listen",this.code(),"prototype", entreeGET,traitementOvertureConnexionLongue);
     };
 
-    // TODO: RECIBE EL CUERPO DEL JSON Y ABRE LA CONEXION, CREA UN NODO EN EL RESEAU?
-    //  VER SI ES MEJOR HACER ESTO EN EL SERVIDOR O AFUERA(TRAITEMENT) EL TRAITEMENT RECIBE LA REQUETE
+
     specifierTraitementOuvertureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void{
         //TODO: Ajouter au reseau
         //
 
     }
 
-    //TODO: RECIBE EL MENSAJE Y LO RENVIA A TODOS LOS USUARIOS, EL TRAITEMENT PODRIA SER UNA FUNCION QUE RECIBE EL MENSAJE Y LO PASA.
-    // Pensar en que tan separado esta la implementacion del reseau. El traitement podria ser un metodo de reseau.
-    //  VER SI ES MEJOR HACER ESTO EN EL SERVIDOR O AFUERA(TRAITEMENT) EL TRAITEMENT RECIBE LA REQUETE
+
     specifierTraitementRequeteEntrante(sousChemin : string, traitement : ((entree : E) => void)) : void{
         // TODO: Envoyer message
     }
