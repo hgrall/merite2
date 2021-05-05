@@ -248,9 +248,9 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
     /**
      * Constructeur initialisant l'application Express et le port avec celui passé en argument.
      * @param entreeAuth
-     * @param entreeGET 
-     * @param entreePOST 
-     * @param entreePUT 
+     * @param entreeGET
+     * @param entreePOST
+     * @param entreePUT
 
      * @param port port utilisé par le serveur.
      */
@@ -263,6 +263,7 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
         this.appli = express();
         this.port = port;
     }
+
     // genererServeurConnexions(code: string, chemin: string): ServeurConnexions<E, S> {
     //     // TODO
     //     throw new Error('Method not implemented.');
@@ -277,10 +278,11 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                     + " - Le serveur écoute le port " + this.port + " de l'hôte (local ou heroku).");
             });
     }
+
     /**
-     * Paramètre l'application Express pour utiliser 
-     * le répertoire passé en argument comme réservoir 
-     * pour les scripts embarqués. 
+     * Paramètre l'application Express pour utiliser
+     * le répertoire passé en argument comme réservoir
+     * pour les scripts embarqués.
      * @param rep chemin relatif vers le répertoire des scripts embarqués.
      */
     specifierRepertoireScriptsEmbarques(rep: string): void {
@@ -289,21 +291,22 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
 
     specifierTraitementRequeteAuthentification<E, S>(
         prefixe: string,
-        traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.get(
             prefixe,
             (requete: express.Request,
-                reponse: express.Response) => {
-                    const entree = traductionEntree(requete);
-                    const sortie = traitement(entree);
-                    traductionSortie(sortie, reponse);
-                    reponse.json(sortie);
-                }
+             reponse: express.Response) => {
+                const entree = traductionEntree(requete);
+                const sortie = traitement(entree);
+                traductionSortie(sortie, reponse);
+                reponse.json(sortie);
+            }
         );
     }
+
     specifierApplicationAServir(code: string, chemin: string, repertoire: string, application: string): void {
         this.appli.get(
             chemin,
@@ -313,11 +316,12 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
             }
         );
     }
+
     specifierTraitementRequeteGET<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.get(
             prefixe + "/" + code + "/" + suffixe,
             jsonParser,
@@ -329,11 +333,12 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
             }
         )
     }
+
     specifierTraitementRequetePOST<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.post(
             prefixe + "/" + code + "/" + suffixe,
             jsonParser,
@@ -345,14 +350,15 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
             }
         )
     }
+
     specifierTraitementRequetePUT<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traductionSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request) => E,
+        traductionSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
         this.appli.put(
             prefixe + "/" + code + "/" + suffixe,
-            (requete:express.Request, reponse: express.Response) => {
+            (requete: express.Request, reponse: express.Response) => {
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
@@ -367,9 +373,9 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
         traitement: (entree: E) => void, traductionEntree: (e: express.Request) => E,
         traitementFlux: (canalEntree: express.Request, canalSortie: express.Response) => void):
         void {
-        console.log("prefixe:" +prefixe);
-        console.log("code:" +code);
-        console.log("suffixe:" +suffixe);
+        console.log("prefixe:" + prefixe);
+        console.log("code:" + code);
+        console.log("suffixe:" + suffixe);
         this.appli.get(
             prefixe + "/" + code + "/" + suffixe,
             jsonParser,
@@ -381,4 +387,3 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
         )
     }
 }
-

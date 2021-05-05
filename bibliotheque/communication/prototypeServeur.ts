@@ -137,7 +137,6 @@ export class PrototypeServeur<E, S> implements ServeurConnexion<E, S>{
                 "Cache-Control": "no-cache",
             });
             // TODO : Ajouter NOEUD AU RESEAU
-
         }
 
         this.traitementFermetureConnexionLongue = traitement;
