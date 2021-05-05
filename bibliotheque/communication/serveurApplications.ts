@@ -183,6 +183,37 @@ export interface ServeurApplications<EConcret, SConcret> {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Interface provisoire décrivant un réseau de communication.
+ * Un réseau est un graphe entre des noeuds, pouvant 
+ * posséder plusieurs composantes connexes. Les noeuds 
+ * sont localisés sur le serveur ou sur les clients.
+ * Chaque jeu (associé à un code) possède son graphe propre :
+ * - un graphe pour les tchats en anneau,
+ * - un graphe pour les tchats en étoile,
+ * - un graphe pour le jeu de distribution,
+ * - etc. 
+ */
+/*interface Reseau<S> {
+    estVide() : boolean;
+    estComplet() : boolean;
+    envoyer(clientDestinataire: string, message : S) : void;
+    ajouterNoeud(noeud: S): void;
+}
+
+interface ServeurConnexion<E, S> {
+    code() : string;
+    chemin() : string;
+    serveurApplications() : ServeurApplications<E, S>;
+    specifierTraitementRequeteEntrante(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementOuvertureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementFermetureConnexionLongue(sousChemin : string, traitement : (() => void)) : void;
+    reseauConnecte() : Reseau<S>
+}
+*/
+/**
+>>>>>>> 5621651... Add prototype serveur
  * Serveur d'applications web implémenté grâce à Express
  * (cf. http://expressjs.com/en/api.html).
  * 
