@@ -30,10 +30,10 @@ import { TableMutable } from '../types/table';
  * - des chemins de la forme `préfixe/code/suffixe` pour 
  * désigner les ressources.
  *  
- * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
- * @param S format JSON pour les sorties (allant au client, sortant du serveur)
+ * @param EConcret type correspondant au canal d'entrée
+ * @param SConcret type correspondant au canal de sortie
  */
-export interface ServeurApplications<E, S> {
+export interface ServeurApplications<EConcret, SConcret> {
     /**
      * Démarre le serveur.
      * 
@@ -56,12 +56,18 @@ export interface ServeurApplications<E, S> {
      * - méthode http : GET
      * - url : prefixe?code=xxx
      * 
-     * L'entrée pour le traitement est du format suivant :
-     * - { code : string }
+     * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
+     * @param S format JSON pour les sorties (allant au client, sortant du serveur)
      * @param prefixe chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête d'authentification
      */
-    specifierTraitementRequeteAuthentification(prefixe: string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequeteAuthentification<E, S>(
+        prefixe: string, 
+        traitement : ((entree : E) => S), 
+        traductionEntree : (e : EConcret) => E,
+        traductionSortie : (s : S, canalSortie : SConcret) => void,
+    ) : void;
+
 
 
     /**
@@ -84,13 +90,18 @@ export interface ServeurApplications<E, S> {
      * en-tête de la requête http. Conformément à l'usage, 
      * le corps de la requête est supposé vide.
      *  
+     * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
+     * @param S format JSON pour les sorties (allant au client, sortant du serveur)
      * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
      * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête GET adressée à ce chemin
      * */ 
-    specifierTraitementRequeteGET(prefixe : string, code : string,
-        suffixe : string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequeteGET<E, S>(
+        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
+        traductionEntree : (e : EConcret) => E,
+        traductionSortie : (s : S, canalSortie : SConcret) => void,
+    ) : void;
 
     /**
      * Spécifie le traitement d'une requête POST.
@@ -103,13 +114,19 @@ export interface ServeurApplications<E, S> {
      * formée d'associations (clé, valeur) de l'URL, 
      * en-tête de la requête http et corps de la requête.
      * 
+     * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
+     * @param S format JSON pour les sorties (allant au client, sortant du serveur)
      * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
      * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête POST adressée à ce chemin
      * */ 
-    specifierTraitementRequetePOST(prefixe : string, code : string,
-        suffixe : string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequetePOST<E, S>(
+        prefixe : string, code : string, suffixe : string, 
+        traitement : (entree : E) => S,
+        traductionEntree : (e : EConcret) => E,
+        traductionSortie : (s : S, canalSortie : SConcret) => void,
+    ) : void;
 
     /**
      * Spécifie le traitement d'une requête PUT.
@@ -122,16 +139,49 @@ export interface ServeurApplications<E, S> {
      * formée d'associations (clé, valeur) de l'URL, 
      * en-tête de la requête http et corps de la requête.
      * 
+     * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
+     * @param S format JSON pour les sorties (allant au client, sortant du serveur)
      * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
      * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête PUT adressée à ce chemin
      * */ 
-    specifierTraitementRequetePUT(prefixe : string, code : string,
-        suffixe : string, traitement : ((entree : E) => S)) : void;
+    specifierTraitementRequetePUT<E, S>(
+        prefixe : string, code : string, suffixe : string, 
+        traitement : ((entree : E) => S),
+        traductionEntree : (e : EConcret) => E,
+        traductionSortie : (s : S, canalSortie : SConcret) => void,
+    ) : void;
 
-    genererServeurConnexions(prefixe : string, code : string,
-        suffixe : string) : ServeurConnexion<E, S>;
+    /**
+     * Spécifie le traitement d'une requête GET persitante.
+     * Requête :
+     * - méthode http : GET
+     * - url : prefixe/code/suffixe
+     * - connexion maintenue en vie pur permettre au serveur
+     * d'envoyer un flux de messages.
+     * L'entrée pour le traitement est d'un format sous-type de E. 
+     * Elle est calculée à partir de la requête : partie requête 
+     * formée d'associations (clé, valeur) de l'URL, 
+     * en-tête de la requête http et corps de la requête.
+     * 
+     * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
+     * @param S format JSON pour les sorties (allant au client, sortant du serveur)
+     * @param prefixe préfixe du chemin de l'URL
+     * @param code code identifiant l'école
+     * @param suffixe suffixe du chemin de l'URL
+     * @param traitement traitement lors de la réception d'une requête POST adressée à ce chemin
+     * */ 
+    specifierTraitementRequeteGETLongue<E, S>(
+        prefixe : string, code : string, suffixe : string, 
+        traitement : (entree : E) => void,
+        traductionEntree : (e : EConcret) => E,
+        traitementFlux : 
+            (canalEntree : EConcret, canalSortie : SConcret) => void,
+    ) : void;
+
+    /*genererServeurConnexions(prefixe : string, code : string,
+        suffixe : string) : ServeurConnexions<E, S>;*/
 }
 
 /**
@@ -145,13 +195,13 @@ export interface ServeurApplications<E, S> {
  * - un graphe pour le jeu de distribution,
  * - etc. 
  */
-interface Reseau<S> {
+/*interface Reseau<S> {
     estVide() : boolean;
     estComplet() : boolean;
     envoyer(clientDestinataire: string, message : S) : void; 
 }
 
-interface ServeurConnexion<E, S> {
+interface ServeurConnexions<E, S> {
     code() : string;
     chemin() : string;
     serveurApplications() : ServeurApplications<E, S>;
@@ -160,7 +210,7 @@ interface ServeurConnexion<E, S> {
     specifierTraitementFermetureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void; 
     reseauConnecte() : Reseau<S>
 }
-
+*/
 /**
  * Serveur d'applications web implémenté grâce à Express
  * (cf. http://expressjs.com/en/api.html).
@@ -179,7 +229,7 @@ interface ServeurConnexion<E, S> {
  * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
  * @param S format JSON pour les sorties (allant au client, sortant du serveur)
  */
-export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, S> {
+export class ServeurApplicationsExpress implements ServeurApplications<express.Request, express.Response> {
 
     private cheminAuth : string;
     private traitementAuth : (entree: E) => S;
@@ -211,7 +261,7 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
         this.appli = express();
         this.port = port;
     }
-    genererServeurConnexions(code: string, chemin: string): ServeurConnexion<E, S> {
+    genererServeurConnexions(code: string, chemin: string): ServeurConnexions<E, S> {
         // TODO
         throw new Error('Method not implemented.');
     }
@@ -235,7 +285,7 @@ export class ServeurApplicationsExpress<E, S> implements ServeurApplications<E, 
         this.appli.use(express.static(rep)); // répertoire local visible
     }
 
-    specifierTraitementRequeteAuthentification(chemin: string, traitement: (entree: E) => S): void {
+    specifierTraitementRequeteAuthentification<E>(chemin: string, traitement: (entree: E) => S, traduction : (e : express.Request)=> E): void {
         this.appli.get(
             chemin,
             (requete: express.Request,
