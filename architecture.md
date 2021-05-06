@@ -38,7 +38,7 @@ Jeu
 
 # Composants
 
-Serveur d'applications - Voir `bibliotheque/communication/serveurApplications`
+TODO (à actualiser) Serveur d'applications - Voir `bibliotheque/communication/serveurApplications`
 - servir une application (html + js) en enregistrant le traitement d'une requête GET
 - servir une API (json) en enregistrant le traitement de requêtes GET, PUT ou POST
 - servir des connexions longues en enregistrant les traitements à l'ouverture, la fermeture et en permettant la communication du serveur vers le client
@@ -46,10 +46,17 @@ Serveur d'applications - Voir `bibliotheque/communication/serveurApplications`
 - générer des serveurs de connexions agrégeant ce serveur d'applications
 - démarrer en écoutant un port
   
-Serveur de connexion (agrégeant le serveur d'applications)
-- gérer les connexions vivantes
-- enregistrer le traitement d'une demande de jeu
-- enregistrer le traitement d'un message entrant (json)
-- enregistrer le traitement d'une ouverture de connexion
-- enregistrer le traitement d'une fermeture de connexion
-- envoyer un message (json) à un client connecté
+Réseau associé à un jeu
+- un graphe virtuel `GV`, formé de noeuds à connecter, intialement total
+- un graphe réel `GR`, formé de noeuds connextés, initialement vide
+- traitement à l'ouverture d'une connexion longue
+  1. mise à jour des graphes : `GV--`, `GR++` - générique
+  2. enregistrement de la connexion longue dans le graphe réel `GR` - générique
+  3. envoi à tous les autres clients de la composante connexe de l'information de connexion - spécifique au graphe
+  4. envoi au client de sa configuration initiale - spécifique au jeu
+- fermeture de la connexion longue
+  1. mise à jour des graphes : `GV++`, `GR--` - générique
+  2. envoi à tous les autres clients de la composante connexe de l'information de déconnexion - spécifique au graphe
+- protocole de communication   
+  - utilisation d'un service POST et du graphe réel pour communiquer
+
