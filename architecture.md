@@ -46,15 +46,26 @@ TODO (à actualiser) Serveur d'applications - Voir `bibliotheque/communication/s
 - générer des serveurs de connexions agrégeant ce serveur d'applications
 - démarrer en écoutant un port
   
+Noeud (correspondant à un client)
+- identifiant
+- information (de type variable): configuration initiale, canal, etc.  
+
+Graphe
+- liste de noeuds
+- table associant à un noeud ses voisins (une liste de noeuds)
+- ajouter un noeud (liste et table à mettre à jour)
+- retirer un noeud (liste et table à mettre à jour)
+- composante connexe (liste de noeud)
+
 Réseau associé à un jeu
 - un graphe virtuel `GV`, formé de noeuds à connecter, intialement total
-- un graphe réel `GR`, formé de noeuds connextés, initialement vide
+- un graphe réel `GR`, formé de noeuds connectés, initialement vide
 - traitement à l'ouverture d'une connexion longue
   1. mise à jour des graphes : `GV--`, `GR++` - générique
   2. enregistrement de la connexion longue dans le graphe réel `GR` - générique
   3. envoi à tous les autres clients de la composante connexe de l'information de connexion - spécifique au graphe
   4. envoi au client de sa configuration initiale - spécifique au jeu
-- fermeture de la connexion longue
+- traitement à la fermeture de la connexion longue
   1. mise à jour des graphes : `GV++`, `GR--` - générique
   2. envoi à tous les autres clients de la composante connexe de l'information de déconnexion - spécifique au graphe
 - protocole de communication   
