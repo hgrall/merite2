@@ -109,13 +109,13 @@ export interface GrapheMutable<
     // TODO autres méthodes d'accès (concernant l'adjacence) 
 }
 
-class GrapheMutableParTablesIdentifications<
+export class GrapheMutableParTablesIdentification<
 FSA extends FormatIdentifiable<'sommet'>,
 FSI extends FormatIdentifiable<'sommet'>> 
 implements GrapheMutable<FSA, FSI> {
     private actifs : TableIdentificationMutable<'sommet', FSA>;
     constructor(
-        private inactifs : TableIdentificationMutable<'sommet', FSA>,
+        private inactifs : TableIdentificationMutable<'sommet', FSI>,
         private tableAdjacence : 
         TableIdentification<'sommets', FormatTableau<Identifiant<'sommet'>>>
     ){
