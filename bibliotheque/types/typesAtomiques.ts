@@ -12,9 +12,17 @@ export enum Deux {
     UN
 }
 
+/**
+ * Interface exprimant la propriété d'être mesurable et mutable.
+ * Attributs :
+ * - taille : entier naturel
+ */
+export interface MesurableMutable {
+    taille: number
+}
 
 /**
- * Interface exprimant la propriété d'être mesurable et.
+ * Interface exprimant la propriété d'être mesurable.
  * Attribut :
  * - taille : entier naturel
  */
