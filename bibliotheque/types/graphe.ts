@@ -109,7 +109,7 @@ export interface GrapheMutable<
     // TODO autres méthodes d'accès (concernant l'adjacence) 
 }
 
-class GrapheMutableParEnveloppe<
+class GrapheMutableParTablesIdentifications<
 FSA extends FormatIdentifiable<'sommet'>,
 FSI extends FormatIdentifiable<'sommet'>> 
 implements GrapheMutable<FSA, FSI> {
