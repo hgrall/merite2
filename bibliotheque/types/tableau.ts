@@ -91,6 +91,22 @@ export const FABRIQUE_TABLEAU_JSON = new FabriqueTableauEnJSON();
  */
 class ModuleTableauEnJSON {
     /**
+     * Détermine si le tableau contient un élément vérifiant 
+     * la propriété passée en argument.
+     * 
+     * @param tab tableau
+     * @param propriete prédicat 
+     * @returns renvoie true si le tableau contient un élément vérifiant la propriété, false sinon 
+     */
+    contient<T>(tab : FormatTableau<T>, propriete : (e : T) => boolean) : boolean {
+        for(let i = 0; i < tab.taille; i++){
+            if(propriete(tab.tableau[i])){
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
      * Itère sur les associations du tableau.
      * @param f procédure appelée pendant l'itération.
      * @param t tableau.

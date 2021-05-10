@@ -347,6 +347,11 @@ extends TypeEnveloppe<FormatTable<T>, EtiquetteTable> {
      */
     taille(): number;
     /**
+     * Teste si la table est vide ou non.
+     * @retuns true si la table est vide, false sinon.
+     */
+    estVide() : boolean;
+    /**
      * Sélection d'une clé d'une table.
      * @returns une clé de la table s'il en existe, une erreur sinon.
      */
@@ -372,7 +377,9 @@ extends TypeEnveloppe<FormatTable<T>, EtiquetteTable> {
  * @param T type des valeurs dans la table (recommandé : format JSON)
  */
 export class TableParEnveloppe<T>
-    extends Enveloppe<FormatTable<T>, FormatTable<T>, EtiquetteTable> {
+    extends Enveloppe<FormatTable<T>, FormatTable<T>, EtiquetteTable> 
+    implements Table<T>
+    {
     /**
      * Constructeur à partir d'une table au format JSON.
      * @param etat table au format JSON.
@@ -457,6 +464,14 @@ export class TableParEnveloppe<T>
     taille(): number {
         return MODULE_TABLE.taille(this.etat());
     }
+    /**
+     * Teste si la table est vide ou non.
+     * @retuns true si la table est vide, false sinon.
+     */
+    estVide() : boolean {
+        return this.taille() === 0;
+    }
+
     /**
      * Sélection d'une clé d'une table.
      * @returns une clé de la table s'il en existe, une erreur sinon.

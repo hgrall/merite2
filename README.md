@@ -49,3 +49,10 @@
   - A faire côté client : le code dans `componentDidMount(): void`.
 - Dans `prototype/serveur`, définir le serveur de l'application et des services associés (un pour les "post", un autre pour les messages du serveur vers les clients, en utilisant SSE). 
   - A faire côté serveur : le serveur web en utilisant Express servant l'application, fournissant le service pour poster les messages et diffuser les informations de connexion.  
+
+# Tests
+
+- Installer chai, mocha, types@chai et types@mocha.
+- Installer typescript et ts-node (localement).
+- Définir dans `test/general.ts` les tests à effectuer.
+- Lancer `npm run test`.
