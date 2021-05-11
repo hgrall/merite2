@@ -3,7 +3,14 @@ import { FormatIdentifiable, Identifiant } from "./identifiant";
 import { FormatTableau } from "./tableau";
 import { creerTableIdentificationMutableVide, FormatTableIdentification, TableIdentification, TableIdentificationMutable } from "./tableIdentification";
 
-
+/**
+ * TODO
+ */
+export interface FormatSommetActif<
+    FSI extends FormatIdentifiable<'sommet'>, C> {
+    sommetInactif : FSI;
+    connexion : C;
+} 
 /**
  * Description JSON d'un graphe composée
  * - d'un tableau mutable de sommets actifs,
@@ -15,9 +22,9 @@ import { creerTableIdentificationMutableVide, FormatTableIdentification, TableId
  * @param FSI format JSON des sommets inactifs
  */
 export interface FormatGraphe<
-    FSA extends FormatIdentifiable<'sommet'>,
-    FSI extends FormatIdentifiable<'sommet'>> {
-    readonly actifs : FormatTableIdentification<'sommet', FSA>;
+    FSI extends FormatIdentifiable<'sommet'>,
+    C> {
+    readonly actifs : FormatTableIdentification<'sommet', FormatSommetActif<FSI, C>>;
     readonly inactifs : FormatTableIdentification<'sommet', FSI>;
     readonly adjacence : FormatTableIdentification<'sommet', FormatTableau<Identifiant<'sommet'>>>;
 } 
@@ -35,10 +42,9 @@ export type EtiquetteGraphe = 'actifs' | 'inactifs' | 'voisins';
  * @param FS type décrivant les sommets en JSON.
  */
 export interface GrapheMutable<
-    FSA extends FormatIdentifiable<'sommet'>,
-    FSI extends FormatIdentifiable<'sommet'>>
+    FSI extends FormatIdentifiable<'sommet'>, C>
     extends TypeEnveloppe<
-    FormatGraphe<FSA, FSI>,
+    FormatGraphe<FSI, C>,
     EtiquetteGraphe> {    
     /**
      * Détermine si le  graphe possède le sommet identifié par l'argument.
@@ -73,7 +79,7 @@ export interface GrapheMutable<
      * @param ID_sommet identité du sommet.
      * @returns description en JSON du sommet actif.
      */
-    sommetActif(ID_sommet: Identifiant<'sommet'>): FSA;
+    sommetActif(ID_sommet: Identifiant<'sommet'>): FormatSommetActif<FSI, C>;
     /**
      * Sommet inactif identifié par l'argument.
      * Précondition : le sommet appartient au graphe et est inactif.
@@ -96,7 +102,8 @@ export interface GrapheMutable<
      * Active un sommet inactif.
      * @returns ID_sommet identité du sommet activé.
      */
-    activerSommet() : Identifiant<'sommet'>;
+    // g.activerSommet((s ) => { infos : f (s) , canal : x})
+    activerSommet(connexion : C) : Identifiant<'sommet'>;
     /**
      * Inactive le sommet identifié par l'argument.
      * @param ID_sommet identité du sommet à inactiver.
@@ -110,10 +117,9 @@ export interface GrapheMutable<
 }
 
 export class GrapheMutableParTablesIdentification<
-FSA extends FormatIdentifiable<'sommet'>,
-FSI extends FormatIdentifiable<'sommet'>> 
-implements GrapheMutable<FSA, FSI> {
-    private actifs : TableIdentificationMutable<'sommet', FSA>;
+FSI extends FormatIdentifiable<'sommet'>, C> 
+implements GrapheMutable<FSI, C> {
+    private actifs : TableIdentificationMutable<'sommet', FormatSommetActif<FSI, C>>;
     constructor(
         private inactifs : TableIdentificationMutable<'sommet', FSI>,
         private tableAdjacence : 
@@ -134,7 +140,7 @@ implements GrapheMutable<FSA, FSI> {
     sontVoisins(ID_sommet1: Identifiant<"sommet">, ID_sommet2: Identifiant<"sommet">): boolean {
         throw new Error("Method not implemented.");
     }
-    sommetActif(ID_sommet: Identifiant<"sommet">): FSA {
+    sommetActif(ID_sommet: Identifiant<"sommet">): FormatSommetActif<FSI, C> {
         return this.actifs.valeur(ID_sommet);
     }
     sommetInactif(ID_sommet: Identifiant<"sommet">): FSI {
@@ -146,7 +152,7 @@ implements GrapheMutable<FSA, FSI> {
     aUnSommetInactif(): boolean {
         throw new Error("Method not implemented.");
     }
-    activerSommet(): Identifiant<"sommet"> {
+    activerSommet(connexion : C): Identifiant<"sommet"> {
         throw new Error("Method not implemented.");
     }
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {
@@ -155,7 +161,7 @@ implements GrapheMutable<FSA, FSI> {
     taille(): number {
         throw new Error("Method not implemented.");
     }
-    val(): FormatGraphe<FSA, FSI> {
+    val(): FormatGraphe<FSI, C> {
         throw new Error("Method not implemented.");
     }
     brut(): string {
