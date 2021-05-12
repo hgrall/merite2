@@ -1,6 +1,6 @@
 import { Enveloppe, TypeEnveloppe } from './enveloppe';
 import { FormatTableMutable, FormatTable, MODULE_TABLE, EtiquetteTable, FABRIQUE_TABLE } from './table';
-import { Identifiant, identifiant } from './identifiant';
+import { EnsembleSortes, Identifiant, identifiant } from './identifiant';
 import { jamais } from './typesAtomiques';
 import { Option } from './option';
 
@@ -85,7 +85,7 @@ export function conversionFormatTableIdentification<
         });
 }
 
-export interface TableIdentification<Sorte extends string, T>
+export interface TableIdentification<Sorte extends EnsembleSortes, T>
     extends TypeEnveloppe<FormatTableIdentification<Sorte, T>, EtiquetteTable> {
     iterer(
         f: (ID_sorte: Identifiant<Sorte>, val: T, tab?: { [cle: string]: T }, taille?: number) => void
@@ -105,7 +105,7 @@ export interface TableIdentification<Sorte extends string, T>
  * Table d'identification mutable utilisant la valeur d'identificateurs
  * comme clé.
  */
-export interface TableIdentificationMutable<Sorte extends string, T>
+export interface TableIdentificationMutable<Sorte extends EnsembleSortes, T>
     extends TableIdentification<Sorte, T> {
     ajouter(ID_sorte: Identifiant<Sorte>, x: T): Option<T>;
     retirer(ID_sorte: Identifiant<Sorte>): Option<T>;
@@ -115,7 +115,7 @@ export interface TableIdentificationMutable<Sorte extends string, T>
  * Table d'identification mutable utilisant la valeur d'identificateurs
  * comme clé.
  */
-export class TableIdentificationMutableParEnveloppe<Sorte extends string, T>
+export class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>
     extends Enveloppe<
     FormatTableIdentificationMutable<Sorte, T>,
     FormatTableIdentification<Sorte, T>, EtiquetteTable>
@@ -187,7 +187,7 @@ export class TableIdentificationMutableParEnveloppe<Sorte extends string, T>
         return MODULE_TABLE.retirer(this.etat().identification, ID_sorte.val);
     }
 }
-export function creerTableIdentificationMutableVide<Sorte extends string, T>(
+export function creerTableIdentificationMutableVide<Sorte extends EnsembleSortes, T>(
     sorte: Sorte
 ) {
     return new TableIdentificationMutableParEnveloppe<Sorte, T>(sorte);
@@ -195,7 +195,7 @@ export function creerTableIdentificationMutableVide<Sorte extends string, T>(
 /*
 * Création par copie de la table.
 */
-export function creerTableIdentificationMutableParCopie<Sorte extends string, S, T>(
+export function creerTableIdentificationMutableParCopie<Sorte extends EnsembleSortes, S, T>(
     sorte: Sorte, transformation: (x: S) => T,
     table: FormatTableIdentification<Sorte, S>
 ) {
@@ -207,7 +207,7 @@ export function creerTableIdentificationMutableParCopie<Sorte extends string, S,
 /*
  *  Création d'une enveloppe de la table passée en argument (qui est donc partagée).
  */
-export function creerTableIdentificationMutableParEnveloppe<Sorte extends string, T>(
+export function creerTableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>(
     sorte: Sorte, 
     table: FormatTableIdentificationMutable<Sorte, T>
 ) {
@@ -217,7 +217,7 @@ export function creerTableIdentificationMutableParEnveloppe<Sorte extends string
 
 
 // TODO commentaires version immutable.
-export class TableIdentificationParEnveloppe<Sorte extends string, T>
+export class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
     extends Enveloppe<
         FormatTableIdentification<Sorte, T>,
         FormatTableIdentification<Sorte, T>, EtiquetteTable>
@@ -283,7 +283,7 @@ export class TableIdentificationParEnveloppe<Sorte extends string, T>
 
 }
 
-export function tableIdentification<Sorte extends string, TEX>(
+export function tableIdentification<Sorte extends EnsembleSortes, TEX>(
     sorte: Sorte,
     table: FormatTable<TEX>)
     : TableIdentification<Sorte, TEX> {
