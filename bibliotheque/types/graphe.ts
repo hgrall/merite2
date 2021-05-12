@@ -123,7 +123,7 @@ implements GrapheMutable<FSI, C> {
     constructor(
         private inactifs : TableIdentificationMutable<'sommet', FSI>,
         private tableAdjacence : 
-        TableIdentification<'sommets', FormatTableau<Identifiant<'sommet'>>>
+        TableIdentification<'sommet', FormatTableau<Identifiant<'sommet'>>>
     ){
         this.actifs = creerTableIdentificationMutableVide('sommet');
         }
