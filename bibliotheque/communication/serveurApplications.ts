@@ -7,9 +7,6 @@ const jsonParser = bodyParser.json()
 import {
     dateMaintenant
 } from "../types/date";
-/*
-import { TableMutable } from '../types/table';
-*/
 
 /**
  * Serveur d'applications Web. 
@@ -135,17 +132,17 @@ export interface ServeurApplications<EConcret, SConcret> {
      * Requête :
      * - méthode http : PUT
      * - url : prefixe/code/suffixe
-     * 
-     * L'entrée pour le traitement est d'un format sous-type de E. 
-     * Elle est calculée à partir de la requête : partie requête 
-     * formée d'associations (clé, valeur) de l'URL, 
+     *
+     * L'entrée pour le traitement est d'un format sous-type de E.
+     * Elle est calculée à partir de la requête : partie requête
+     * formée d'associations (clé, valeur) de l'URL,
      * en-tête de la requête http et corps de la requête.
-     * 
+     *
      * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
      * @param suffixe suffixe du chemin de l'URL
      * @param traitement traitement lors de la réception d'une requête PUT adressée à ce chemin
-     * */ 
+     * */
     specifierTraitementRequetePUT<E, S>(
         prefixe : string, code : string, suffixe : string,
         traitement : ((entree : E) => S),
@@ -183,6 +180,37 @@ export interface ServeurApplications<EConcret, SConcret> {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Interface provisoire décrivant un réseau de communication.
+ * Un réseau est un graphe entre des noeuds, pouvant 
+ * posséder plusieurs composantes connexes. Les noeuds 
+ * sont localisés sur le serveur ou sur les clients.
+ * Chaque jeu (associé à un code) possède son graphe propre :
+ * - un graphe pour les tchats en anneau,
+ * - un graphe pour les tchats en étoile,
+ * - un graphe pour le jeu de distribution,
+ * - etc. 
+ */
+/*interface Reseau<S> {
+    estVide() : boolean;
+    estComplet() : boolean;
+    envoyer(clientDestinataire: string, message : S) : void;
+    ajouterNoeud(noeud: S): void;
+}
+
+interface ServeurConnexion<E, S> {
+    code() : string;
+    chemin() : string;
+    serveurApplications() : ServeurApplications<E, S>;
+    specifierTraitementRequeteEntrante(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementOuvertureConnexionLongue(sousChemin : string, traitement : ((entree : E) => void)) : void;
+    specifierTraitementFermetureConnexionLongue(sousChemin : string, traitement : (() => void)) : void;
+    reseauConnecte() : Reseau<S>
+}
+*/
+/**
+>>>>>>> 0e9c3ff... Add initual version of prototypeServeur
  * Serveur d'applications web implémenté grâce à Express
  * (cf. http://expressjs.com/en/api.html).
  * 
@@ -330,7 +358,6 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
         );
     }
 
-// TODO: TRAITEMENT FERMETURE
     specifierTraitementRequeteGETLongue<E, S>(
         prefixe: string, code: string, suffixe: string,
         traitement: (entree: E) => void, traductionEntree: (e: express.Request) => E,

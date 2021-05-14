@@ -139,7 +139,7 @@ export class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes
         return jamais(e);
     }
     representation(): string {
-        return this.net('graphe');
+        return this.net('domaine');
     }
 
     iterer(
@@ -241,7 +241,7 @@ export class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
         return jamais(e);
     }
     representation(): string {
-        return this.net('graphe');
+        return this.net('domaine');
     }
 
     val(): FormatTableIdentification<Sorte, T> {

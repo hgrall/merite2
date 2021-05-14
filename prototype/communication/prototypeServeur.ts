@@ -26,9 +26,16 @@ const traductionEntree = (request: express.Request) : DataType => {
 };
 
 const traitementDesFlux = (request: express.Request, response: express.Response) => {
-    reseauPrototype.traitementOvertureConnectionLongue(request.body.id, response);
+
+    const headers = {
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-store, no-transform'
+    };
+    response.writeHead(200, headers);
+
+    const id_sommet = reseauPrototype.traitementOvertureConnectionLongue(response);
     request.on("close", () => {
-        reseauPrototype.traitementFermetureConnectionLongue(request.body.id);
+        reseauPrototype.traitementFermetureConnectionLongue(id_sommet);
     });
 }
 

@@ -7,6 +7,7 @@ import {
     TableIdentification,
     TableIdentificationMutable
 } from "./tableIdentification";
+import {dateMaintenant} from "./date";
 
 /**
  * TODO
@@ -174,16 +175,28 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
     }
 
     activerSommet(connexion: C): Identifiant<"sommet"> {
+        if(this.inactifs.estVide()){
+            throw new Error('Le réseau est complete`');
+        }
         const ID_sommet = this.inactifs.selectionCle();
         const sommetInactif = this.inactifs.retirer(ID_sommet).valeur();
         const sommetActif: FormatSommetActif<FSI, C> = {connexion, sommetInactif};
         this.actifs.ajouter(ID_sommet, sommetActif);
+
+        console.log("* " + dateMaintenant().representationLog()
+            + ` - Connexions inactives: ${this.net("inactifs")}`);
+        console.log("* " + dateMaintenant().representationLog()
+            + ` - Connexions actives: ${this.actifs.representation()}`);
+        console.log("* " + dateMaintenant().representationLog()
+            + "- Le sommet " + ID_sommet.val + " a été activé");
         return ID_sommet;
     }
 
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {
         const sommetActif = this.actifs.retirer(ID_sommet).valeur();
         this.inactifs.ajouter(ID_sommet, sommetActif.sommetInactif);
+        console.log("* " + dateMaintenant().representationLog()
+            + "- Le sommet " + ID_sommet.val + " a été inactivé");
     }
 
     taille(): number {
@@ -210,7 +223,7 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
     }
 
     representation(): string {
-        return ""
+        return `Actifs: ${this.net("actifs")} Inactifs: ${this.net("inactifs")}`;
     }
 
 } 
