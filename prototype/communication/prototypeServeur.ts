@@ -1,9 +1,7 @@
 import {ServeurApplicationsExpress} from "../../bibliotheque/communication/serveurApplications";
 import * as express from 'express';
-import * as e from "express";
-import {ReseauPrototype} from "./reseau";
+import {ReseauAnneau, ReseauEtoile} from "./reseau";
 import {Identifiant} from "../../bibliotheque/types/identifiant";
-import {json} from "express";
 
 const serveurApplications = new ServeurApplicationsExpress(8080);
 
@@ -16,8 +14,7 @@ class DataTypeSortie {
 }
 
 serveurApplications.demarrer();
-
-const reseauPrototype = new ReseauPrototype(5);
+const reseauEtoile = new ReseauEtoile(10);
 
 const traductionEntree = (request: express.Request) : DataType => {
     return new DataType(request.body.message, request.body.id);
@@ -27,12 +24,12 @@ const traitementDesFlux = (request: express.Request, response: express.Response)
       response.writeHead(200, {
         "Content-Type": "text/event-stream",
             Connection: "keep-alive",
-           "Cache-Control": "no-cache",
+           "Cache-Control": "no-cache, no-store",
          });
 
-    const id_sommet = reseauPrototype.traitementOvertureConnectionLongue(response);
+    const id_sommet = reseauEtoile.traitementOvertureConnectionLongue(response);
     request.on("close", () => {
-        reseauPrototype.traitementFermetureConnectionLongue(id_sommet);
+        reseauEtoile.traitementFermetureConnectionLongue(id_sommet);
     });
 }
 
@@ -53,7 +50,7 @@ const traducctionEntreePost = (request: express.Request): DataType =>{
 };
 
 const traducctionSortiePost = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
-    reseauPrototype.diffuserMessage(sortie.messageSortie);
+    reseauEtoile.diffuserMessage(sortie.messageSortie);
     canalSortie.write(`data: ${JSON.stringify(sortie)} \n\n`)
 };
 

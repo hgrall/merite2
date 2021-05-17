@@ -248,7 +248,7 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
     }
 
     representation(): string {
-        return `Actifs: ${this.net("actifs")} Inactifs: ${this.net("inactifs")}`;
+        return `Actifs: ${this.net("actifs")} Inactifs: ${this.net("inactifs")} Voisins: ${this.net("voisins")}`;
     }
 
 } 
