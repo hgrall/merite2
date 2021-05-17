@@ -2,20 +2,22 @@ import {ServeurApplicationsExpress} from "../../bibliotheque/communication/serve
 import * as express from 'express';
 import * as e from "express";
 import {ReseauPrototype} from "./reseau";
+import {Identifiant} from "../../bibliotheque/types/identifiant";
+import {json} from "express";
 
 const serveurApplications = new ServeurApplicationsExpress(8080);
 
 class DataType {
-    constructor(public message: string, public id: string ) {};
+    constructor(public message: string, public id: Identifiant<"sommet"> ) {};
 }
 
 class DataTypeSortie {
-    constructor(public entree: DataType, public id: string, public messageSortie: string){};
+    constructor(public entree: DataType, public id: Identifiant<"sommet">, public messageSortie: string){};
 }
 
 serveurApplications.demarrer();
 
-const reseauPrototype = new ReseauPrototype(10);
+const reseauPrototype = new ReseauPrototype(5);
 
 const traitement = (data: DataType) => {
 
@@ -27,11 +29,13 @@ const traductionEntree = (request: express.Request) : DataType => {
 
 const traitementDesFlux = (request: express.Request, response: express.Response) => {
 
-    const headers = {
-        'Connection': 'keep-alive',
-        'Cache-Control': 'no-store, no-transform'
-    };
-    response.writeHead(200, headers);
+
+      response.writeHead(200, {
+        "Content-Type": "text/event-stream",
+            Connection: "keep-alive",
+           "Cache-Control": "no-cache",
+         });
+
 
     const id_sommet = reseauPrototype.traitementOvertureConnectionLongue(response);
     request.on("close", () => {
@@ -49,7 +53,7 @@ serveurApplications.specifierTraitementRequeteGETLongue<DataType,DataTypeSortie>
 );
 
 const traitementPOST = (data: DataType): DataTypeSortie =>  {
-    return new DataTypeSortie(data, "10", data.message);
+    return new DataTypeSortie(data, data.id, data.message);
 };
 
 const traducctionEntreePost = (request: express.Request): DataType =>{
@@ -57,7 +61,8 @@ const traducctionEntreePost = (request: express.Request): DataType =>{
 };
 
 const traducctionSortiePost = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
-
+    reseauPrototype.diffuserMessage(sortie.messageSortie);
+    canalSortie.write(`data: ${JSON.stringify(sortie)} \n\n`)
 };
 
 serveurApplications.specifierTraitementRequetePOST<DataType,DataTypeSortie>(
@@ -67,4 +72,23 @@ serveurApplications.specifierTraitementRequetePOST<DataType,DataTypeSortie>(
     traitementPOST,
     traducctionEntreePost,
     traducctionSortiePost
+)
+
+const traducctionSortieGET = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
+    canalSortie.json(DataTypeSortie);
+};
+
+
+const traitementGET = ( entree: DataType) : DataTypeSortie => {
+   return new DataTypeSortie( entree, entree.id,"Salida");
+};
+
+
+serveurApplications.specifierTraitementRequeteGET<DataType,DataTypeSortie>(
+    "/get",
+    "A1",
+    "",
+    traitementGET,
+    traductionEntree,
+    traducctionSortieGET
 )

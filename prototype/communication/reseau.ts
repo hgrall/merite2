@@ -1,7 +1,7 @@
 import * as express from "express";
 import {GrapheMutableParTablesIdentification} from "../../bibliotheque/types/graphe";
 import {
-    FormatIdentifiable, Identifiant, GenerateurIdentifiants, creerGenerateurIdentifiantParCompteur
+    FormatIdentifiable, Identifiant, GenerateurIdentifiants, creerGenerateurIdentifiantParCompteur, identifiant
 } from "../../bibliotheque/types/identifiant";
 import {
     creerTableIdentificationMutableVide,
@@ -65,14 +65,18 @@ export class ReseauPrototype implements Reseau{
 
     }
 
-    diffuserMessage<M>(idEmisseur: Identifiant<"sommet">, message: M): void {
-        // TODO: iterer voisins de l'emisseur pour diffuser le message
+    diffuserMessage<M>( message: M): void {
+        this.graphe.itererActifs((identifiant)=> {
+            this.envoyerMessage(identifiant, message)
+        });
+        console.log("* " + dateMaintenant().representationLog()
+            + `- Le message ${message} a été diffusé`);
     }
 
     envoyerMessage<M>(idRecepteur: Identifiant<"sommet">, message: M): void {
         if(this.graphe.aSommetActif(idRecepteur)) {
             const recepteur = this.graphe.sommetActif(idRecepteur);
-            recepteur.connexion.write(JSON.stringify(message));
+            recepteur.connexion.write(message);
         }
         else{
             // TODO : Lancer erreur
@@ -81,7 +85,6 @@ export class ReseauPrototype implements Reseau{
 
     traitementFermetureConnectionLongue(idNoeud: Identifiant<"sommet">): void {
         if(this.graphe.aSommetActif(idNoeud)) {
-            this.graphe.sommetActif(idNoeud).connexion.send(`La connexion avec id ${idNoeud} a ete fermé`);
             this.graphe.inactiverSommet(idNoeud);
             console.log("* " + dateMaintenant().representationLog()
                 + "Fermeture d'une connection longue");

@@ -124,13 +124,22 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
      * Nombre total de sommets dans le graphe.
      */
     taille(): number;
-    // TODO autres méthodes d'accès (concernant l'adjacence) 
+
+    /**
+     * Itère les voisins du sommet identifie par l'argument et leur applique une fonction
+     */
+    itererVoisins(ID_sommet: Identifiant<'sommet'>, f: (ID_sommet: Identifiant<'sommet'>)=> void): void;
+
+    /**
+     * Itère tous les sommets actifs dans le réseau
+     */
+    itererActifs( f: (ID_sommet: Identifiant<"sommet">) => void): void;
+    // TODO autres méthodes d'accès (concernant l'adjacence)
 }
 
 export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable<'sommet'>, C>
     implements GrapheMutable<FSI, C> {
     private actifs: TableIdentificationMutable<'sommet', FormatSommetActif<FSI, C>>;
-
     constructor(
         private inactifs : TableIdentificationMutable<'sommet', FSI>,
         private tableAdjacence : 
@@ -176,11 +185,13 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
 
     activerSommet(connexion: C): Identifiant<"sommet"> {
         if(this.inactifs.estVide()){
-            throw new Error('Le réseau est complete`');
+            throw new Error("Le réseau est complete");
         }
+        //Sélectionne un sommet inactif au hazard
         const ID_sommet = this.inactifs.selectionCle();
         const sommetInactif = this.inactifs.retirer(ID_sommet).valeur();
-        const sommetActif: FormatSommetActif<FSI, C> = {connexion, sommetInactif};
+        //Cree un sommet actif a partir du sommet sélectionné
+        const sommetActif = { connexion, sommetInactif };
         this.actifs.ajouter(ID_sommet, sommetActif);
 
         console.log("* " + dateMaintenant().representationLog()
@@ -201,6 +212,16 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
 
     taille(): number {
         throw this.actifs.taille() + this.inactifs.taille();
+    }
+
+    itererVoisins(ID_sommet: Identifiant<"sommet">, f: (ID_sommet: Identifiant<"sommet">) => void): void {
+        this.tableAdjacence.valeur(ID_sommet).tableau.forEach(ID_sommet => {
+            f(ID_sommet);
+        });
+    }
+
+    itererActifs( f: (ID_sommet: Identifiant<"sommet">) => void): void {
+        this.actifs.iterer(f);
     }
 
     val(): FormatGraphe<FSI, C> {

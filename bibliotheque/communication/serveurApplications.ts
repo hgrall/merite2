@@ -180,8 +180,6 @@ export interface ServeurApplications<EConcret, SConcret> {
 }
 
 /**
-<<<<<<< HEAD
-=======
  * Interface provisoire décrivant un réseau de communication.
  * Un réseau est un graphe entre des noeuds, pouvant 
  * posséder plusieurs composantes connexes. Les noeuds 
@@ -210,7 +208,6 @@ interface ServeurConnexion<E, S> {
 }
 */
 /**
->>>>>>> 0e9c3ff... Add initual version of prototypeServeur
  * Serveur d'applications web implémenté grâce à Express
  * (cf. http://expressjs.com/en/api.html).
  * 
@@ -273,6 +270,7 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 console.log("* " + dateMaintenant().representationLog()
                     + " - Le serveur écoute le port " + this.port + " de l'hôte (local ou heroku).");
             });
+        this.appli.use(bodyParser.json());
     }
     /**
      * Paramètre l'application Express pour utiliser 
@@ -297,7 +295,6 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                     const entree = traductionEntree(requete);
                     const sortie = traitement(entree);
                     traductionSortie(sortie, reponse);
-                    reponse.json(sortie);
                 }
         );
     }
@@ -311,7 +308,8 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
         );
     }
     specifierTraitementRequeteGET<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
+        prefixe : string, code : string,  suffixe : string,
+        traitement : ((entree : E) => S),
         traductionEntree : (e : express.Request) => E,
         traductionSortie : (s : S, canalSortie : express.Response) => void,
     ) : void {
@@ -322,7 +320,6 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
-                reponse.json(sortie);
             }
         )
     }
@@ -338,7 +335,6 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
-                reponse.json(sortie);
             }
         )
     }
@@ -353,7 +349,6 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
                 const entree = traductionEntree(requete);
                 const sortie = traitement(entree);
                 traductionSortie(sortie, reponse);
-                reponse.json(sortie);
             }
         );
     }
