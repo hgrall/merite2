@@ -11,20 +11,12 @@ import {
 } from "../../bibliotheque/types/tableau";
 import {dateMaintenant} from "../../bibliotheque/types/date";
 
-class FormatSommetsActives implements FormatIdentifiable<"sommet">{
-    readonly ID: Identifiant<"sommet">;
-    constructor(id: Identifiant<"sommet">,public connexion:express.Response) {
-        this.connexion = connexion;
-        this.ID=id;
-    };
-}
 
 interface FormatSommetsInnactives extends FormatIdentifiable<"sommet">{
     readonly ID: Identifiant<"sommet">;
 }
 
 interface Reseau {
-    generateurIdentifiants: GenerateurIdentifiants<"sommet">;
     traitementOvertureConnectionLongue(connexion: express.Response): void;
     traitementFermetureConnectionLongue(idNoeud: Identifiant<"sommet">): void;
     envoyerMessage<M>(idRecepteur: Identifiant<"sommet">,message:M):void;

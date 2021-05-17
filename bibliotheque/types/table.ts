@@ -61,6 +61,7 @@ class FabriqueTable {
      * Fabrique une table à partir d'associations fournies par un document JSON { (cle1: val1), ... }
      * représentant un graphe fonctionnel.
      * @param tab une table JSON associant à chaque clé du domaine une valeur de type T.
+     * @param t taille de la table a créer
      * @returns la table contenant les associations passées en argument.
      */
     enveloppe<T>(tab: { readonly [cle: string]: T }, t: number): FormatTable<T> {
@@ -80,7 +81,7 @@ class ModuleTable {
     /**
      * Itère sur les associations de la table.
      * @param f procédure appelée pendant l'itération.
-     * @param t table.
+     * @param t table a itérer.
      */
     iterer<T>(
         f: (cle: string, val: T, tab?: { [cle: string]: T }, taille?: number) => void,

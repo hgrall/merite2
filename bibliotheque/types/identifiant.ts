@@ -1,5 +1,5 @@
 /**
- * TODO
+ * Sortes possibles predefines pour tous les types différents d'identifiants
  */
 export type EnsembleSortes = "sommet" | "message"; // à compléter
 
@@ -78,7 +78,6 @@ class GenerateurIdentifiantsParCompteur<Sorte extends EnsembleSortes>
 
 /**
  * Fabrique fournissant un générateur d'identifiants par compteur.
- * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  * @param prefixe préfixe des identifiants.
  */
 export function creerGenerateurIdentifiantParCompteur<
@@ -90,7 +89,6 @@ export function creerGenerateurIdentifiantParCompteur<
 
 /**
  * Fabrique d'un identifiant (au format JSON).
- * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  * @param s sorte des identifiants (précondition : valeur s = type Sorte).
  * @param cle valeur de l'identifiant.
  */
@@ -105,7 +103,6 @@ export function identifiant<Sorte extends EnsembleSortes>(
 
 /**
  * Test d'égalité entre deux identifiants.
- * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  * @param id1 premier identifiant.
  * @param id2 second identifiant.
  */

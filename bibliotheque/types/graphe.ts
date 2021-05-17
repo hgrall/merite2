@@ -10,7 +10,8 @@ import {
 import {dateMaintenant} from "./date";
 
 /**
- * TODO
+ *  Format qui represente un sommet actif composée d'un sommet inactif
+ *  duquel il s'est activé et de la connexion qui est le canal de communication avec le client
  */
 export interface FormatSommetActif<FSI extends FormatIdentifiable<'sommet'>, C> {
     sommetInactif: FSI;
@@ -111,7 +112,6 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
      * Active un sommet inactif.
      * @returns ID_sommet identité du sommet activé.
      */
-    // g.activerSommet((s ) => { infos : f (s) , canal : x})
     activerSommet(connexion: C): Identifiant<'sommet'>;
 
     /**
@@ -127,13 +127,17 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
 
     /**
      * Itère les voisins du sommet identifie par l'argument et leur applique une fonction
+     * @param ID_sommet identifiant du sommet auquel on veut itérer ses voisins
+     * @param f function a appliquer a chaque sommet voisin
      */
     itererVoisins(ID_sommet: Identifiant<'sommet'>, f: (ID_sommet: Identifiant<'sommet'>)=> void): void;
 
     /**
      * Itère tous les sommets actifs dans le réseau
+     * @param f function a appliquer a chaque sommet actif du réseau
      */
     itererActifs( f: (ID_sommet: Identifiant<"sommet">) => void): void;
+
     // TODO autres méthodes d'accès (concernant l'adjacence)
 }
 

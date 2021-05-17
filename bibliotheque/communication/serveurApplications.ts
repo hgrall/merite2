@@ -171,7 +171,6 @@ export interface ServeurApplications<EConcret, SConcret> {
      * */
     specifierTraitementRequeteGETLongue<E, S>(
         prefixe : string, code : string, suffixe : string,
-        traitement : (entree : E) => void,
         traductionEntree : (e : EConcret) => E,
         traitementFlux :
             (canalEntree : EConcret, canalSortie : SConcret) => void,
@@ -354,8 +353,7 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
     }
 
     specifierTraitementRequeteGETLongue<E, S>(
-        prefixe: string, code: string, suffixe: string,
-        traitement: (entree: E) => void, traductionEntree: (e: express.Request) => E,
+        prefixe: string, code: string, suffixe: string, traductionEntree: (e: express.Request) => E,
         traitementFlux: (canalEntree: express.Request, canalSortie: express.Response) => void):
         void {
         console.log("prefixe:" +prefixe);
@@ -366,7 +364,6 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
             jsonParser,
             (requete: express.Request, reponse: express.Response) => {
                 const entree = traductionEntree(requete);
-                traitement(entree);
                 traitementFlux(requete, reponse);
             }
         )

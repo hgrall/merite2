@@ -10,7 +10,7 @@ const serveurApplications = new ServeurApplicationsExpress(8080);
 class DataType {
     constructor(public message: string, public id: Identifiant<"sommet"> ) {};
 }
-
+// changer a interface
 class DataTypeSortie {
     constructor(public entree: DataType, public id: Identifiant<"sommet">, public messageSortie: string){};
 }
@@ -19,23 +19,16 @@ serveurApplications.demarrer();
 
 const reseauPrototype = new ReseauPrototype(5);
 
-const traitement = (data: DataType) => {
-
-};
-
 const traductionEntree = (request: express.Request) : DataType => {
     return new DataType(request.body.message, request.body.id);
 };
 
 const traitementDesFlux = (request: express.Request, response: express.Response) => {
-
-
       response.writeHead(200, {
         "Content-Type": "text/event-stream",
             Connection: "keep-alive",
            "Cache-Control": "no-cache",
          });
-
 
     const id_sommet = reseauPrototype.traitementOvertureConnectionLongue(response);
     request.on("close", () => {
@@ -47,7 +40,6 @@ serveurApplications.specifierTraitementRequeteGETLongue<DataType,DataTypeSortie>
     "/listen",
     "A1",
     "",
-    traitement,
     traductionEntree,
     traitementDesFlux
 );
