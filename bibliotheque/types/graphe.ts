@@ -1,6 +1,6 @@
 import {TypeEnveloppe} from "./enveloppe";
 import {FormatIdentifiable, Identifiant} from "./identifiant";
-import {FormatTableau} from "./tableau";
+import {creerTableauMutableVide, FormatTableau, TableauMutable, TableauMutableParEnveloppe} from "./tableau";
 import {
     creerTableIdentificationMutableVide,
     FormatTableIdentification,
@@ -15,6 +15,7 @@ import {dateMaintenant} from "./date";
  */
 export interface FormatSommetActif<FSI extends FormatIdentifiable<'sommet'>, C> {
     sommetInactif: FSI;
+    voisinsActifs: TableauMutableParEnveloppe<Identifiant<"sommet">>;
     connexion: C;
 }
 
@@ -112,7 +113,7 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
      * Active un sommet inactif.
      * @returns Sommet inactivé.
      */
-    activerSommet(connexion: C): FSI ;
+    activerSommet(connexion: C): FormatSommetActif<FSI, C> ;
 
     /**
      * Inactive le sommet identifié par l'argument.
@@ -192,16 +193,29 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
         return this.inactifs.taille() > 0;
     }
 
-    activerSommet(connexion: C): FSI {
+    activerSommet(connexion: C): FormatSommetActif<FSI, C> {
         if(this.inactifs.estVide()){
             throw new Error("Le réseau est complete");
         }
         //Sélectionne un sommet inactif au hazard
         const ID_sommet = this.inactifs.selectionCle();
         const sommetInactif = this.inactifs.retirer(ID_sommet).valeur();
-        //Cree un sommet actif a partir du sommet sélectionné
-        const sommetActif = { connexion, sommetInactif };
+
+        //Initializer la table avec les pseudos et identifiants des voisins actifs
+        const voisinsActifs: TableauMutableParEnveloppe<Identifiant<"sommet">> = creerTableauMutableVide<Identifiant<"sommet">>();
+        this.actifs.iterer((id_actif, val1) => {
+            if(this.tableAdjacence.valeur(id_actif).tableau.includes(ID_sommet)){
+                voisinsActifs.ajouterEnFin(id_actif);
+            }
+            if(this.tableAdjacence.valeur(id_actif).tableau.includes(ID_sommet)){
+                this.actifs.valeur(id_actif).voisinsActifs.ajouterEnFin(ID_sommet);
+            }
+        })
+
+        //Crée un sommet actif a partir du sommet sélectionné
+        const sommetActif = { connexion, sommetInactif, voisinsActifs };
         this.actifs.ajouter(ID_sommet, sommetActif);
+
 
         console.log("* " + dateMaintenant().representationLog()
             + ` - Connexions inactives: ${this.net("inactifs")}`);
@@ -209,7 +223,7 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
             + ` - Connexions actives: ${this.actifs.representation()}`);
         console.log("* " + dateMaintenant().representationLog()
             + "- Le sommet " + ID_sommet.val + " a été activé");
-        return sommetInactif;
+        return sommetActif;
     }
 
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {

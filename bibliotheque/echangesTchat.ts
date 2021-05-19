@@ -20,6 +20,7 @@ import {
     Sommet,
     SommetParEnveloppe
 } from "./types/sommet";
+import {TableauMutable} from "./types/tableau";
 
 /**
  * Format JSON pour un sommet du réseau de tchat.
@@ -134,16 +135,16 @@ export function sommetTchat(s: FormatSommetTchat) {
  */
 export interface FormatConfigurationTchat extends FormatConfigurationInitiale {
     readonly "centre": FormatSommetTchat,
-    readonly "voisins": TableIdentificationMutable<'sommet', string>,
     readonly "date": FormatDateFr,
-    readonly "nombreConnexions" : number
-    readonly "id": Identifiant<"sommet">
+    readonly "nombreConnexions" : number,
+    readonly "id": Identifiant<"sommet">,
+    readonly "voisinsActifs": TableauMutable<Identifiant<"sommet">>
 }
 
 /**
  * Etiquettes utiles pour représenter une configuration.
  */
-export type EtiquetteConfigurationTchat = 'centre' | 'voisins' | 'date' |'nombreConnexions';
+export type EtiquetteConfigurationTchat = 'centre' | 'date' |'nombreConnexions';
 
 /**
  * Interface pour les configurations initiales du tchat.
@@ -175,8 +176,6 @@ export class ConfigurationTchatParEnveloppe
         let config = this.val();
         switch (e) {
             case 'centre': return sommetTchat(config.centre).representation();
-            case 'voisins':
-                return config.voisins.representation();
             case 'date': return dateEnveloppe(config.date).representation();
             case 'nombreConnexions':  return  ""+ config.nombreConnexions;
         }
@@ -189,9 +188,8 @@ export class ConfigurationTchatParEnveloppe
      */
     representation(): string {
         let cc = this.net('centre');
-        let vc = this.net('voisins');
         let dc = this.net('date');
-        return "(centre : " + cc + " ; voisins : " + vc + ") créée à " + dc;
+        return "(centre : " + cc + " ; " +  ") créée à " + dc;
     }
 }
 /**
@@ -209,21 +207,22 @@ export function configurationTchat(c: FormatConfigurationTchat) {
  * @param n description du noeud au format JSON
  * @param date date en français au format JSON
  * @param nombreConnexions nombre de connexions actives dans le reseau
+ * @param voisinsActifs
  */
 export function configurationDeNoeudTchat(
     n: FormatSommetTchat,
     date: FormatDateFr,
     nombreConnexions: number,
-    voisins: TableIdentificationMutable<'sommet', string>
+    voisinsActifs: TableauMutable<Identifiant<"sommet">>
 )
     : ConfigurationTchatParEnveloppe {
     return new ConfigurationTchatParEnveloppe({
         "id": n.ID,
         "configurationInitiale": Unite.ZERO,
         "centre": n,
-        "voisins":voisins,
         "date": date,
-        "nombreConnexions" : nombreConnexions
+        "nombreConnexions" : nombreConnexions,
+        "voisinsActifs": voisinsActifs
     });
 }
 
