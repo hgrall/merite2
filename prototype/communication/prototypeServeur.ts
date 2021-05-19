@@ -13,8 +13,10 @@ class DataTypeSortie {
     constructor(public entree: DataType, public id: Identifiant<"sommet">, public messageSortie: string){};
 }
 
+const noms: ReadonlyArray<string> = ["dede", "fifi", "jojo", "lulu", "zaza"];
+
 serveurApplications.demarrer();
-const reseauEtoile = new ReseauEtoile(10);
+const reseauEtoile = new ReseauAnneau(10, noms);
 
 const traductionEntree = (request: express.Request) : DataType => {
     return new DataType(request.body.message, request.body.id);
@@ -26,11 +28,12 @@ const traitementDesFlux = (request: express.Request, response: express.Response)
             Connection: "keep-alive",
            "Cache-Control": "no-cache, no-store",
          });
-
     const id_sommet = reseauEtoile.traitementOvertureConnectionLongue(response);
-    request.on("close", () => {
-        reseauEtoile.traitementFermetureConnectionLongue(id_sommet);
-    });
+    if (id_sommet != undefined){
+        request.on("close", () => {
+            reseauEtoile.traitementFermetureConnectionLongue(id_sommet);
+        });
+    }
 }
 
 serveurApplications.specifierTraitementRequeteGETLongue<DataType,DataTypeSortie>(

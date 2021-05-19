@@ -58,19 +58,23 @@ abstract class Reseau {
         }
     }
 
-    traitementOvertureConnectionLongue(connexion: express.Response): void {
+    traitementOvertureConnectionLongue(connexion: express.Response): Identifiant<"sommet"> | undefined{
         console.log("* " + dateMaintenant().representationLog()
-            + " Ouverture connection longue");
+            + " - Ouverture connection longue");
         try {
-            const sommet_innactive = this.graphe.activerSommet(connexion);
+            const sommet_actif = this.graphe.activerSommet(connexion);
             const d = dateMaintenant();
-            const config = configurationDeNoeudTchat(sommet_innactive, d.val(),this.graphe.tailleActifs(), sommet_innactive.voisins);
+            const config = configurationDeNoeudTchat(sommet_actif.sommetInactif, d.val(),this.graphe.tailleActifs(), sommet_actif.voisinsActifs);
+            this.envoyerMessage(sommet_actif.sommetInactif.ID,config);
             // TODO: Changer la implementation de la configuration pour afficher le voisins connectés
             // TODO: Envoyer configuration
             // TODO: Diffuser information avec le nombre des connexions
+            return sommet_actif.sommetInactif.ID;
         }
         catch (e) {
             // TODO: Envoyer message d'erreur
+            console.log("* " + dateMaintenant().representationLog()
+                + `- Erreur: ${e}`);
         }
     }
 
@@ -78,7 +82,9 @@ abstract class Reseau {
         // TODO: Valider Message
         if(this.graphe.aSommetActif(idRecepteur)) {
             const recepteur = this.graphe.sommetActif(idRecepteur);
-            recepteur.connexion.write(message);
+            recepteur.connexion.write(JSON.stringify(message));
+            console.log("* " + dateMaintenant().representationLog()
+                + ` - Le message a ete envoyé: ${message}`);
         }
         else {
             // TODO : Lancer erreur
