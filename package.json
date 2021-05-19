@@ -26,6 +26,7 @@
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.3",
     "@types/shelljs": "^0.8.8",
+    "D": "^1.0.0",
     "chai": "^4.3.4",
     "express": "^4.17.1",
     "g": "^2.0.1",

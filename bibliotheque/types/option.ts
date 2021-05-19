@@ -13,10 +13,10 @@ export interface Option<T> extends TypeEnveloppe<FormatOption<T>, EtiquetteOptio
 }
 
 class OptionParEnveloppe<T>
-    extends Enveloppe<FormatOption<T>, FormatOption<T>, EtiquetteOption>
+    extends Enveloppe<FormatOption<T>, EtiquetteOption>
     implements Option<T>{
     constructor(v: FormatOption<T>) {
-        super((x) => x, v);
+        super(v);
     }
     /**
      * Réprésentation du type de l'option.
@@ -39,12 +39,7 @@ class OptionParEnveloppe<T>
     representation(): string {
         return this.net('type');
     }
-    /**
-     * Redéfinition de "val" pour éviter toute conversion, ici inutile.
-     */
-    val(): FormatOption<T> {
-        return this.etat();
-    }
+    
     /**
      * Filtrage suivant le type de l'option.
      * @param present fonction à appliquer à une option pleine.
@@ -52,7 +47,7 @@ class OptionParEnveloppe<T>
      */
 
     filtrage<S>(present: (x: T) => S, absent: () => S): S {
-        let e = this.etat();
+        let e = this.val();
         if (e instanceof FormatOptionVide) {
             return absent();
         } else {
@@ -63,13 +58,13 @@ class OptionParEnveloppe<T>
         return !this.estVide();
     }
     estVide() {
-        let e = this.etat();
+        let e = this.val();
         return (e instanceof FormatOptionVide);
     }
     valeur(): T {
-        let e = this.etat();
+        let e = this.val();
         if (e instanceof FormatOptionVide) {
-            throw new Error("[Exception : valeur() non défini pour une option vide.]");
+            throw new Error("[Exception : valeur() non définie pour une option vide.]");
         } else {
             return e;
         }

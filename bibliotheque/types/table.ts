@@ -3,16 +3,11 @@ import { Enveloppe, TypeEnveloppe } from "./enveloppe";
 import { Option, option, rienOption } from "./option";
 
 /**
- * Format JSON pour les tables mutables.
+ * Format pour les tables mutables. C'est un type JSON si et seulement si T est un type JSON. 
  * Structure :
- * - mutable : marqueur de mutabilité
  * - taille : taille de la table
  * - table : type indexé associant à une chaîne une valeur dans T
- * <br>
- * Remarque : la solution la plus simple ne fonctionne pas.
- * Il est impossible d'avoir un type indexé avec un champ
- * supplémentaire comme ci-dessous :
- * - { [cle: string]: T }, mutable : Unite
+ * 
  * @param T type des images
 */
 export interface FormatTableMutable<T> extends MesurableMutable {
@@ -20,7 +15,7 @@ export interface FormatTableMutable<T> extends MesurableMutable {
 }
 
 /**
- * Format JSON pour les tables.
+ * Format pour les tables immutables. C'est un type JSON si et seulement si T est un type JSON. 
  * Structure :
  * - taille : taille de la table
  * - table : type indexé associant à une chaîne une valeur dans T
@@ -42,7 +37,7 @@ class FabriqueTable {
         return { table: {}, taille: 0 };
     }
     /**
-     * Fabrique une table vide.
+     * Fabrique d'une table vide.
      * @returns la table vide.
      */
     vide<T>(): FormatTable<T> {
@@ -50,8 +45,10 @@ class FabriqueTable {
     }
     /**
      * Fabrique une table mutable à partir d'associations fournies par un document JSON { (cle1: val1), ... }
-     * représentant un graphe fonctionnel.
+     * représentant un graphe fonctionnel et d'une taille.
+     * @param T type des éléments de la table
      * @param tab une table JSON associant à chaque clé du domaine une valeur de type T.
+     * @param t taille de la table
      * @returns la table mutable contenant les associations passées en argument.
      */
     creerEnveloppeMutable<T>(tab: { [cle: string]: T; }, t: number): FormatTableMutable<T> {
@@ -59,8 +56,10 @@ class FabriqueTable {
     }
     /**
      * Fabrique une table à partir d'associations fournies par un document JSON { (cle1: val1), ... }
-     * représentant un graphe fonctionnel.
+     * représentant un graphe fonctionnel et d'une taille.
+     * @param T type des éléments de la table
      * @param tab une table JSON associant à chaque clé du domaine une valeur de type T.
+     * @param t taille de la table
      * @returns la table contenant les associations passées en argument.
      */
     enveloppe<T>(tab: { readonly [cle: string]: T }, t: number): FormatTable<T> {
@@ -146,17 +145,11 @@ class ModuleTable {
      * @returns un entier naturel égal au nombre d'associations.
      */
     taille<T>(t: FormatTable<T>): number {
-        /* calcul direct remplacé par un accès à l'attribut.
-        let n: number = 0;
-        this.iterer((c, v) => {
-            n++;
-        }, t);
-        return n; */
         return t.taille;
     }
 
     /**
-     * Nombre d'associations dans la table indexée.
+     * Nombre de clés dans la table indexée.
      * @param t table.
      * @returns un entier naturel égal au nombre d'associations.
      */
@@ -292,10 +285,10 @@ export const MODULE_TABLE = new ModuleTable();
  * @returns fonction de conversion transformant une table mutable en une nouvelle table
  *          après composition avec conv.
  */
-export function conversionFormatTable<TIN, TEX>(conv: (x: TIN) => TEX)
-    : (t: FormatTableMutable<TIN>) => FormatTable<TEX> {
+export function conversionFormatTable<S, T>(conv: (x: S) => T)
+    : (t: FormatTableMutable<S>) => FormatTable<T> {
     return (
-        (t: FormatTableMutable<TIN>) => {
+        (t: FormatTableMutable<S>) => {
             return MODULE_TABLE.applicationFonctorielle(t, conv);
         });
 }
@@ -373,11 +366,11 @@ extends TypeEnveloppe<FormatTable<T>, EtiquetteTable> {
 
 /**
  * Table dérivée d'Enveloppe, utilisant le format JSON FormatTable.
- * Les méthodes de la classe utilisant le module MODULE_TABLE.
+ * Les méthodes de la classe utilisent le module MODULE_TABLE.
  * @param T type des valeurs dans la table (recommandé : format JSON)
  */
 export class TableParEnveloppe<T>
-    extends Enveloppe<FormatTable<T>, FormatTable<T>, EtiquetteTable> 
+    extends Enveloppe<FormatTable<T>, EtiquetteTable> 
     implements Table<T>
     {
     /**
@@ -385,14 +378,14 @@ export class TableParEnveloppe<T>
      * @param etat table au format JSON.
      */
     constructor(etat: FormatTable<T>) {
-        super((x) => x, etat);
+        super(etat);
     }
     /**
      * Redéfinition de la méthode val de Enveloppe, pour éviter le parcours de la structure.
      * @returns la table sous-jacente.
      */
     val(): FormatTable<T> {
-        return this.etat();
+        return this.val();
     }
     /**
      * Représentation paramétrée de la table sous forme d'une chaîne de caractères :
@@ -405,10 +398,10 @@ export class TableParEnveloppe<T>
      */
     net(e: EtiquetteTable): string {
         switch (e) {
-            case 'taille': return this.taille().toString();
-            case 'domaine': return this.domaine().toString();
-            case 'image': return this.image().map((v, i, t) => JSON.stringify(v)).toString();
-            case 'graphe': return JSON.stringify(this.etat().table);
+            case 'taille': return JSON.stringify(this.taille());
+            case 'domaine': return JSON.stringify(this.domaine());
+            case 'image': return JSON.stringify(this.image());
+            case 'graphe': return JSON.stringify(this.val().table);
         }
         return jamais(e);
     }
@@ -426,7 +419,7 @@ export class TableParEnveloppe<T>
     iterer(
         f: (cle: string, val: T, tab?: { [cle: string]: T }, taille?: number) => void
     ): void {
-        MODULE_TABLE.iterer(f, this.etat());
+        MODULE_TABLE.iterer(f, this.val());
     }
     /**
      * Valeur associée à la clé.
@@ -434,35 +427,35 @@ export class TableParEnveloppe<T>
      * @returns valeur associée à cle.
      */
     valeur(cle: string): T {
-        return MODULE_TABLE.valeur(this.etat(), cle);
+        return MODULE_TABLE.valeur(this.val(), cle);
     }
     /**
      * Teste si la clé appartient à la table.
      * @param cle chaîne représentant une clé.
      */
     contient(cle: string): boolean {
-        return MODULE_TABLE.contient(this.etat(), cle);
+        return MODULE_TABLE.contient(this.val(), cle);
     }
     /**
      * Liste des valeurs de la table.
      * @returns un tableau listant les valeurs.
      */
     image(): ReadonlyArray<T> {
-        return MODULE_TABLE.image(this.etat());
+        return MODULE_TABLE.image(this.val());
     }
     /**
      * Liste des clés de la table.
      * @returns un tableau listant les clés.
      */
     domaine(): ReadonlyArray<string> {
-        return MODULE_TABLE.domaine(this.etat());
+        return MODULE_TABLE.domaine(this.val());
     }
     /**
      * Nombre d'associations dans la table.
      * @returns un entier naturel égal au nombre d'associations.
      */
     taille(): number {
-        return MODULE_TABLE.taille(this.etat());
+        return MODULE_TABLE.taille(this.val());
     }
     /**
      * Teste si la table est vide ou non.
@@ -477,7 +470,7 @@ export class TableParEnveloppe<T>
      * @returns une clé de la table s'il en existe, une erreur sinon.
      */
     selectionCle(): string {
-        return MODULE_TABLE.selectionCle(this.etat());
+        return MODULE_TABLE.selectionCle(this.val());
     }
     /**
      * Sélection d'une clé dont la valeur vérifie une propriété.
@@ -485,7 +478,7 @@ export class TableParEnveloppe<T>
      * @returns une clé de la table s'il en existe une satisfaisante, une erreur sinon.
      */
     selectionCleSuivantCritere(prop: (x: T) => boolean): string {
-        return MODULE_TABLE.selectionCleSuivantCritere(this.etat(), prop);
+        return MODULE_TABLE.selectionCleSuivantCritere(this.val(), prop);
     }
     /**
      * Application fonctorielle de f à la table.
@@ -494,7 +487,7 @@ export class TableParEnveloppe<T>
      */
     application<S>(f: (x: T) => S): Table<S> {
         return new TableParEnveloppe<S>(
-            MODULE_TABLE.applicationFonctorielle(this.etat(), f)
+            MODULE_TABLE.applicationFonctorielle(this.val(), f)
         );
     }
 }
@@ -541,7 +534,7 @@ export interface TableMutable<T> extends Table<T> {
  */
 
 export class TableMutableParEnveloppe<T>
-    extends Enveloppe<FormatTableMutable<T>, FormatTable<T>, EtiquetteTable>
+    extends Enveloppe<FormatTableMutable<T>, EtiquetteTable>
     implements TableMutable<T> {
 
     /**
@@ -550,9 +543,8 @@ export class TableMutableParEnveloppe<T>
      * @param table table mutable au format JSON.
      */
     constructor(
-        table: FormatTableMutable<T> = FABRIQUE_TABLE.creerVideMutable()
-    ) {
-        super((x) => x, table);
+        etat: FormatTableMutable<T> = FABRIQUE_TABLE.creerVideMutable()) {
+        super(etat);
     }
     /**
      * Représentation paramétrée de la table sous forme d'une chaîne de caractères :
@@ -565,9 +557,9 @@ export class TableMutableParEnveloppe<T>
      */
     net(e: EtiquetteTable): string {
         switch (e) {
-            case 'taille': return this.taille().toString();
-            case 'domaine': return this.domaine().toString();
-            case 'image': return this.image().map((v, i) => JSON.stringify(v)).toString();
+            case 'taille': return JSON.stringify(this.taille());
+            case 'domaine': return JSON.stringify(this.domaine());
+            case 'image': return JSON.stringify(this.image());
             case 'graphe': return JSON.stringify(this.val().table);
         }
         return jamais(e);
@@ -586,42 +578,42 @@ export class TableMutableParEnveloppe<T>
     iterer(
         f: (cle: string, val: T, tab?: { [cle: string]: T }, taille?: number) => void
     ): void {
-        MODULE_TABLE.iterer(f, this.etat());
+        MODULE_TABLE.iterer(f, this.val());
     }
     /**
      * Délégation à "valeur" de MODULE_TABLE.
      * @param cle chaîne représentant une clé (précondition : this.contient(cle) == true).
      */
     valeur(cle: string): T {
-        return MODULE_TABLE.valeur(this.etat(), cle);
+        return MODULE_TABLE.valeur(this.val(), cle);
     }
     /**
      * Teste si la clé appartient à la table.
      * @param cle chaîne représentant une clé.
      */
     contient(cle: string): boolean {
-        return MODULE_TABLE.contient(this.etat(), cle);
+        return MODULE_TABLE.contient(this.val(), cle);
     }
     /**
      * Liste des valeurs de la table mutable.
      * @returns un tableau listant les valeurs.
      */
     image(): ReadonlyArray<T> {
-        return MODULE_TABLE.image(this.etat());
+        return MODULE_TABLE.image(this.val());
     }
     /**
       * Liste des clés de la table.
       * @returns un tableau listant les clés.
       */
     domaine(): ReadonlyArray<string> {
-        return MODULE_TABLE.domaine(this.etat());
+        return MODULE_TABLE.domaine(this.val());
     }
     /**
      * Nombre d'associations dans la table.
      * @returns un entier naturel égal au nombre d'associations.
      */
     taille(): number {
-        return MODULE_TABLE.taille(this.etat());
+        return MODULE_TABLE.taille(this.val());
     }
     /**
      * Teste si la table est vide.
@@ -634,7 +626,7 @@ export class TableMutableParEnveloppe<T>
       * @returns une clé de la table s'il en existe, une erreur sinon.
       */
     selectionCle(): string {
-        return MODULE_TABLE.selectionCle(this.etat());
+        return MODULE_TABLE.selectionCle(this.val());
     }
     /**
      * Sélection d'une clé dont la valeur vérifie une propriété.
@@ -642,7 +634,7 @@ export class TableMutableParEnveloppe<T>
      * @returns une clé de la table s'il en existe une satisfaisante, une erreur sinon.
      */
     selectionCleSuivantCritere(prop: (x: T) => boolean): string {
-        return MODULE_TABLE.selectionCleSuivantCritere(this.etat(), prop);
+        return MODULE_TABLE.selectionCleSuivantCritere(this.val(), prop);
     }
     /**
      * Ajoute l'association (cle, x) à la table mutable.
@@ -650,14 +642,14 @@ export class TableMutableParEnveloppe<T>
      * @param x valeur.
      */
     ajouter(cle: string, x: T): Option<T> {
-        return MODULE_TABLE.ajouter(this.etat(), cle, x);
+        return MODULE_TABLE.ajouter(this.val(), cle, x);
     }
     /**
      * Retire l'association (cle, ?) de la table mutable.
      * @param cle clé.
      */
     retirer(cle: string): Option<T> {
-        return MODULE_TABLE.retirer(this.etat(), cle);
+        return MODULE_TABLE.retirer(this.val(), cle);
     }
     /**
      * Application fonctorielle de f à la table.
@@ -666,7 +658,7 @@ export class TableMutableParEnveloppe<T>
      */
     application<S>(f: (x: T) => S): Table<S> {
         return new TableParEnveloppe<S>(
-            MODULE_TABLE.applicationFonctorielle(this.etat(), f)
+            MODULE_TABLE.applicationFonctorielle(this.val(), f)
         );
     }
     /**
@@ -676,7 +668,7 @@ export class TableMutableParEnveloppe<T>
      */
     appliquer<S>(f: (x: T) => S): TableMutable<S> {
         return new TableMutableParEnveloppe<S>(
-            MODULE_TABLE.appliquerFonctoriellement(this.etat(), f)
+            MODULE_TABLE.appliquerFonctoriellement(this.val(), f)
         );
     }
 
@@ -688,7 +680,7 @@ export class TableMutableParEnveloppe<T>
  */
 export function creerTableMutableVide<T>():
     TableMutable<T> {
-    return new TableMutableParEnveloppe();
+    return new TableMutableParEnveloppe(FABRIQUE_TABLE.creerVideMutable());
 }
 
 /**

@@ -1,6 +1,6 @@
 /*
-* Tableaux - Un tableau peut être considéré comme une fonction d'un segment initial de Nat
-* dans un ensemble.
+* Tableaux - Un tableau peut être considéré comme une fonction
+* d'un segment initial de Nat dans un ensemble.
 */
 
 import { Enveloppe, TypeEnveloppe } from "./enveloppe";
@@ -8,7 +8,7 @@ import { MesurableMutable, jamais, Mesurable } from "./typesAtomiques";
 import { entierAleatoire } from "./nombres";
 
 /**
- * Format JSON pour un tableau mutable enveloppe d'un tableau natif (de type T[]).
+ * Format pour un tableau mutable enveloppe d'un tableau natif (de type T[]). C'est un type JSON si et seulement si T est un type JSON. 
  * Invariant : taille == tableau.length.
  * @param T type des éléments du tableau.
  */
@@ -17,7 +17,7 @@ export interface FormatTableauMutable<T> extends MesurableMutable {
 }
 
 /**
- * Format JSON pour un tableau enveloppe d'un tableau natif (de type ReadonlyArray<T>).
+ * Format pour un tableau enveloppe d'un tableau natif (de type ReadonlyArray<T>). C'est un type JSON si et seulement si T est un type JSON. 
  *  * Invariant : taille == tableau.length.
  * @param T type des éléments du tableau.
  */
@@ -230,11 +230,11 @@ export type EtiquetteTableau = 'taille' | 'valeurs';
  * @returns fonction de conversion transformant un tableau mutable en un nouveau tableau
  *          après composition avec conv.
  */
-export function conversionFormatTableau<TIN, TEX>(conv: (x: TIN) => TEX)
-    : (t: FormatTableau<TIN>) => FormatTableau<TEX> {
+export function conversionFormatTableau<S, T>(conv: (x: S) => T)
+    : (t: FormatTableau<S>) => FormatTableau<T> {
     return (
-        (t: FormatTableau<TIN>) => {
-            let r: TEX[] = new Array(t.taille);
+        (t: FormatTableau<S>) => {
+            let r: T[] = new Array(t.taille);
             MODULE_TABLEAU_JSON.iterer((i, v) => {
                 r[i] = conv(v);
             }, t);
@@ -297,16 +297,17 @@ export interface Tableau<T> extends
  * @param T type des valeurs dans le tableau.
  */
 export class TableauParEnveloppe<T>
-    extends Enveloppe<FormatTableau<T>, FormatTableau<T>, EtiquetteTableau>
+    extends Enveloppe<FormatTableau<T>, EtiquetteTableau>
     implements Tableau<T> {
 
     /**
-     * Constructeur à partir d'une table au format JSON.
+     * Constructeur à partir d'une tableau.
+     * Si T n'est pas un type JSON, une fonction de conversion doit 
+     * être fournie. 
      * @param etat table au format JSON.
      */
-    constructor(
-        etat: FormatTableau<T>) {
-        super((x) => x, etat);
+    constructor(etat: FormatTableau<T>) {
+            super(etat);
     }
     /**
      * Représentation nette du tableau :
@@ -315,8 +316,8 @@ export class TableauParEnveloppe<T>
      */
     net(e: EtiquetteTableau): string {
         switch (e) {
-            case 'taille': return this.taille().toString();
-            case 'valeurs': return this.etat().tableau.toString();
+            case 'taille': return JSON.stringify(this.taille());
+            case 'valeurs': return JSON.stringify(this.val().tableau);
         }
         return jamais(e);
     }
@@ -333,21 +334,21 @@ export class TableauParEnveloppe<T>
     iterer(
         f: (index: number, val: T, tab?: T[]) => void
     ): void {
-        MODULE_TABLEAU_JSON.iterer(f, this.etat());
+        MODULE_TABLEAU_JSON.iterer(f, this.val());
     }
     /**
      * Délégation à la méthode application du module.
      */
     application<S>(f: (x: T) => S): Tableau<S> {
         return new TableauParEnveloppe<S>(
-            MODULE_TABLEAU_JSON.applicationFonctorielle(this.etat(), f));
+            MODULE_TABLEAU_JSON.applicationFonctorielle(this.val(), f));
     }
     /**
      * Délégation à la méthode reduction du module.
      */
     reduction(neutre: T, op: (x: T, y: T) => T): T {
         return MODULE_TABLEAU_JSON.reduction(
-            this.etat(),
+            this.val(),
             neutre,
             op);
     }
@@ -355,13 +356,13 @@ export class TableauParEnveloppe<T>
      * Délégation à la méthode valeur du module.
      */
     valeur(i: number): T {
-        return MODULE_TABLEAU_JSON.valeur(this.etat(), i);
+        return MODULE_TABLEAU_JSON.valeur(this.val(), i);
     }
     /**
      * Délégation à la méthode taille du module.
      */
     taille(): number {
-        return MODULE_TABLEAU_JSON.taille(this.etat());
+        return MODULE_TABLEAU_JSON.taille(this.val());
     }
     /**
      * Teste si la taille vaut zéro.
@@ -403,7 +404,7 @@ export interface TableauMutable<T> extends Tableau<T> {
  * TODO Attention : la méthode "val" requiert un parcours du tableau formant l'état.
  */
 export class TableauMutableParEnveloppe<T>
-    extends Enveloppe<FormatTableauMutable<T>, FormatTableau<T>, EtiquetteTableau>
+    extends Enveloppe<FormatTableauMutable<T>, EtiquetteTableau>
     implements TableauMutable<T> {
 
     /**
@@ -411,9 +412,8 @@ export class TableauMutableParEnveloppe<T>
      * et d'un tableau décrit en JSON.
      * @param etat tableau au format JSON.
      */
-    constructor(
-        etat: FormatTableauMutable<T> = FABRIQUE_TABLEAU_JSON.creerVideMutable()) {
-        super((x) => x, etat);
+    constructor(etat: FormatTableauMutable<T> = FABRIQUE_TABLEAU_JSON.creerVideMutable()){
+        super(etat);
     }
     /**
      * Représentation nette du tableau :
@@ -422,8 +422,8 @@ export class TableauMutableParEnveloppe<T>
      */
     net(e: EtiquetteTableau): string {
         switch (e) {
-            case 'taille': return this.taille().toString();
-            case 'valeurs': return this.val().tableau.toString();
+            case 'taille': return JSON.stringify(this.taille());
+            case 'valeurs': return JSON.stringify(this.val().tableau);
         }
         return jamais(e);
     }
@@ -440,7 +440,7 @@ export class TableauMutableParEnveloppe<T>
     iterer(
         f: (index: number, val: T, tab?: T[]) => void
     ): void {
-        MODULE_TABLEAU_JSON.iterer(f, this.etat());
+        MODULE_TABLEAU_JSON.iterer(f, this.val());
     }
     /**
      * Délégation à la méthode application du module.
@@ -448,14 +448,14 @@ export class TableauMutableParEnveloppe<T>
     application<S>(f: (x: T) => S): TableauMutable<S> {
         return new TableauMutableParEnveloppe<S>(
             MODULE_TABLEAU_JSON.appliquerFonctoriellement(
-            this.etat(), f));
+            this.val(), f));
     }
     /**
      * Délégation aux méthodes application et reduction du module.
      */
     reduction(neutre: T, op: (x: T, y: T) => T): T {
         return MODULE_TABLEAU_JSON.reduction(
-            this.etat(),
+            this.val(),
             neutre,
             op);
     }
@@ -464,13 +464,13 @@ export class TableauMutableParEnveloppe<T>
      * @param i position dans le tableau.
      */
     valeur(i: number): T {
-        return MODULE_TABLEAU_JSON.valeur(this.etat(), i);
+        return MODULE_TABLEAU_JSON.valeur(this.val(), i);
     }
     /**
      * Délégation à la méthode taille du module.
      */
     taille(): number {
-        return MODULE_TABLEAU_JSON.taille(this.etat());
+        return MODULE_TABLEAU_JSON.taille(this.val());
     }
     /**
      * Teste si la taille vaut zéro.
@@ -482,13 +482,13 @@ export class TableauMutableParEnveloppe<T>
      * Délègue à la méthode ajouterEnFin du module.
      */
     ajouterEnFin(x: T): void {
-        MODULE_TABLEAU_JSON.ajouterEnFin(this.etat(), x);
+        MODULE_TABLEAU_JSON.ajouterEnFin(this.val(), x);
     }
     /**
      * Délègue à la méthode retirerEnFin du module.
      */
     retirerEnFin(): T {
-        return MODULE_TABLEAU_JSON.retirerEnFin(this.etat());
+        return MODULE_TABLEAU_JSON.retirerEnFin(this.val());
     }
 }
 

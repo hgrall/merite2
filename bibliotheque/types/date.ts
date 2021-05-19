@@ -81,7 +81,7 @@ export function conversionDate(d: Date): FormatDateFr {
 /**
  * Classe enveloppe représentant les datess.
  */
-class DateFrEnveloppe extends Enveloppe<FormatDateFr, FormatDateFr, EtiquetteDateFr>
+class DateFrEnveloppe extends Enveloppe<FormatDateFr, EtiquetteDateFr>
     implements DateFr {
 
     /**
@@ -92,48 +92,48 @@ class DateFrEnveloppe extends Enveloppe<FormatDateFr, FormatDateFr, EtiquetteDat
     net(e: EtiquetteDateFr): string {
         switch (e) {
             case 'heure': {
-                let s = normalisationNombre(this.etat().seconde, 2);
-                let min = normalisationNombre(this.etat().minute, 2);
-                let h = normalisationNombre(this.etat().heure, 2);
+                let s = normalisationNombre(this.val().seconde, 2);
+                let min = normalisationNombre(this.val().minute, 2);
+                let h = normalisationNombre(this.val().heure, 2);
                 return `${h}:${min}:${s}`;
             }
             case 'jourSemaine': {
-                let js = this.etat().jourSemaine;
+                let js = this.val().jourSemaine;
                 let jsL = Semaine[js].toLowerCase();
                 return jsL;
             }
             case 'jourMois': {
-                let jm = normalisationNombre(this.etat().jourMois, 2);
+                let jm = normalisationNombre(this.val().jourMois, 2);
                 return jm;
             }
             case 'moisLettre': {
-                let mo = this.etat().mois;
+                let mo = this.val().mois;
                 let moL = Mois[mo].toLowerCase();
                 return moL;
             }
             case 'moisNumero': {
-                let mo = this.etat().mois;
+                let mo = this.val().mois;
                 let moN = normalisationNombre(mo + 1, 2);
                 return moN;
             }
             case 'annee': {
-                let a = this.etat().annee.toString();
+                let a = this.val().annee.toString();
                 return a;
             }
             case 'date': {
-                let a = this.etat().annee.toString();
-                let jm = normalisationNombre(this.etat().jourMois, 2);
-                let mo = this.etat().mois;
+                let a = this.val().annee.toString();
+                let jm = normalisationNombre(this.val().jourMois, 2);
+                let mo = this.val().mois;
                 let moN = normalisationNombre(mo + 1, 2);
                 return `${jm}/${moN}/${a}`;
             }
             case 'dateLongue': {
-                let js = this.etat().jourSemaine;
+                let js = this.val().jourSemaine;
                 let jsL = Semaine[js].toLowerCase();
-                let jm = normalisationNombre(this.etat().jourMois, 2);
-                let mo = this.etat().mois;
+                let jm = normalisationNombre(this.val().jourMois, 2);
+                let mo = this.val().mois;
                 let moL = Mois[mo].toLowerCase();
-                let a = this.etat().annee.toString();
+                let a = this.val().annee.toString();
                 return `${jsL} ${jm} ${moL} ${a}`;
             }
         }
@@ -171,7 +171,7 @@ class DateFrEnveloppe extends Enveloppe<FormatDateFr, FormatDateFr, EtiquetteDat
  * @returns la date courante (, format français).
  */
 export function dateMaintenant(): DateFr {
-    return new DateFrEnveloppe(x => x, conversionDate(new Date()));
+    return new DateFrEnveloppe(conversionDate(new Date()));
 }
 
 
@@ -181,5 +181,5 @@ export function dateMaintenant(): DateFr {
  * @returns la date correspondant au format JSON (, format français).
  */
 export function dateEnveloppe(d: FormatDateFr): DateFr {
-    return new DateFrEnveloppe(x => x, d);
+    return new DateFrEnveloppe(d);
 }

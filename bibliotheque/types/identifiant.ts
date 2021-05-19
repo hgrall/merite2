@@ -1,7 +1,7 @@
 /**
  * TODO
  */
-export type EnsembleSortes = "sommet" | "message"; // à compléter
+export type EnsembleSortes = "sommet" | "message" | "test"; // à compléter
 
 /**
  * Identifiant au format JSON. Type paramétré et valeur paramétrée par la sorte des identifiants,
