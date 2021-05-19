@@ -1,7 +1,7 @@
 import * as express from "express";
 import {GrapheMutableParTablesIdentification} from "../../bibliotheque/types/graphe";
 import {
-    FormatIdentifiable, Identifiant, GenerateurIdentifiants, creerGenerateurIdentifiantParCompteur, identifiant
+    Identifiant, GenerateurIdentifiants, creerGenerateurIdentifiantParCompteur,
 } from "../../bibliotheque/types/identifiant";
 import {
     creerTableIdentificationMutableVide,
@@ -10,36 +10,24 @@ import {
     FormatTableau
 } from "../../bibliotheque/types/tableau";
 import {dateMaintenant} from "../../bibliotheque/types/date";
+import {
+    configurationDeNoeudTchat,
+    FormatSommetTchat,
+} from "../../bibliotheque/echangesTchat";
 
-
-interface FormatSommetsInnactives extends FormatIdentifiable<"sommet">{
-    readonly ID: Identifiant<"sommet">;
-}
 
 abstract class Reseau {
-
-    graphe: GrapheMutableParTablesIdentification<FormatSommetsInnactives, express.Response>;
+    graphe: GrapheMutableParTablesIdentification<FormatSommetTchat, express.Response>;
     generateurIdentifiants: GenerateurIdentifiants<"sommet">;
 
-    abstract traitementOvertureConnectionLongue(connexion: express.Response): void;
-    abstract traitementFermetureConnectionLongue(idNoeud: Identifiant<"sommet">): void;
-    abstract genererReseau(taille:number): void;
+    abstract genererReseau(taille:number , noms: ReadonlyArray<string>): void;
+
     diffuserMessage<M>( message: M): void {
         this.graphe.itererActifs((identifiant)=> {
             this.envoyerMessage(identifiant, message)
         });
         console.log("* " + dateMaintenant().representationLog()
             + `- Le message ${message} a été diffusé`);
-    }
-
-    envoyerMessage<M>(idRecepteur: Identifiant<"sommet">, message: M): void {
-        if(this.graphe.aSommetActif(idRecepteur)) {
-            const recepteur = this.graphe.sommetActif(idRecepteur);
-            recepteur.connexion.write(message);
-        }
-        else{
-            // TODO : Lancer erreur
-        }
     }
 
     envoyerMessageAVoisins<M>(idEmmiteur: Identifiant<"sommet">, message: M): void {
@@ -49,25 +37,12 @@ abstract class Reseau {
                     const recepteur = this.graphe.sommetActif(idRecepteur);
                     recepteur.connexion.write(message);
                 }
-            })
+            });
         }
-        else{
-            // TODO : Lancer erreur
+        else {
+            //TODO : Lancer erreur
         }
     }
-}
-
-export class ReseauEtoile extends Reseau{
-
-    constructor(taille: number ) {
-        super();
-        this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur("prototype");
-        this.genererReseau(taille);
-        console.log("* " + dateMaintenant().representationLog()
-            + ` - Le reseau a ete créée avec le graph: ${this.graphe.representation()}`);
-
-    }
-
 
     traitementFermetureConnectionLongue(idNoeud: Identifiant<"sommet">): void {
         if(this.graphe.aSommetActif(idNoeud)) {
@@ -76,33 +51,70 @@ export class ReseauEtoile extends Reseau{
                 + "Fermeture d'une connection longue");
             console.log("* " + dateMaintenant().representationLog()
                 + ` - Graphe: ${this.graphe.representation()} `);
+            // TODO: Diffuser information avec le nombre des connexions
+        }
+        else {
+            // TODO: Envoyer message d'erreur
+        }
+    }
+
+    traitementOvertureConnectionLongue(connexion: express.Response): void {
+        console.log("* " + dateMaintenant().representationLog()
+            + " Ouverture connection longue");
+        try {
+            const sommet_innactive = this.graphe.activerSommet(connexion);
+            const d = dateMaintenant();
+            const config = configurationDeNoeudTchat(sommet_innactive, d.val(),this.graphe.tailleActifs(), sommet_innactive.voisins);
+            // TODO: Changer la implementation de la configuration pour afficher le voisins connectés
+            // TODO: Envoyer configuration
+            // TODO: Diffuser information avec le nombre des connexions
+        }
+        catch (e) {
+            // TODO: Envoyer message d'erreur
+        }
+    }
+
+    envoyerMessage<M>(idRecepteur: Identifiant<"sommet">, message: M): void {
+        // TODO: Valider Message
+        if(this.graphe.aSommetActif(idRecepteur)) {
+            const recepteur = this.graphe.sommetActif(idRecepteur);
+            recepteur.connexion.write(message);
         }
         else {
             // TODO : Lancer erreur
         }
     }
+}
 
-    traitementOvertureConnectionLongue(connexion: express.Response): Identifiant<"sommet"> {
+export class ReseauEtoile extends Reseau{
+
+    constructor(taille: number, noms: ReadonlyArray<string> ) {
+        super();
+        this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur("prototype");
+        this.genererReseau(taille, noms);
         console.log("* " + dateMaintenant().representationLog()
-            + " Ouverture connection longue");
-        return this.graphe.activerSommet(connexion);
+            + ` - Le reseau a ete créée avec le graph: ${this.graphe.representation()}`);
     }
 
-    genererReseau(taille:number): void {
+    genererReseau(taille:number, noms: ReadonlyArray<string>): void {
+
         const identifiants= Array(taille).fill(null);
+        const pseudos = creerTableIdentificationMutableVide<"sommet", string>("sommet");
 
+        // Creer des identifiants et des pseudos pour chaque sommet du reseau
         identifiants.forEach((_, index)=>{
-            identifiants[index] = this.generateurIdentifiants.produire("sommet")
-
+            const identifiant = this.generateurIdentifiants.produire("sommet");
+            identifiants[index] = identifiant;
+            pseudos.ajouter(identifiant, noms[index%noms.length])
         });
 
-        const inactifs = creerTableIdentificationMutableVide<"sommet",FormatSommetsInnactives>("sommet");
+        const inactifs = creerTableIdentificationMutableVide<"sommet", FormatSommetTchat>("sommet");
         const tableAdjacence = creerTableIdentificationMutableVide<'sommet', FormatTableau<Identifiant<'sommet'>>>("sommet");
 
-        identifiants.forEach((identifiant)=>{
-            inactifs.ajouter(identifiant,{ID: identifiant})
+        identifiants.forEach((identifiant, index)=>{
+            inactifs.ajouter(identifiant,{ID: identifiant, pseudo: noms[index % noms.length], voisins: pseudos});
             tableAdjacence.ajouter(identifiant,{taille: taille, tableau: identifiants})
-        })
+        });
 
         this.graphe = new GrapheMutableParTablesIdentification(
             inactifs,
@@ -114,47 +126,29 @@ export class ReseauEtoile extends Reseau{
 
 export class ReseauAnneau extends Reseau{
 
-    constructor(taille: number ) {
+    constructor(taille: number,noms: ReadonlyArray<string>) {
         super();
         this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur("prototype");
-        this.genererReseau(taille);
+        this.genererReseau(taille, noms);
         console.log("* " + dateMaintenant().representationLog()
             + ` - Le reseau a ete créée avec le graph: ${this.graphe.representation()}`);
-
     }
 
-    traitementFermetureConnectionLongue(idNoeud: Identifiant<"sommet">): void {
-        if(this.graphe.aSommetActif(idNoeud)) {
-            this.graphe.inactiverSommet(idNoeud);
-            console.log("* " + dateMaintenant().representationLog()
-                + "Fermeture d'une connection longue");
-            console.log("* " + dateMaintenant().representationLog()
-                + ` - Graphe: ${this.graphe.representation()} `);
-        }
-        else {
-            // TODO : Lancer erreur
-        }
-    }
-
-    traitementOvertureConnectionLongue(connexion: express.Response): Identifiant<"sommet"> {
-        console.log("* " + dateMaintenant().representationLog()
-            + " Ouverture connection longue");
-        return this.graphe.activerSommet(connexion);
-    }
-
-    genererReseau(taille:number): void {
+    genererReseau(taille:number, noms: ReadonlyArray<string>): void {
         const identifiants= Array(taille).fill(null);
+        const pseudos = creerTableIdentificationMutableVide<"sommet", string>("sommet");
 
         identifiants.forEach((_, index)=>{
-            identifiants[index] = this.generateurIdentifiants.produire("sommet")
-
+            const identifiant = this.generateurIdentifiants.produire("sommet");
+            identifiants[index] = identifiant;
+            pseudos.ajouter(identifiant, noms[index%noms.length])
         });
 
-        const inactifs = creerTableIdentificationMutableVide<"sommet",FormatSommetsInnactives>("sommet");
+        const inactifs = creerTableIdentificationMutableVide<"sommet", FormatSommetTchat>("sommet");
         const tableAdjacence = creerTableIdentificationMutableVide<'sommet', FormatTableau<Identifiant<'sommet'>>>("sommet");
 
-        identifiants.forEach((identifiant)=>{
-            inactifs.ajouter(identifiant,{ID: identifiant})
+        identifiants.forEach((identifiant, index)=>{
+            inactifs.ajouter(identifiant,{ID: identifiant, pseudo: noms[index % noms.length], voisins: creerTableIdentificationMutableVide<"sommet", string>("sommet")})
         })
 
         // Rempli la table d'adjacence de tous les sommets sauf le premier et le dernier
@@ -165,6 +159,13 @@ export class ReseauAnneau extends Reseau{
         tableAdjacence.ajouter(identifiants[0], {taille:2, tableau:[identifiants[identifiants.length-1], identifiants[1]]})
         // Ajoute la table d'adjacence pour le dernier sommet
         tableAdjacence.ajouter(identifiants[identifiants.length-1], {taille:2, tableau:[identifiants[identifiants.length-2], identifiants[0]]})
+
+        //Rempli les voisins de chaque sommet inactif en utilisant la table d'adjacence
+        tableAdjacence.iterer((ID_sorte, val) => {
+            val.tableau.forEach(voisin => {
+                inactifs.valeur(ID_sorte).voisins.ajouter(voisin, pseudos.valeur(voisin));
+            })
+        })
 
         this.graphe = new GrapheMutableParTablesIdentification(
             inactifs,

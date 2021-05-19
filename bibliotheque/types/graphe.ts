@@ -110,9 +110,9 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
 
     /**
      * Active un sommet inactif.
-     * @returns ID_sommet identité du sommet activé.
+     * @returns Sommet inactivé.
      */
-    activerSommet(connexion: C): Identifiant<'sommet'>;
+    activerSommet(connexion: C): FSI ;
 
     /**
      * Inactive le sommet identifié par l'argument.
@@ -121,9 +121,14 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
     inactiverSommet(ID_sommet: Identifiant<'sommet'>): void;
 
     /**
-     * Nombre total de sommets dans le graphe.
+     * Nombre total de sommets inactifs dans le graphe.
      */
-    taille(): number;
+    tailleInactifs(): number;
+
+    /**
+     * Nombre total de sommets inactifs dans le graphe.
+     */
+    tailleActifs(): number;
 
     /**
      * Itère les voisins du sommet identifie par l'argument et leur applique une fonction
@@ -187,7 +192,7 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
         return this.inactifs.taille() > 0;
     }
 
-    activerSommet(connexion: C): Identifiant<"sommet"> {
+    activerSommet(connexion: C): FSI {
         if(this.inactifs.estVide()){
             throw new Error("Le réseau est complete");
         }
@@ -204,7 +209,7 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
             + ` - Connexions actives: ${this.actifs.representation()}`);
         console.log("* " + dateMaintenant().representationLog()
             + "- Le sommet " + ID_sommet.val + " a été activé");
-        return ID_sommet;
+        return sommetInactif;
     }
 
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {
@@ -214,8 +219,12 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
             + "- Le sommet " + ID_sommet.val + " a été inactivé");
     }
 
-    taille(): number {
-        throw this.actifs.taille() + this.inactifs.taille();
+    tailleInactifs(): number {
+        return  this.inactifs.taille();
+    }
+
+    tailleActifs(): number {
+        return  this.actifs.taille();
     }
 
     itererVoisins(ID_sommet: Identifiant<"sommet">, f: (ID_sommet: Identifiant<"sommet">) => void): void {
