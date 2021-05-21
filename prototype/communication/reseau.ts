@@ -11,7 +11,7 @@ import {
 } from "../../bibliotheque/types/tableau";
 import {dateMaintenant} from "../../bibliotheque/types/date";
 import {
-    configurationDeSommetTchat
+    configurationDeSommetTchat, FormatMessageTchat
 } from "../../bibliotheque/echangesTchat";
 import {FormatSommetTchat} from "../../bibliotheque/types/sommet";
 
@@ -28,7 +28,7 @@ abstract class Reseau {
             this.envoyerMessage(identifiant, message)
         });
         console.log("* " + dateMaintenant().representationLog()
-            + `- Le message ${message} a été diffusé`);
+            + `- Le message ${JSON.stringify(message)} a été diffusé`);
     }
 
     envoyerMessageAVoisins<M>(idEmmiteur: Identifiant<"sommet">, message: M): void {
@@ -36,7 +36,7 @@ abstract class Reseau {
             this.graphe.itererVoisins(idEmmiteur, (idRecepteur)=>{
                 if(this.graphe.aSommetActif(idRecepteur)) {
                     const recepteur = this.graphe.sommetActif(idRecepteur);
-                    recepteur.connexion.write(message);
+                    recepteur.connexion.write(JSON.stringify(message));
                 }
             });
         }
@@ -88,15 +88,23 @@ abstract class Reseau {
     }
 
     envoyerMessage<M>(idRecepteur: Identifiant<"sommet">, message: M): void {
+        console.log("* " + dateMaintenant().representationLog()
+            + ` - Message a envoyer: ${JSON.stringify(message)}`);
         // TODO: Valider Message
-        if(this.graphe.aSommetActif(idRecepteur)) {
-            const recepteur = this.graphe.sommetActif(idRecepteur);
-            recepteur.connexion.write(JSON.stringify(message));
+        try {
+            if(this.graphe.aSommetActif(idRecepteur)) {
+                const recepteur = this.graphe.sommetActif(idRecepteur);
+                recepteur.connexion.write(JSON.stringify(message));
+                console.log("* " + dateMaintenant().representationLog()
+                    + ` - Le message a ete envoyé à: ${idRecepteur.val}`);
+            }
+            else {
+                // TODO : Lancer erreur
+            }
+        } catch  (e) {
+            // TODO: Envoyer message d'erreur
             console.log("* " + dateMaintenant().representationLog()
-                + ` - Le message a ete envoyé à: ${idRecepteur.val}`);
-        }
-        else {
-            // TODO : Lancer erreur
+                + `- Erreur: ${e}`);
         }
     }
 }

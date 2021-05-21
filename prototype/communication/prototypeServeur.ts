@@ -1,7 +1,7 @@
 import {ServeurApplicationsExpress} from "../../bibliotheque/communication/serveurApplications";
 import * as express from 'express';
 import {ReseauAnneau, ReseauEtoile} from "./reseau";
-import {Identifiant} from "../../bibliotheque/types/identifiant";
+import {identifiant, Identifiant} from "../../bibliotheque/types/identifiant";
 
 const serveurApplications = new ServeurApplicationsExpress(8080);
 
@@ -19,7 +19,7 @@ serveurApplications.demarrer();
 const reseauEtoile = new ReseauAnneau(5, noms);
 
 const traductionEntree = (request: express.Request) : DataType => {
-    return new DataType(request.body.message, request.body.id);
+    return new DataType(request.body.message, identifiant("sommet", request.body.id));
 };
 
 const traitementDesFlux = (request: express.Request, response: express.Response) => {
@@ -49,11 +49,12 @@ const traitementPOST = (data: DataType): DataTypeSortie =>  {
 };
 
 const traducctionEntreePost = (request: express.Request): DataType =>{
-    return new DataType(request.body.message, request.body.id);
+    return new DataType(request.body.message, identifiant("sommet", request.body.id));
 };
 
 const traducctionSortiePost = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
-    reseauEtoile.envoyerMessage(sortie.id, sortie);
+    console.log(sortie.id);
+    reseauEtoile.envoyerMessageAVoisins(sortie.id,sortie);
     canalSortie.send(`data: ${JSON.stringify(sortie)} \n\n`)
 };
 
