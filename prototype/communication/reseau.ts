@@ -11,9 +11,10 @@ import {
 } from "../../bibliotheque/types/tableau";
 import {dateMaintenant} from "../../bibliotheque/types/date";
 import {
-    configurationDeNoeudTchat,
-    FormatSommetTchat,
+    configurationDeSommetTchat
 } from "../../bibliotheque/echangesTchat";
+import {FormatSommetTchat} from "../../bibliotheque/types/sommet";
+
 
 
 abstract class Reseau {
@@ -51,7 +52,13 @@ abstract class Reseau {
                 + "Fermeture d'une connection longue");
             console.log("* " + dateMaintenant().representationLog()
                 + ` - Graphe: ${this.graphe.representation()} `);
-            // TODO: Diffuser information avec le nombre des connexions
+            // Envoie l'information de la nouvelle de-connexion a tous les sommets actifs
+            this.graphe.itererActifs((ID_sommet => {
+                const d = dateMaintenant();
+                const sommetActif = this.graphe.sommetActif(ID_sommet);
+                const config = configurationDeSommetTchat(sommetActif.sommetInactif, d.val(),this.graphe.tailleActifs(), sommetActif.voisinsActifs);
+                this.envoyerMessage(ID_sommet, config);
+            }));
         }
         else {
             // TODO: Envoyer message d'erreur
@@ -68,7 +75,7 @@ abstract class Reseau {
             this.graphe.itererActifs((ID_sommet => {
                 const d = dateMaintenant();
                 const sommetActif = this.graphe.sommetActif(ID_sommet);
-                const config = configurationDeNoeudTchat(sommetActif.sommetInactif, d.val(),this.graphe.tailleActifs(), sommetActif.voisinsActifs);
+                const config = configurationDeSommetTchat(sommetActif.sommetInactif, d.val(),this.graphe.tailleActifs(), sommetActif.voisinsActifs);
                 this.envoyerMessage(ID_sommet, config);
             }));
             return nouveauSommetActif.sommetInactif.ID;
@@ -86,7 +93,7 @@ abstract class Reseau {
             const recepteur = this.graphe.sommetActif(idRecepteur);
             recepteur.connexion.write(JSON.stringify(message));
             console.log("* " + dateMaintenant().representationLog()
-                + ` - Le message a ete envoyé: ${message}`);
+                + ` - Le message a ete envoyé à: ${idRecepteur.val}`);
         }
         else {
             // TODO : Lancer erreur

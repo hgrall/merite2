@@ -8,6 +8,7 @@ import {
     TableIdentificationMutable
 } from "./tableIdentification";
 import {dateMaintenant} from "./date";
+import {creerTableMutableVide, TableMutable, TableMutableParEnveloppe} from "./table";
 
 /**
  *  Format qui represente un sommet actif composée d'un sommet inactif
@@ -15,7 +16,7 @@ import {dateMaintenant} from "./date";
  */
 export interface FormatSommetActif<FSI extends FormatIdentifiable<'sommet'>, C> {
     sommetInactif: FSI;
-    voisinsActifs: TableauMutableParEnveloppe<Identifiant<"sommet">>;
+    voisinsActifs: TableIdentificationMutable<'sommet', FSI>;
     connexion: C;
 }
 
@@ -201,27 +202,26 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
         const ID_sommet = this.inactifs.selectionCle();
         const sommetInactif = this.inactifs.retirer(ID_sommet).valeur();
 
-        //Initializer la table avec les pseudos et identifiants des voisins actifs
-        const voisinsActifs: TableauMutableParEnveloppe<Identifiant<"sommet">> = creerTableauMutableVide<Identifiant<"sommet">>();
-        // Mise a jour des listes de voisins actifs
-        this.actifs.iterer((id_actif, val1) => {
-            if(this.tableAdjacence.valeur(ID_sommet).tableau.find(
-                (identifiant) => identifiant.val == id_actif.val
-            ) !== undefined){
-                // Ajouter les sommets actifs dans la liste de voisins actifs du nouveau sommet
-                voisinsActifs.ajouterEnFin(id_actif);
-            }
-            if(this.tableAdjacence.valeur(id_actif).tableau.find(
-                (identifiant) => identifiant.val == ID_sommet.val
-            ) !== undefined){
-                // Ajouter le nouveau sommet dans la liste de voisins actifs du sommets actifs
-                this.actifs.valeur(id_actif).voisinsActifs.ajouterEnFin(ID_sommet);
-            }
-        });
+        //Initializer et remplir la table avec les  identifiants des voisins actifs
+        const voisinsActifs = creerTableIdentificationMutableVide<"sommet", FSI>("sommet");
+        this.tableAdjacence.valeur(ID_sommet).tableau.forEach( idAdjacence => {
+            voisinsActifs.ajouter(idAdjacence, this.inactifs.valeur(idAdjacence));
+
+        })
 
         //Crée un sommet actif a partir du sommet sélectionné
         const sommetActif = { connexion, sommetInactif, voisinsActifs };
         this.actifs.ajouter(ID_sommet, sommetActif);
+
+        // Mise a jour des listes de voisins actifs de tous les sommets actifs avec le nouveau sommet actif
+        this.actifs.iterer((id_actif, val1) => {
+            if(this.tableAdjacence.valeur(id_actif).tableau.find(
+                (identifiant) => identifiant.val == ID_sommet.val
+            ) !== undefined){
+                // Ajouter le nouveau sommet dans la liste de voisins actifs du sommets actifs
+                this.actifs.valeur(id_actif).voisinsActifs.ajouter(ID_sommet, sommetInactif);
+            }
+        });
 
 
         console.log("* " + dateMaintenant().representationLog()
@@ -236,6 +236,14 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {
         const sommetActif = this.actifs.retirer(ID_sommet).valeur();
         this.inactifs.ajouter(ID_sommet, sommetActif.sommetInactif);
+        // Enlève le sommet a inactiver de la liste des voisins actifs de tous les sommets actifs
+        this.itererActifs(idActif => {
+            this.actifs.valeur(idActif).voisinsActifs.iterer((identifiant) => {
+               if(identifiant == ID_sommet){
+                   this.actifs.valeur(idActif).voisinsActifs.retirer(ID_sommet)
+               }
+           })
+       })
         console.log("* " + dateMaintenant().representationLog()
             + "- Le sommet " + ID_sommet.val + " a été inactivé");
     }

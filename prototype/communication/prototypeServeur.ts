@@ -53,8 +53,8 @@ const traducctionEntreePost = (request: express.Request): DataType =>{
 };
 
 const traducctionSortiePost = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
-    reseauEtoile.diffuserMessage(sortie.messageSortie);
-    canalSortie.write(`data: ${JSON.stringify(sortie)} \n\n`)
+    reseauEtoile.envoyerMessage(sortie.id, sortie);
+    canalSortie.send(`data: ${JSON.stringify(sortie)} \n\n`)
 };
 
 serveurApplications.specifierTraitementRequetePOST<DataType,DataTypeSortie>(

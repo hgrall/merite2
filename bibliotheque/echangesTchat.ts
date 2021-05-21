@@ -13,112 +13,18 @@ import {
 } from "./types/date";
 
 import {
-    Identifiant, FormatIdentifiable,
+    FormatIdentifiable,
+    Identifiant
 } from "./types/identifiant";
-import { TableIdentificationMutable} from "./types/tableIdentification";
 import {
-    Sommet,
-    SommetParEnveloppe
+    FormatSommetTchat, sommetTchat,
 } from "./types/sommet";
 import {TableauMutable} from "./types/tableau";
+import {TableMutable} from "./types/table";
+import {FormatTableIdentification, TableIdentificationMutable} from "./types/tableIdentification";
+import {FormatSommetActif} from "./types/graphe";
+import * as FS from "fs";
 
-/**
- * Format JSON pour un sommet du réseau de tchat.
- * Structure :
- * - ID : identifiant
- * - pseudo : nom
- * - voisins: {identifiant: pseudo}
- */
-export interface FormatSommetTchat extends FormatIdentifiable<'sommet'> {
-    readonly pseudo: string,
-    readonly voisins:  TableIdentificationMutable<'sommet', string>
-}
-/**
- * Etiquettes pour un sommet du réseau de tchat.
- */
-export type EtiquetteSommetTchat = 'ID' | 'nom';
-
-/**
- * Interface pour un sommet du réseau de tchat dérivée de Sommet et
- * l'étendant par des accesseurs en lecture.
- */
-export interface SommetTchat
-    extends Sommet<FormatSommetTchat, EtiquetteSommetTchat> {
-    /**
-     * Identifiant du sommet.
-     */
-    identifiant(): string;
-    /**
-     * Pseudo de l'utilisateur associé au sommet.
-     */
-    pseudo(): string;
-
-    /**
-     * Table avec les voisins du sommet.
-     */
-    voisins(): TableIdentificationMutable<'sommet', string>;
-}
-
-/**
- * Sommet du réseau de tchat implémenté par une enveloppe.
- *
- */
-export class SommetTchatParEnveloppe
-    extends SommetParEnveloppe<FormatSommetTchat, EtiquetteSommetTchat>
-    implements SommetTchat {
-
-    /**
-     * Constructeur à partir d'un sommet au format JSON.
-     * @param etat sommet au format JSON
-     */
-    constructor(etat: FormatSommetTchat) {
-        super( etat);
-    }
-
-    voisins(): TableIdentificationMutable<'sommet', string>{
-        return this.val().voisins;
-    }
-    /**
-     * Représentation nette à partir des étiquettes "nom" et "ID".
-     * @param e
-     */
-    net(e: EtiquetteSommetTchat): string {
-        let s = this.val();
-        switch (e) {
-            case 'nom': return s.pseudo;
-            case 'ID': return s.ID.val;
-        }
-        return jamais(e);
-    }
-    /**
-     * Représentation sous la forme "nom (ID)".
-     */
-    representation(): string {
-        return this.net('nom') + " (" + this.net('ID') + ")";
-    }
-
-    /**
-     * Identifiant du sommet.
-     */
-    identifiant(): string {
-        return this.val().ID.val;
-    }
-    /**
-     * Pseudo de l'utilisateur associé au sommet.
-     */
-    pseudo(): string {
-        return this.val().pseudo;
-    }
-
-}
-
-/**
- * Fabrique d'un sommet.
- * @param s sommet au format JSON.
- */
-export function sommetTchat(s: FormatSommetTchat) {
-    return new SommetTchatParEnveloppe(s);
-}
 
 /**
  * Description JSON d'une configuration pour le tchat.
@@ -128,12 +34,12 @@ export function sommetTchat(s: FormatSommetTchat) {
  * - voisins : table de sommets voisins contenant l'
  * - date : date en français
  */
-export interface FormatConfigurationTchat extends FormatConfigurationInitiale {
+export interface FormatConfigurationTchat<FSI extends FormatIdentifiable<"sommet">,C> extends FormatConfigurationInitiale {
     readonly "centre": FormatSommetTchat,
     readonly "date": FormatDateFr,
     readonly "nombreConnexions" : number,
     readonly "id": Identifiant<"sommet">,
-    readonly "voisinsActifs": TableauMutable<Identifiant<"sommet">>
+    readonly "voisinsActifs": TableIdentificationMutable<'sommet', FSI>;
 }
 
 /**
@@ -144,19 +50,19 @@ export type EtiquetteConfigurationTchat = 'centre' | 'date' |'nombreConnexions';
 /**
  * Interface pour les configurations initiales du tchat.
  */
-export interface ConfigurationTchat
-    extends Configuration<FormatConfigurationTchat, EtiquetteConfigurationTchat> {
+export interface ConfigurationTchat <FSI extends FormatIdentifiable<"sommet">,C>
+    extends Configuration<FormatConfigurationTchat<FSI,C>, EtiquetteConfigurationTchat> {
 }
 
 /**
  * Configuration initiale d'un client du tchat implémentée
  * par une enveloppe.
  */
-export class ConfigurationTchatParEnveloppe
+export class ConfigurationTchatParEnveloppe <FSI extends FormatIdentifiable<"sommet">,C>
     extends ConfigurationParEnveloppe<
-        FormatConfigurationTchat,
+        FormatConfigurationTchat<FSI,C>,
         EtiquetteConfigurationTchat>
-    implements ConfigurationTchat {
+    implements ConfigurationTchat<FSI,C> {
 
     /**
      * Représentation nette du centre et des voisins, ainsi que de la date.
@@ -192,7 +98,7 @@ export class ConfigurationTchatParEnveloppe
  * à partir de sa description en JSON.
  * @param c description de la configuration en JSON
  */
-export function configurationTchat(c: FormatConfigurationTchat) {
+export function configurationTchat<FSI extends FormatIdentifiable<"sommet">,C>(c: FormatConfigurationTchat<FSI,C>) {
     return new ConfigurationTchatParEnveloppe(c);
 }
 
@@ -204,13 +110,12 @@ export function configurationTchat(c: FormatConfigurationTchat) {
  * @param nombreConnexions nombre de connexions actives dans le reseau
  * @param voisinsActifs
  */
-export function configurationDeNoeudTchat(
+export function configurationDeSommetTchat<FSI extends FormatIdentifiable<"sommet">, C>(
     n: FormatSommetTchat,
     date: FormatDateFr,
     nombreConnexions: number,
-    voisinsActifs: TableauMutable<Identifiant<"sommet">>
-)
-    : ConfigurationTchatParEnveloppe {
+    voisinsActifs: TableIdentificationMutable<'sommet', FSI>
+): ConfigurationTchatParEnveloppe<FSI,C> {
     return new ConfigurationTchatParEnveloppe({
         "id": n.ID,
         "configurationInitiale": Unite.ZERO,
