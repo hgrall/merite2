@@ -67,16 +67,10 @@ export abstract class MessageParEnveloppe<
     FMsg extends FormatMessage,
     EtMsg extends string
     >
-    extends Enveloppe<FMsg, FMsg, EtMsg>
+    extends Enveloppe<FMsg, EtMsg>
     implements Message<FMsg, EtMsg> {
     constructor(etat: FMsg) {
-        super(x => x, etat);
-    }
-    /**
-     * Représentation JSON du message, égale à l'état.
-     */
-    val(): FMsg {
-        return this.etat();
+        super( etat);
     }
 }
 
@@ -106,16 +100,10 @@ export abstract class ConfigurationParEnveloppe<
     FConf extends FormatConfigurationInitiale,
     EtConf extends string
     >
-    extends Enveloppe<FConf, FConf, EtConf>
+    extends Enveloppe<FConf, EtConf>
     implements Configuration<FConf, EtConf> {
     constructor(etat: FConf) {
-        super(x => x, etat);
-    }
-    /**
-     * Représentation JSON de la configuration, égale à l'état.
-     */
-    val(): FConf {
-        return this.etat();
+        super( etat);
     }
 }
 
@@ -145,16 +133,10 @@ export abstract class ErreurRedhibitoireParEnveloppe<
     FErr extends FormatErreurRedhibitoire,
     EtErr extends string
     >
-    extends Enveloppe<FErr, FErr, EtErr>
+    extends Enveloppe<FErr, EtErr>
     implements ErreurRedhibitoire<FErr, EtErr> {
     constructor(etat: FErr) {
-        super(x => x, etat);
-    }
-    /**
-     * Représentation JSON de l'erreur, égale à l'état.
-     */
-    val(): FErr {
-        return this.etat();
+        super( etat);
     }
 }
 
@@ -184,16 +166,10 @@ export abstract class InformationParEnveloppe<
     FInfo extends FormatInformation,
     EtInfo extends string
     >
-    extends Enveloppe<FInfo, FInfo, EtInfo>
+    extends Enveloppe<FInfo,  EtInfo>
     implements Information<FInfo, EtInfo> {
     constructor(etat: FInfo) {
-        super(x => x, etat);
-    }
-    /**
-     * Représentation JSON de l'erreur, égale à l'état.
-     */
-    val(): FInfo {
-        return this.etat();
+        super( etat);
     }
 }
 

@@ -16,7 +16,7 @@ class DataTypeSortie {
 const noms: ReadonlyArray<string> = ["dede", "fifi", "jojo", "lulu", "zaza"];
 
 serveurApplications.demarrer();
-const reseauEtoile = new ReseauAnneau(10, noms);
+const reseauEtoile = new ReseauAnneau(5, noms);
 
 const traductionEntree = (request: express.Request) : DataType => {
     return new DataType(request.body.message, request.body.id);

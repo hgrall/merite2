@@ -110,8 +110,8 @@ export interface GrapheMutable<FSI extends FormatIdentifiable<'sommet'>, C>
     aUnSommetInactif(): boolean;
 
     /**
-     * Active un sommet inactif.
-     * @returns Sommet inactivé.
+     * Active un sommet inactif et mettre a jour la liste de voisins actifs de tous les sommets actifs
+     * @returns Sommet activé.
      */
     activerSommet(connexion: C): FormatSommetActif<FSI, C> ;
 
@@ -203,14 +203,21 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
 
         //Initializer la table avec les pseudos et identifiants des voisins actifs
         const voisinsActifs: TableauMutableParEnveloppe<Identifiant<"sommet">> = creerTableauMutableVide<Identifiant<"sommet">>();
+        // Mise a jour des listes de voisins actifs
         this.actifs.iterer((id_actif, val1) => {
-            if(this.tableAdjacence.valeur(id_actif).tableau.includes(ID_sommet)){
+            if(this.tableAdjacence.valeur(ID_sommet).tableau.find(
+                (identifiant) => identifiant.val == id_actif.val
+            ) !== undefined){
+                // Ajouter les sommets actifs dans la liste de voisins actifs du nouveau sommet
                 voisinsActifs.ajouterEnFin(id_actif);
             }
-            if(this.tableAdjacence.valeur(id_actif).tableau.includes(ID_sommet)){
+            if(this.tableAdjacence.valeur(id_actif).tableau.find(
+                (identifiant) => identifiant.val == ID_sommet.val
+            ) !== undefined){
+                // Ajouter le nouveau sommet dans la liste de voisins actifs du sommets actifs
                 this.actifs.valeur(id_actif).voisinsActifs.ajouterEnFin(ID_sommet);
             }
-        })
+        });
 
         //Crée un sommet actif a partir du sommet sélectionné
         const sommetActif = { connexion, sommetInactif, voisinsActifs };
@@ -273,5 +280,4 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
     representation(): string {
         return `Actifs: ${this.net("actifs")} Inactifs: ${this.net("inactifs")} Voisins: ${this.net("voisins")}`;
     }
-
 } 

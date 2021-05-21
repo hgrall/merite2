@@ -64,7 +64,7 @@ export interface SommetTchat
  *
  */
 export class SommetTchatParEnveloppe
-    extends SommetParEnveloppe<FormatSommetTchat, FormatSommetTchat, EtiquetteSommetTchat>
+    extends SommetParEnveloppe<FormatSommetTchat, EtiquetteSommetTchat>
     implements SommetTchat {
 
     /**
@@ -72,11 +72,11 @@ export class SommetTchatParEnveloppe
      * @param etat sommet au format JSON
      */
     constructor(etat: FormatSommetTchat) {
-        super((x) => x, etat);
+        super( etat);
     }
 
     voisins(): TableIdentificationMutable<'sommet', string>{
-        return this.etat().voisins;
+        return this.val().voisins;
     }
     /**
      * Représentation nette à partir des étiquettes "nom" et "ID".
@@ -96,23 +96,18 @@ export class SommetTchatParEnveloppe
     representation(): string {
         return this.net('nom') + " (" + this.net('ID') + ")";
     }
-    /**
-     * Description au format JSON.
-     */
-    val(): FormatSommetTchat {
-        return this.etat();
-    }
+
     /**
      * Identifiant du sommet.
      */
     identifiant(): string {
-        return this.etat().ID.val;
+        return this.val().ID.val;
     }
     /**
      * Pseudo de l'utilisateur associé au sommet.
      */
     pseudo(): string {
-        return this.etat().pseudo;
+        return this.val().pseudo;
     }
 
 }
@@ -496,29 +491,5 @@ export function messageInformation(id: Identifiant<'message'>,
         type: TypeMessageTchat.INFO,
         contenu: texte,
         date: date
-    });
-}
-
-/**
- * Fabrique d'un message d'erreur retourné à l'émetteur, formé ainsi :
- * - ID: celui original,
- * - ID_emetteur: celui original,
- * - ID_destinataire: celui original,
- * - type: le type passé en argument,
- * - contenu: le message d'erreur passé en argument,
- * - date: celle originale.
- * @param original message original
- * @param codeErreur code de l'erreur
- * @param messageErreur message d'erreur
- */
-export function messageRetourErreur(original: MessageTchat,
-                                    codeErreur: TypeMessageTchat, messageErreur: string): MessageTchat {
-    return new MessageTchatParEnveloppe({
-        ID: original.val().ID,
-        ID_emetteur: original.val().ID_emetteur,
-        ID_destinataire: original.val().ID_destinataire,
-        type: codeErreur,
-        contenu: messageErreur,
-        date: original.val().date
     });
 }

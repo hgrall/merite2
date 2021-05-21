@@ -62,14 +62,16 @@ abstract class Reseau {
         console.log("* " + dateMaintenant().representationLog()
             + " - Ouverture connection longue");
         try {
-            const sommet_actif = this.graphe.activerSommet(connexion);
-            const d = dateMaintenant();
-            const config = configurationDeNoeudTchat(sommet_actif.sommetInactif, d.val(),this.graphe.tailleActifs(), sommet_actif.voisinsActifs);
-            this.envoyerMessage(sommet_actif.sommetInactif.ID,config);
-            // TODO: Changer la implementation de la configuration pour afficher le voisins connectés
-            // TODO: Envoyer configuration
-            // TODO: Diffuser information avec le nombre des connexions
-            return sommet_actif.sommetInactif.ID;
+            // Active le sommet a partir de la nouvelle connexion
+            const nouveauSommetActif = this.graphe.activerSommet(connexion);
+            // Envoie l'information de la nouvelle connexion a tous les sommets actifs
+            this.graphe.itererActifs((ID_sommet => {
+                const d = dateMaintenant();
+                const sommetActif = this.graphe.sommetActif(ID_sommet);
+                const config = configurationDeNoeudTchat(sommetActif.sommetInactif, d.val(),this.graphe.tailleActifs(), sommetActif.voisinsActifs);
+                this.envoyerMessage(ID_sommet, config);
+            }));
+            return nouveauSommetActif.sommetInactif.ID;
         }
         catch (e) {
             // TODO: Envoyer message d'erreur
