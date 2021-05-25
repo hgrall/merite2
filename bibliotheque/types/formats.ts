@@ -5,6 +5,8 @@ import {
 import {
     Enveloppe, TypeEnveloppe
 } from "./enveloppe";
+import {Identifiant} from "./identifiant";
+import {FormatDateFr} from "./date";
 
 /**
  * Interface JSON servant de marqueur pour les configurations initiales.
@@ -36,12 +38,14 @@ export interface FormatInformation {
 }
 /**
  * Interface JSON servant de marqueur pour les messages.
- * Elle ne possède pas de clé permettant la discrimination.
- * Pour discriminer, on vérifie l'absence des clés utilisées pour discriminer,
- * soit "configurationInitiale" et "erreurRedhibitoire".
- * Cette interface pourrait être complétée à l'avenir.
  */
-export interface FormatMessage { }
+export interface FormatMessage {
+    readonly ID: Identifiant<'message'>,
+    readonly ID_emetteur: Identifiant<'sommet'>,
+    readonly type: string ,
+    readonly contenu: string,
+    readonly date: FormatDateFr
+}
 
 /**
  * Interface pour les messages abstraitss.

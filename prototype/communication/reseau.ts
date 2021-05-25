@@ -11,7 +11,7 @@ import {
 } from "../../bibliotheque/types/tableau";
 import {dateMaintenant} from "../../bibliotheque/types/date";
 import {
-    configurationDeSommetTchat, FormatMessageTchat
+    configurationDeSommetTchat,
 } from "../../bibliotheque/echangesTchat";
 import {FormatSommetTchat} from "../../bibliotheque/types/sommet";
 
@@ -32,6 +32,8 @@ abstract class Reseau {
     }
 
     envoyerMessageAVoisins<M>(idEmmiteur: Identifiant<"sommet">, message: M): void {
+        console.log("* " + dateMaintenant().representationLog()
+            + ` - Message a envoyer: ${JSON.stringify(message)}`);
         if(this.graphe.aSommetActif(idEmmiteur)) {
             this.graphe.itererVoisins(idEmmiteur, (idRecepteur)=>{
                 if(this.graphe.aSommetActif(idRecepteur)) {
@@ -90,7 +92,6 @@ abstract class Reseau {
     envoyerMessage<M>(idRecepteur: Identifiant<"sommet">, message: M): void {
         console.log("* " + dateMaintenant().representationLog()
             + ` - Message a envoyer: ${JSON.stringify(message)}`);
-        // TODO: Valider Message
         try {
             if(this.graphe.aSommetActif(idRecepteur)) {
                 const recepteur = this.graphe.sommetActif(idRecepteur);

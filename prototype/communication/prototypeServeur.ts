@@ -2,6 +2,8 @@ import {ServeurApplicationsExpress} from "../../bibliotheque/communication/serve
 import * as express from 'express';
 import {ReseauAnneau, ReseauEtoile} from "./reseau";
 import {identifiant, Identifiant} from "../../bibliotheque/types/identifiant";
+import {validerMessageCommunication, validerMessageCommunicationAvecDestinataire} from "./formats";
+import {MessageTchatParEnveloppe} from "../../bibliotheque/echangesTchat";
 
 const serveurApplications = new ServeurApplicationsExpress(8080);
 
@@ -10,9 +12,17 @@ class DataType {
 }
 // changer a interface
 class DataTypeSortie {
-    constructor(public entree: DataType, public id: Identifiant<"sommet">, public messageSortie: string){};
+    constructor(public message: MessageTchatParEnveloppe, public id: Identifiant<"sommet">, public messageSortie: string){};
 }
 
+
+class DataTypeGET {
+    constructor(public message: string, public id: Identifiant<"sommet"> ) {};
+}
+// changer a interface
+class DataTypeSortieGET {
+    constructor(public message: DataTypeGET, public id: Identifiant<"sommet">, public messageSortie: string){};
+}
 const noms: ReadonlyArray<string> = ["dede", "fifi", "jojo", "lulu", "zaza"];
 
 serveurApplications.demarrer();
@@ -44,40 +54,59 @@ serveurApplications.specifierTraitementRequeteGETLongue<DataType,DataTypeSortie>
     traitementDesFlux
 );
 
-const traitementPOST = (data: DataType): DataTypeSortie =>  {
-    return new DataTypeSortie(data, data.id, data.message);
+
+const traducctionEntreePost = (request: express.Request): MessageTchatParEnveloppe =>{
+    return validerMessageCommunicationAvecDestinataire(request.body);
 };
 
-const traducctionEntreePost = (request: express.Request): DataType =>{
-    return new DataType(request.body.message, identifiant("sommet", request.body.id));
-};
-
-const traducctionSortiePost = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
-    console.log(sortie.id);
-    reseauEtoile.envoyerMessageAVoisins(sortie.id,sortie);
+const traducctionSortiePost = ( sortie: MessageTchatParEnveloppe, canalSortie: express.Response) =>{
     canalSortie.send(`data: ${JSON.stringify(sortie)} \n\n`)
 };
 
-serveurApplications.specifierTraitementRequetePOST<DataType,DataTypeSortie>(
-    "/send",
+
+const traducctionEntreePostAuxVoisins = (request: express.Request): MessageTchatParEnveloppe =>{
+    return validerMessageCommunication(request.body);
+};
+
+const traitementPOSTEnvoyerAuxVoisins = (message: MessageTchatParEnveloppe): MessageTchatParEnveloppe =>  {
+    reseauEtoile.envoyerMessageAVoisins(message.val().ID_emetteur,message);
+    return message;
+};
+
+serveurApplications.specifierTraitementRequetePOST<MessageTchatParEnveloppe,MessageTchatParEnveloppe>(
+    "/envoyerAuxVoisins",
     "A1",
     "",
-    traitementPOST,
+    traitementPOSTEnvoyerAuxVoisins,
+    traducctionEntreePostAuxVoisins,
+    traducctionSortiePost
+)
+
+const traitementPOSTEnvoyerADestinataire = (message: MessageTchatParEnveloppe): MessageTchatParEnveloppe =>  {
+    reseauEtoile.envoyerMessage(message.val().ID_emetteur,message);
+    return message;
+};
+
+serveurApplications.specifierTraitementRequetePOST<MessageTchatParEnveloppe,MessageTchatParEnveloppe>(
+    "/envoyerADestinataire",
+    "A1",
+    "",
+    traitementPOSTEnvoyerADestinataire,
     traducctionEntreePost,
     traducctionSortiePost
 )
 
-const traducctionSortieGET = ( sortie: DataTypeSortie, canalSortie: express.Response) =>{
-    canalSortie.json(DataTypeSortie);
+const traducctionSortieGET = (sortie: DataTypeSortieGET, canalSortie: express.Response) =>{
+    canalSortie.json(sortie);
 };
 
 
-const traitementGET = ( entree: DataType) : DataTypeSortie => {
-   return new DataTypeSortie( entree, entree.id,"Salida");
+const traitementGET = ( entree: DataTypeGET) : DataTypeSortieGET => {
+   return new DataTypeSortieGET( entree, entree.id,"Salida");
 };
 
 
-serveurApplications.specifierTraitementRequeteGET<DataType,DataTypeSortie>(
+serveurApplications.specifierTraitementRequeteGET<DataTypeGET,DataTypeSortieGET>(
     "/get",
     "A1",
     "",

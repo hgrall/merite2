@@ -19,11 +19,7 @@ import {
 import {
     FormatSommetTchat, sommetTchat,
 } from "./types/sommet";
-import {TableauMutable} from "./types/tableau";
-import {TableMutable} from "./types/table";
-import {FormatTableIdentification, TableIdentificationMutable} from "./types/tableIdentification";
-import {FormatSommetActif} from "./types/graphe";
-import * as FS from "fs";
+import {TableIdentificationMutable} from "./types/tableIdentification";
 
 
 /**
@@ -205,21 +201,20 @@ export function erreurTchatDeMessage(msg: string, date: FormatDateFr): ErreurTch
 
 
 
-
 /**
  * Enumération des différents types de messages pour le tchat.
  */
-export enum TypeMessageTchat {
-    COM,
-    TRANSIT,
-    AR,
-    ERREUR_CONNEXION,
-    ERREUR_EMET,
-    ERREUR_DEST,
-    ERREUR_TYPE,
-    INTERDICTION,
-    INFO = 8
-}
+export const TypeMessageTchat =  {
+    COM: 'COM',
+    TRANSIT:  'TRANSIT',
+    AR:  'AR',
+    ERREUR_CONNEXION:  'ERREUR_CONNEXION',
+    ERREUR_EMET:  'ERREUR_EMET',
+    ERREUR_DEST:  'ERREUR_DEST',
+    ERREUR_TYPE:  'ERREUR_TYPE',
+    INTERDICTION:  'INTERDICTION',
+    INFO:  'INFO'
+} as const
 
 /**
  * Description JSON d'un message pour le tchat.
@@ -230,24 +225,24 @@ export enum TypeMessageTchat {
  * - type : type du message
  * - date : date en français
  */
-export interface FormatMessageTchat extends FormatMessage {
-    readonly ID: Identifiant<'message'>,
-    readonly ID_emetteur: Identifiant<'sommet'>,
+export interface FormatMessageADestinataireTchat extends FormatMessage {
     readonly ID_destinataire: Identifiant<'sommet'>,
-    readonly type: TypeMessageTchat,
-    readonly contenu: string,
-    readonly date: FormatDateFr
 }
 
 /**
  * Etiquettes utiles pour représenter un message. TODO Ajouter ID.
  */
-export type EtiquetteMessageTchat = 'type' | 'date' | 'ID_de' | 'ID_à' | 'contenu';
+export type EtiquetteMessageADestinataireTchat = 'type' | 'date' | 'ID_de' | 'ID_à'| 'contenu';
+
+/**
+ * Etiquettes utiles pour représenter un message. TODO Ajouter ID.
+ */
+export type EtiquetteMessageTchat = 'type' | 'date' | 'ID_de' | 'contenu';
 
 /**
  * Interface pour les messages de tchat.
  */
-export interface MessageTchat extends Message<FormatMessageTchat, EtiquetteMessageTchat> {
+export interface MessageTchat extends Message<FormatMessage, EtiquetteMessageADestinataireTchat> {
 
     /**
      * Conversion du message en un message de transit (serveur vers destinataire).
@@ -265,7 +260,7 @@ export interface MessageTchat extends Message<FormatMessageTchat, EtiquetteMessa
  * Message de tchat implémenté par une enveloppe.
  */
 export class MessageTchatParEnveloppe
-    extends MessageParEnveloppe<FormatMessageTchat, EtiquetteMessageTchat>
+    extends MessageParEnveloppe<FormatMessage, EtiquetteMessageTchat>
     implements MessageTchat {
     /**
      * Représentation nette :
@@ -279,10 +274,76 @@ export class MessageTchatParEnveloppe
     net(e: EtiquetteMessageTchat): string {
         let msg = this.val();
         switch (e) {
-            case 'type': return TypeMessageTchat[msg.type];
+            case 'type': return msg.type;
             case 'date': return dateEnveloppe(msg.date).representation();
             case 'ID_de': return msg.ID_emetteur.val;
-            case 'ID_à': return msg.ID_destinataire.val;
+            case 'contenu': return msg.contenu;
+        }
+        return jamais(e);
+    }
+    /**
+     * Représentation du message sous la forme suivante :
+     * - "date, de ... à ... (type) - contenu".
+     */
+    representation(): string {
+        let dem = this.net('ID_de');
+        let typem = this.net('type');
+        let datem = this.net('date');
+        let cm = this.net('contenu');
+        return datem + ", de " + dem + " (" + typem + ") - " + cm;
+    }
+    /**
+     * Création d'un nouveau message, de même structure, sauf le type qui devient TRANSIT.
+     */
+    transit(): MessageTchatParEnveloppe {
+        let msg = this.val();
+        return new MessageTchatParEnveloppe({
+            ID: msg.ID,
+            ID_emetteur: msg.ID_emetteur,
+            type: TypeMessageTchat.TRANSIT,
+            contenu: msg.contenu,
+            date: msg.date
+        });
+    }
+    /**
+     * Création d'un nouveau message, de même structure, sauf le type qui devient AR.
+     */
+    avecAccuseReception(): MessageTchatParEnveloppe {
+        let msg = this.val();
+        return new MessageTchatParEnveloppe({
+            ID: msg.ID,
+            ID_emetteur: msg.ID_emetteur,
+            type: TypeMessageTchat.AR,
+            contenu: msg.contenu,
+            date: msg.date
+        });
+    }
+
+}
+
+
+/**
+ * Message de tchat implémenté par une enveloppe.
+ */
+export class MessageTchatADestinataireParEnveloppe
+    extends MessageParEnveloppe<FormatMessageADestinataireTchat, EtiquetteMessageADestinataireTchat>
+    implements MessageTchat {
+    /**
+     * Représentation nette :
+     * - type : une constante de TypeMessageTchat
+     * - date : représentation de la date ("heure, le date")
+     * - ID_de : ID du sommet émétteur
+     * - ID_à : ID du sommet destinataire
+     * - contenu : le contenu du message
+     * @param e étiquette
+     */
+    net(e: EtiquetteMessageADestinataireTchat): string {
+        let msg = this.val();
+        switch (e) {
+            case 'type': return msg.type;
+            case 'date': return dateEnveloppe(msg.date).representation();
+            case 'ID_de': return msg.ID_emetteur.val;
+            case 'ID_à' : return msg.ID_destinataire.val;
             case 'contenu': return msg.contenu;
         }
         return jamais(e);
@@ -307,7 +368,6 @@ export class MessageTchatParEnveloppe
         return new MessageTchatParEnveloppe({
             ID: msg.ID,
             ID_emetteur: msg.ID_emetteur,
-            ID_destinataire: msg.ID_destinataire,
             type: TypeMessageTchat.TRANSIT,
             contenu: msg.contenu,
             date: msg.date
@@ -321,7 +381,6 @@ export class MessageTchatParEnveloppe
         return new MessageTchatParEnveloppe({
             ID: msg.ID,
             ID_emetteur: msg.ID_emetteur,
-            ID_destinataire: msg.ID_destinataire,
             type: TypeMessageTchat.AR,
             contenu: msg.contenu,
             date: msg.date
@@ -335,7 +394,7 @@ export class MessageTchatParEnveloppe
  *
  * @param m description d'un mesage de tchat en JSON
  */
-export function messageTchat(m: FormatMessageTchat) {
+export function messageTchat(m: FormatMessage) {
     return new MessageTchatParEnveloppe(m);
 }
 
@@ -345,38 +404,38 @@ export function messageTchat(m: FormatMessageTchat) {
  * @param idEmetteur identifiant de l'émetteur
  * @param messageErreur message d'erreur
  */
-export function messageErreurConnexion(id: Identifiant<'message'>,
-                                       idEmetteur: Identifiant<'sommet'>, messageErreur: string): MessageTchat {
-    return new MessageTchatParEnveloppe({
-        ID: id,
+export function creerMessageADestinataire(id: Identifiant<'message'>,
+                                       idEmetteur: Identifiant<'sommet'>, idDestinataire: Identifiant<'sommet'>,
+                                       texte: string, date: FormatDateFr, type: string){
+    return new MessageTchatADestinataireParEnveloppe({
+        ID:id,
         ID_emetteur: idEmetteur,
-        ID_destinataire: idEmetteur,
-        type: TypeMessageTchat.ERREUR_CONNEXION,
-        contenu: messageErreur,
-        date: dateMaintenant().val()
-    });
-}
-
-/**
- * Fabrique d'un message de communication.
- * @param id identifiant du message
- * @param idEmetteur identifiant de l'émetteur
- * @param idDestinataire identifiant du destinataire
- * @param texte contenu
- * @param date date (en français)
- */
-export function messageCommunication(id: Identifiant<'message'>,
-                                     idEmetteur: Identifiant<'sommet'>, idDestinataire: Identifiant<'sommet'>,
-                                     texte: string, date: FormatDateFr): MessageTchat {
-    return new MessageTchatParEnveloppe({
-        ID: id,
-        ID_emetteur: idEmetteur,
-        ID_destinataire: idDestinataire,
-        type: TypeMessageTchat.COM,
+        ID_destinataire:idDestinataire,
+        type: type,
         contenu: texte,
         date: date
     });
 }
+
+/**
+ * Fabrique d'un message correspondnat à une erreur de connexion.
+ * @param id identifiant du message
+ * @param idEmetteur identifiant de l'émetteur
+ * @param messageErreur message d'erreur
+ */
+export function creerMessage(id: Identifiant<'message'>,
+                                          idEmetteur: Identifiant<'sommet'>,
+                                          texte: string, date: FormatDateFr, type: string){
+    return new MessageTchatParEnveloppe({
+        ID:id,
+        ID_emetteur: idEmetteur,
+        type: type,
+        contenu: texte,
+        date: date
+    });
+}
+
+
 
 /**
  * Fabrique d'un message d'information
@@ -392,7 +451,6 @@ export function messageInformation(id: Identifiant<'message'>,
     return new MessageTchatParEnveloppe({
         ID: id,
         ID_emetteur: idEmetteur,
-        ID_destinataire: idDestinataire,
         type: TypeMessageTchat.INFO,
         contenu: texte,
         date: date
