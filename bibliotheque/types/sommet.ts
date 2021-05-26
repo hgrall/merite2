@@ -40,7 +40,7 @@ export abstract class SommetParEnveloppe<
 
 
 /**
- * Format JSON pour un sommet du réseau de tchat.
+ * Format JSON pour un sommet du réseau de prototype.
  * Structure :
  * - ID : identifiant
  * - pseudo : nom
@@ -51,12 +51,12 @@ export interface FormatSommetTchat extends FormatIdentifiable<'sommet'> {
     readonly voisins:  TableIdentificationMutable<'sommet', string>
 }
 /**
- * Etiquettes pour un sommet du réseau de tchat.
+ * Etiquettes pour un sommet du réseau de prototype.
  */
 export type EtiquetteSommetTchat = 'ID' | 'nom';
 
 /**
- * Interface pour un sommet du réseau de tchat dérivée de Sommet et
+ * Interface pour un sommet du réseau de prototype dérivée de Sommet et
  * l'étendant par des accesseurs en lecture.
  */
 export interface SommetTchat
@@ -77,7 +77,7 @@ export interface SommetTchat
 }
 
 /**
- * Sommet du réseau de tchat implémenté par une enveloppe.
+ * Sommet du réseau de prototype implémenté par une enveloppe.
  *
  */
 export class SommetTchatParEnveloppe

@@ -377,7 +377,7 @@ export class TableauParEnveloppe<T>
  * @param t tableau en JSON.
  */
 export function tableau<T>(
-    t: ReadonlyArray<T>): Tableau<T> {
+    t: ReadonlyArray<T>): TableauParEnveloppe<T> {
     return new TableauParEnveloppe(FABRIQUE_TABLEAU_JSON.enveloppe(t));
 }
 

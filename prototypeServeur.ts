@@ -1,9 +1,10 @@
-import {ServeurApplicationsExpress} from "../../bibliotheque/communication/serveurApplications";
+import {ServeurApplicationsExpress} from "./bibliotheque/communication/serveurApplications";
 import * as express from 'express';
-import {ReseauAnneau, ReseauEtoile} from "./reseau";
-import {identifiant, Identifiant} from "../../bibliotheque/types/identifiant";
-import {validerMessageCommunication, validerMessageCommunicationAvecDestinataire} from "./formats";
-import {MessageTchatParEnveloppe} from "../../bibliotheque/echangesTchat";
+import * as shell from "shelljs";
+import {ReseauAnneau, ReseauEtoile} from "./prototype/communication/reseau";
+import {identifiant, Identifiant} from "./bibliotheque/types/identifiant";
+import {validerMessageCommunication} from "./prototype/communication/formats";
+import {MessageTchatParEnveloppe} from "./bibliotheque/echangesTchat";
 
 const serveurApplications = new ServeurApplicationsExpress(8080);
 
@@ -55,9 +56,6 @@ serveurApplications.specifierTraitementRequeteGETLongue<DataType,DataTypeSortie>
 );
 
 
-const traducctionEntreePost = (request: express.Request): MessageTchatParEnveloppe =>{
-    return validerMessageCommunicationAvecDestinataire(request.body);
-};
 
 const traducctionSortiePost = ( sortie: MessageTchatParEnveloppe, canalSortie: express.Response) =>{
     canalSortie.send(`data: ${JSON.stringify(sortie)} \n\n`)
@@ -69,7 +67,7 @@ const traducctionEntreePostAuxVoisins = (request: express.Request): MessageTchat
 };
 
 const traitementPOSTEnvoyerAuxVoisins = (message: MessageTchatParEnveloppe): MessageTchatParEnveloppe =>  {
-    reseauEtoile.envoyerMessageAVoisins(message.val().ID_emetteur,message);
+    reseauEtoile.envoyerMessage(message.val().ID_destinataires,message);
     return message;
 };
 
@@ -79,20 +77,6 @@ serveurApplications.specifierTraitementRequetePOST<MessageTchatParEnveloppe,Mess
     "",
     traitementPOSTEnvoyerAuxVoisins,
     traducctionEntreePostAuxVoisins,
-    traducctionSortiePost
-)
-
-const traitementPOSTEnvoyerADestinataire = (message: MessageTchatParEnveloppe): MessageTchatParEnveloppe =>  {
-    reseauEtoile.envoyerMessage(message.val().ID_emetteur,message);
-    return message;
-};
-
-serveurApplications.specifierTraitementRequetePOST<MessageTchatParEnveloppe,MessageTchatParEnveloppe>(
-    "/envoyerADestinataire",
-    "A1",
-    "",
-    traitementPOSTEnvoyerADestinataire,
-    traducctionEntreePost,
     traducctionSortiePost
 )
 
@@ -114,3 +98,12 @@ serveurApplications.specifierTraitementRequeteGET<DataTypeGET,DataTypeSortieGET>
     traductionEntree,
     traducctionSortieGET
 )
+const repertoireHtml: string = shell.pwd() + "/build/";
+
+serveurApplications.specifierRepertoireScriptsEmbarques(repertoireHtml)
+
+const ressourceTchat = "interfaceTchat.html";
+const code =  "A1";
+const chemin = "/prototype"
+
+serveurApplications.specifierApplicationAServir(code, chemin,repertoireHtml, ressourceTchat)

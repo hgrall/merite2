@@ -1,6 +1,6 @@
-import * as express from 'express';
-import * as http from 'http';
-import * as bodyParser from "body-parser";
+import express from 'express';
+import http from 'http';
+import bodyParser from "body-parser";
 const jsonParser = bodyParser.json()
 
 
@@ -306,7 +306,7 @@ export class ServeurApplicationsExpress implements ServeurApplications<express.R
             chemin,
             (requete: express.Request, response: express.Response) => {
                 // TODO : ajouter répertoire
-                response.sendFile(application, chemin);
+                response.sendFile(repertoire+application, chemin);
             }
         );
     }

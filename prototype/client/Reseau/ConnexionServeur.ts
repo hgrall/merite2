@@ -1,19 +1,6 @@
 import { MessageTchat} from "../../../bibliotheque/echangesTchat";
+import axios from 'axios';
 
-
-export const envoyerADestinataire = async (
-    message: unknown,
-    code: string
-) => {
-    const url = `http://localhost:8080/envoyerADestinataire/${code}`;
-    console.log(url);
-    return axios
-        .get(url)
-        .then((response) => {
-            return response.data.R;
-        })
-        .catch((error) => {});
-};
 
 export const envoyerAVoisins = async (
     message: unknown,
@@ -22,9 +9,9 @@ export const envoyerAVoisins = async (
     const url = `http://localhost:8080/envoyerAuxVoisins/${code}`;
     console.log(url);
     return axios
-        .get(url)
+        .post(url)
         .then((response) => {
-            return response.data.R;
+            console.log(response.data);
         })
         .catch((error) => {});
 };

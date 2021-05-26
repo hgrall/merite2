@@ -6,13 +6,15 @@ import {
     MessageTchatParEnveloppe,
     TypeMessageTchat
 } from "../../../bibliotheque/echangesTchat";
+import {TableauParEnveloppe} from "../../../bibliotheque/types/tableau";
+/*
 
-/**
+/!**
  * Fabrique d'un message correspondnat à une erreur de connexion.
  * @param id identifiant du message
  * @param idEmetteur identifiant de l'émetteur
  * @param messageErreur message d'erreur
- */
+ *!/
 export function creerMessageErreurConnexion(id: Identifiant<'message'>,
                                        idEmetteur: Identifiant<'sommet'>, messageErreur: string, type : string): MessageTchat {
     return new MessageTchatParEnveloppe({
@@ -25,39 +27,26 @@ export function creerMessageErreurConnexion(id: Identifiant<'message'>,
     });
 }
 
-/**
- * Fabrique d'un message de communication.
- */
-export function creerMessageADestinataire(ID: Identifiant<"message">, ID_emetteur: Identifiant<"sommet">, ID_destinataire: Identifiant<"sommet">, contenu: string): MessageTchat {
+*/
+export function creerMessageAVoisin(ID: Identifiant<"message">, ID_emetteur: Identifiant<"sommet">, contenu: string, ID_destinataires: TableauParEnveloppe<Identifiant<"sommet">>): MessageTchat {
     return new MessageTchatParEnveloppe({
         ID: ID,
         ID_emetteur: ID_emetteur,
-        ID_destinataire: ID_destinataire,
         type: TypeMessageTchat.COM,
         contenu: contenu,
-        date: dateMaintenant().val()
+        date: dateMaintenant().val(),
+        ID_destinataires: ID_destinataires
     });
 }
-
-export function creerMessageAVoisin(ID: Identifiant<"message">, ID_emetteur: Identifiant<"sommet">, ID_destinataire: Identifiant<"sommet">, contenu: string): MessageTchat {
-    return new MessageTchatParEnveloppe({
-        ID: ID,
-        ID_emetteur: ID_emetteur,
-        ID_destinataire: ID_destinataire,
-        type: TypeMessageTchat.COM,
-        contenu: contenu,
-        date: dateMaintenant().val()
-    });
-}
-
-/**
+/*
+/!**
  * Fabrique d'un message d'information
  * @param id identifiant du message
  * @param idEmetteur identifiant de l'émetteur
  * @param idDestinataire identifiant du destinataire
  * @param texte contenu
  * @param date date (en français)
- */
+ *!/
 export function messageInformation(id: Identifiant<'message'>,
                                    idEmetteur: Identifiant<'sommet'>, idDestinataire: Identifiant<'sommet'>,
                                    texte: string, date: FormatDateFr, ): MessageTchat {
@@ -69,4 +58,4 @@ export function messageInformation(id: Identifiant<'message'>,
         contenu: texte,
         date: date
     });
-}
+}*/

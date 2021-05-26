@@ -3,16 +3,16 @@ import * as td from 'io-ts-types'
 import { isLeft } from "fp-ts/These";
 import {
     creerMessage,
-    creerMessageADestinataire, MessageTchatADestinataireParEnveloppe,
     MessageTchatParEnveloppe,
     TypeMessageTchat
 } from "../../bibliotheque/echangesTchat";
-import {identifiant} from "../../bibliotheque/types/identifiant";
+import {Identifiant, identifiant} from "../../bibliotheque/types/identifiant";
 import {conversionDate} from "../../bibliotheque/types/date";
 import {PathReporter} from "io-ts/PathReporter";
+import {tableau} from "../../bibliotheque/types/tableau";
 
 
-const messageErreurConnexion  = t.type({
+/*const messageErreurConnexion  = t.type({
     ID: t.string,
     ID_emetteur: t.string,
     ID_destinataire: t.string,
@@ -32,7 +32,7 @@ export function validerMessageErreurConnexion(messageToValidate: unknown): Messa
         throw Error(error);
     } else {
         const validResult = result.right
-        return creerMessageADestinataire(
+        return creerMessage(
             identifiant( "message", validResult.ID),
             identifiant( "sommet", validResult.ID_emetteur),
             identifiant( "sommet", validResult.ID_destinataire),
@@ -41,12 +41,13 @@ export function validerMessageErreurConnexion(messageToValidate: unknown): Messa
             TypeMessageTchat.ERREUR_CONNEXION
         );
     }
-}
+}*/
 
 const MessageCommunication = t.type({
     //TODO Ajouter date
     ID: t.string,
     ID_emetteur: t.string,
+    ID_destinataires: t.Array,
     type: t.literal(TypeMessageTchat.COM),
     contenu: t.string,
 })
@@ -62,45 +63,25 @@ export function validerMessageCommunication(messageToValidate: unknown): Message
         // TODO: Envoyer Response, bad request
         throw Error(error);
     } else {
-        const validResult = result.right
-        return creerMessage(
-            identifiant( "message", validResult.ID),
-            identifiant( "sommet", validResult.ID_emetteur),
-            validResult.contenu,
-            conversionDate(new Date()),
-            TypeMessageTchat.COM
-        );
-    }
-}
-
-const MessageCommunicationAvecDestinataire = t.type({
-    //TODO Ajouter date
-    ID: t.string,
-    ID_emetteur: t.string,
-    ID_destinataire: t.string,
-    type: t.literal(TypeMessageTchat.COM),
-    contenu: t.string,
-})
-
-export function validerMessageCommunicationAvecDestinataire(messageToValidate: unknown): MessageTchatADestinataireParEnveloppe {
-    console.log(`Message a valider: ${messageToValidate}`);
-    const result = MessageCommunicationAvecDestinataire.decode(messageToValidate)
-    if (isLeft(result)){
-        let  error = "";
-        PathReporter.report(result).forEach(value => {
-            error+= `${value}, `;
-        })
-        // TODO: Envoyer Response, bad request
-        throw Error(error);
-    } else {
-        const validResult = result.right
-        return creerMessageADestinataire(
-            identifiant( "message", validResult.ID),
-            identifiant( "sommet", validResult.ID_emetteur),
-            identifiant( "sommet", validResult.ID_destinataire),
-            validResult.contenu,
-            conversionDate(new Date()),
-            TypeMessageTchat.COM
-        );
+        try {
+            const validResult = result.right;
+            const arrayDestinataires: Array<Identifiant<"sommet">> = [];
+            validResult.ID_destinataires.forEach(destinataire => {
+                const destinataireString = destinataire as string;
+                arrayDestinataires.push(identifiant("sommet", destinataireString))
+            })
+            return creerMessage(
+                identifiant( "message", validResult.ID),
+                identifiant( "sommet", validResult.ID_emetteur),
+                validResult.contenu,
+                conversionDate(new Date()),
+                TypeMessageTchat.COM,
+                tableau<Identifiant<"sommet">>(arrayDestinataires)
+            );
+        }
+        catch (e) {
+            // TODO: Envoyer Response, bad request
+            throw Error(e);
+        }
     }
 }
