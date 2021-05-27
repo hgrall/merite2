@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import * as mocha from 'mocha';
-
 import { TableIdentificationMutable, creerTableIdentificationMutableVide } from "../../bibliotheque/types/tableIdentification";
 import { testUnitaire } from '../utilitaires';
 import { creerTypeNonSerialisable, TypeNonSerialisable, TypeSerialisable } from './exemplesTypes';
@@ -59,6 +56,11 @@ describe('TableIdentificationMutable - type non sérialisable', () => {
         false,
         table.estVide()
     );
+    testUnitaire(
+        "domaine +2",
+        [{val: "id1", sorte: "test"},{val: "id2", sorte: "test"}],
+        table.domaine()
+    );
     table.retirer({ val: "id1", sorte: 'test' });
     testUnitaire("taille +2-1", 1, table.taille());
     testUnitaire(
@@ -69,6 +71,11 @@ describe('TableIdentificationMutable - type non sérialisable', () => {
         "vacuité +2-1",
         false,
         table.estVide()
+    );
+    testUnitaire(
+        "domaine +2-1",
+        [{"val":"id2","sorte":"test"}],
+        table.domaine()
     );
     table.retirer({ val: "id2", sorte: 'test' });
     testUnitaire(

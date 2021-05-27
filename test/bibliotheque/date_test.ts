@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-
 import { DateFr, dateEnveloppe, dateMaintenant, conversionDate, FormatDateFr } from "../../bibliotheque/types/date";
 import { testUnitaire } from '../utilitaires';
 

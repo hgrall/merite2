@@ -1,8 +1,4 @@
-import * as chai from 'chai';
-import * as mocha from 'mocha';
-
 import { GenerateurIdentifiants, FormatIdentifiableMutable, creerGenerateurIdentifiantParCompteur } from "../../bibliotheque/types/identifiant";
-import { Unite } from "../../bibliotheque/types/typesAtomiques";
 import { testUnitaire } from '../utilitaires';
 
 describe("GenerateurIdentifiants de type 'test'", () => {
