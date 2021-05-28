@@ -4,6 +4,18 @@
 export type EnsembleSortes = "sommet" | "message" | "test"; // à compléter
 
 /**
+ * Valide une string donnée et le transform en un EnsembleSortes si possible
+ * @param sorteAValider string a valider
+ * @param sorte sorte a comparer
+ */
+export function validerSorte<S extends EnsembleSortes>(sorteAValider: string, sorte: S): S {
+    if (sorte != sorteAValider){
+        throw ("La sorte ne correspond pas")
+    }
+    return sorte;
+}
+
+/**
  * Identifiant au format JSON. Type paramétré et valeur paramétrée par la sorte des identifiants,
  * donnée par une chaîne de caractères (considérée comme un type et une valeur respectivement).
  *

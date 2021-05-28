@@ -61,6 +61,8 @@ abstract class Reseau {
                 idSommetsActifs.push(ID_sommet);
                 const d = dateMaintenant();
                 const sommetActif = this.graphe.sommetActif(ID_sommet);
+                //Envoie le type de event source a recevoir côté client
+                connexion.write('event: config\n');
                 const config = configurationDeSommetTchat(sommetActif.sommetInactif, d.val(), this.graphe.tailleActifs(), sommetActif.voisinsActifs);
                 this.envoyerMessageTransit(ID_sommet, config);
             }));
@@ -99,7 +101,7 @@ abstract class Reseau {
         try {
             if (this.graphe.aSommetActif(idRecepteur)) {
                 const recepteur = this.graphe.sommetActif(idRecepteur);
-                recepteur.connexion.write(JSON.stringify(message));
+                recepteur.connexion.write(`data: ${JSON.stringify(message)}\n\n`);
                 console.log("* " + dateMaintenant().representationLog()
                     + ` - Le message a ete envoyé à: ${idRecepteur.val}`);
             } else {

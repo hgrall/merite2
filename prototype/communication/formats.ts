@@ -6,48 +6,30 @@ import {
     MessageTchatParEnveloppe,
     TypeMessageTchat
 } from "../../bibliotheque/echangesTchat";
-import {Identifiant, identifiant} from "../../bibliotheque/types/identifiant";
+import {
+    Identifiant,
+    identifiant,
+    validerSorte,
+} from "../../bibliotheque/types/identifiant";
 import {conversionDate} from "../../bibliotheque/types/date";
 import {PathReporter} from "io-ts/PathReporter";
 import {tableau} from "../../bibliotheque/types/tableau";
 
+const IdentifiantSommet = t.type({
+    val: t.string,
+    sorte: t.literal("sommet")
+});
 
-/*const messageErreurConnexion  = t.type({
-    ID: t.string,
-    ID_emetteur: t.string,
-    ID_destinataire: t.string,
-    type: t.literal(TypeMessageTchat.ERREUR_CONNEXION),
-    contenu: t.string,
-    date: td.date
-})
-
-export function validerMessageErreurConnexion(messageToValidate: unknown): MessageTchatParEnveloppe {
-    const result = messageErreurConnexion.decode(messageToValidate)
-    if (isLeft(result)){
-        let  error = "";
-        PathReporter.report(result).forEach(value => {
-            error+= `${value}, `;
-        })
-        // TODO: Envoyer Response, bad request
-        throw Error(error);
-    } else {
-        const validResult = result.right
-        return creerMessage(
-            identifiant( "message", validResult.ID),
-            identifiant( "sommet", validResult.ID_emetteur),
-            identifiant( "sommet", validResult.ID_destinataire),
-            validResult.contenu,
-            conversionDate(validResult.date),
-            TypeMessageTchat.ERREUR_CONNEXION
-        );
-    }
-}*/
+const IdentifiantMessage = t.type({
+    val: t.string,
+    sorte: t.literal("message")
+});
 
 const MessageCommunication = t.type({
     //TODO Ajouter date
-    ID: t.string,
-    ID_emetteur: t.string,
-    ID_destinataires: t.Array,
+    ID: IdentifiantMessage,
+    ID_emetteur: IdentifiantSommet,
+    ID_destinataires: t.array(IdentifiantSommet),
     type: t.literal(TypeMessageTchat.COM),
     contenu: t.string,
 })
@@ -67,12 +49,15 @@ export function validerMessageCommunication(messageToValidate: unknown): Message
             const validResult = result.right;
             const arrayDestinataires: Array<Identifiant<"sommet">> = [];
             validResult.ID_destinataires.forEach(destinataire => {
-                const destinataireString = destinataire as string;
-                arrayDestinataires.push(identifiant("sommet", destinataireString))
+                const sorteValide = validerSorte<"sommet">("sommet",destinataire.sorte)
+                const identifiantDestinataire = identifiant<"sommet">(sorteValide, destinataire.val);
+                arrayDestinataires.push(identifiantDestinataire);
             })
+            const sorteMessageValide = validerSorte<"message">(validResult.ID.sorte, "message");
+            const sorteSommetEmetteurValide = validerSorte<"sommet">(validResult.ID_emetteur.sorte, "sommet");
             return creerMessage(
-                identifiant( "message", validResult.ID),
-                identifiant( "sommet", validResult.ID_emetteur),
+                identifiant( sorteMessageValide, validResult.ID.val),
+                identifiant( sorteSommetEmetteurValide, validResult.ID_emetteur.val),
                 validResult.contenu,
                 conversionDate(new Date()),
                 TypeMessageTchat.COM,

@@ -32,7 +32,6 @@
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.3",
     "@types/shelljs": "^0.8.8",
-    "axios": "^0.21.1",
     "bootstrap": "^4.6.0",
     "chai": "^4.3.4",
     "D": "^1.0.0",

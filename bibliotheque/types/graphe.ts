@@ -16,7 +16,7 @@ import {creerTableMutableVide, TableMutable, TableMutableParEnveloppe} from "./t
  */
 export interface FormatSommetActif<FSI extends FormatIdentifiable<'sommet'>, C> {
     sommetInactif: FSI;
-    voisinsActifs: TableIdentificationMutable<'sommet', FSI>;
+    voisinsActifs: FormatTableIdentification<'sommet', FSI>;
     connexion: C;
 }
 
@@ -203,11 +203,12 @@ export class GrapheMutableParTablesIdentification<FSI extends FormatIdentifiable
         const sommetInactif = this.inactifs.retirer(ID_sommet).valeur();
 
         //Initializer et remplir la table avec les  identifiants des voisins actifs
-        const voisinsActifs = creerTableIdentificationMutableVide<"sommet", FSI>("sommet");
+        const voisinsActifsMutable = creerTableIdentificationMutableVide<"sommet", FSI>("sommet");
         this.tableAdjacence.valeur(ID_sommet).tableau.forEach( idAdjacence => {
-            voisinsActifs.ajouter(idAdjacence, this.inactifs.valeur(idAdjacence));
+            voisinsActifsMutable.ajouter(idAdjacence, this.inactifs.valeur(idAdjacence));
 
         })
+        const voisinsActifs: FormatTableIdentification<"sommet", FSI> = {sorte:"sommet", identification: voisinsActifsMutable.val()}
 
         //Crée un sommet actif a partir du sommet sélectionné
         const sommetActif = { connexion, sommetInactif, voisinsActifs };

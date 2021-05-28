@@ -34,11 +34,13 @@ const traductionEntree = (request: express.Request) : DataType => {
 };
 
 const traitementDesFlux = (request: express.Request, response: express.Response) => {
-      response.writeHead(200, {
-        "Content-Type": "text/event-stream",
-            Connection: "keep-alive",
-           "Cache-Control": "no-cache, no-store",
-         });
+    response.setHeader('Content-Type', 'text/event-stream');
+    response.setHeader('Cache-Control', 'no-cache');
+
+    // only if you want anyone to access this endpoint
+    response.setHeader('Access-Control-Allow-Origin', '*');
+
+    response.flushHeaders();
     const id_sommet = reseauEtoile.traitementOvertureConnectionLongue(response);
     if (id_sommet != undefined){
         request.on("close", () => {

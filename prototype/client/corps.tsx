@@ -1,22 +1,34 @@
 import * as React from "react";
 import {Individu, Message} from "./Helpers/typesInterface";
-import {TableIdentification} from "../../bibliotheque/types/tableIdentification";
 import {
-    COUPLE_FOND_ENCRE_INCONNU,
+    creerTableIdentificationMutableParCopie, creerTableIdentificationMutableParEnveloppe,
+    creerTableIdentificationMutableVide,
+    tableIdentification,
+    TableIdentification, TableIdentificationMutable
+} from "../../bibliotheque/types/tableIdentification";
+import {
+    COUPLE_FOND_ENCRE_INCONNU, COUPLE_FOND_ENCRE_SUJET,
     COUPLE_FOND_ENCRE_TOUS,
-    FOND,
+    FOND, SuiteCouplesFondEncre,
     TEXTE_ERREUR
 } from "../../bibliotheque/interface/couleur";
-import {GenerateurIdentifiants, identifiant, Identifiant} from "../../bibliotheque/types/identifiant";
+import {
+    creerGenerateurIdentifiantParCompteur,
+    GenerateurIdentifiants,
+    identifiant,
+    Identifiant
+} from "../../bibliotheque/types/identifiant";
 import {DateFr} from "../../bibliotheque/types/date";
 import {creerMessageAVoisin} from "../communication/Mapper/MessageMapper";
-import {MessageTchat} from "../../bibliotheque/echangesTchat";
-import {envoyerAVoisins} from "./Reseau/ConnexionServeur";
+import {configurationDeSommetTchat, configurationTchat, MessageTchat} from "../../bibliotheque/echangesTchat";
+import {ecouterServeur, envoyerAVoisins} from "./Reseau/connexionServeur";
 import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
 import {tableau} from "../../bibliotheque/types/tableau";
+import {table} from "../../bibliotheque/types/table";
+import {FormatSommetTchat} from "../../bibliotheque/types/sommet";
 
 
 interface ProprietesCorps {
@@ -37,10 +49,11 @@ interface Etat {
     selection: Individu;
     messages: Message[];
     etatInterface: EtatInterfaceTchat;
-    nombreConnexions: string;
+    nombreConnexions: number;
     afficherAlerte: boolean;
     messageAlerte: string;
     code: string;
+    config: unknown
 }
 
 export class Corps extends React.Component<{}, Etat> {
@@ -50,17 +63,25 @@ export class Corps extends React.Component<{}, Etat> {
 
     private messageErreur: string;
 
-    private individusObjets: TableIdentification<'sommet', Individu>;
+    private individusObjets: TableIdentificationMutable<'sommet', Individu>;
     private individuSujet: Individu;
     private toutIndividu: Individu;
     private individuInconnu: Individu;
 
+    private  sse : EventSource;
+
     constructor(props: {}) {
         super(props);
-        this.urlServeur = location.toString()
-            .replace(/^http/, 'ws'); // Même url, au protocole près
+        // this.urlServeur = location.toString()
+        //     .replace(/^http/, 'ws'); // Même url, au protocole près
+
+        const code = "A1"
+        this.sse = new EventSource(`http://localhost:8080/listen/${code}`,
+            { withCredentials: false });
 
         this.messageErreur = "Aucune erreur";
+
+        this.individusObjets = creerTableIdentificationMutableVide('sommet');
 
         this.toutIndividu = {
             ID: identifiant('sommet', ID_TOUS),
@@ -80,11 +101,13 @@ export class Corps extends React.Component<{}, Etat> {
             selection: this.toutIndividu,
             messages: [],
             etatInterface: EtatInterfaceTchat.INITIAL,
-            nombreConnexions: "0",
+            nombreConnexions: 0,
             afficherAlerte: false,
             messageAlerte: "",
-            code: ""
-        };
+            code: "",
+            config: {}
+        }
+
         this.envoyerMessage = this.envoyerMessage.bind(this);
         this.modifierSelection = this.modifierSelection.bind(this);
         this.masquerAlerte = this.masquerAlerte.bind(this);
@@ -158,22 +181,96 @@ export class Corps extends React.Component<{}, Etat> {
             console.log("- net : " + msg.representation());
             envoyerAVoisins(msg, this.state.code).catch(reason => {
                 // TODO: AFFICHER ALERTE
-            });;
+            });
         }
     }
+
 
     componentDidMount(): void {
         // TODO
         // - poster un message de connexion (service rest, requête post)
         // - établir une connexion SSE et recevoir les avertissements de connexion
         // - afficher ces messages
-        console.log("Le composant est monté.");
+        const self = this;
+        this.sse .addEventListener('config',  (e:MessageEvent) => {
+            const configJSON = JSON.parse(e.data);
+            console.log(configJSON);
+            const config = configurationTchat<FormatSommetTchat,Express.Request>(configJSON.etat);
+            self.individuSujet = {
+                ID: configJSON.etat.id,
+                nom: configJSON.etat.centre.pseudo,
+                fond: COUPLE_FOND_ENCRE_SUJET.fond,
+                encre: COUPLE_FOND_ENCRE_SUJET.encre
+            };
+            self.generateur = creerGenerateurIdentifiantParCompteur(configJSON.id + "-ERR-");
+            const suite = new SuiteCouplesFondEncre();
+            console.log(configJSON.etat.voisinsActifs);
+            console.log(configJSON.etat.voisinsActifs.etat.identification);
+            creerTableIdentificationMutableParEnveloppe("sommet", {identification:configJSON.etat.voisinsActifs.etat.identification,sorte:"sommet"}).iterer((ID_sorte, sommet: FormatSommetTchat) => {
+                    let c = suite.courant();
+                    self.individusObjets.ajouter(ID_sorte, {ID: sommet.ID,nom:sommet.pseudo, encre:c.encre, fond:c.fond })
+                });
+            self.setState({nombreConnexions: config.val().nombreConnexions});
+            self.setState({
+                etatInterface: EtatInterfaceTchat.NORMAL
+            });
+        });
 
+
+
+
+
+        // this.sse.onmessage = e => this.getRealtimeData(JSON.parse(e.data));
+        // this.sse.onerror = e => {
+        //     // error log here
+        //     console.log(e);
+        //     this.sse.close();
+        // }
+
+        //let config = configurationTchat(c);
+        // console.log("* Réception");
+        // console.log("- de la configuration brute : " + config.brut());
+        // console.log("- de la configuration nette : " + config.representation());
+        // console.log("* Initialisation du noeud du réseau");
+        // this.setState({nombreConnexions: config.net('nombreConnexions')})
+        // this.noeud = config.noeud();
+        // this.individuSujet = {
+        //     ID: this.noeud.val().centre.ID,
+        //     nom: this.noeud.val().centre.pseudo,
+        //     fond: COUPLE_FOND_ENCRE_SUJET.fond,
+        //     encre: COUPLE_FOND_ENCRE_SUJET.encre
+        // };
+        // this.generateur = creerGenerateurIdentifiantParCompteur(this.individuSujet.ID.val + "-ERR-");
+        // let suite = new SuiteCouplesFondEncre();
+        // this.individusObjets =
+        //     tableIdentification('sommet',
+        //         table(this.noeud.val().voisins.identification).application(s => {
+        //             let c = suite.courant();
+        //             return {
+        //                 ID: s.ID,
+        //                 nom: s.pseudo,
+        //                 fond: c.fond,
+        //                 encre: c.encre
+        //             };
+        //         }).val());
+        // this.setState({
+        //     etatInterface: EtatInterfaceTchat.NORMAL
+        // });
+
+        console.log("Le composant est monté.");
+    }
+
+    componentWillUnmount() {
+        this.sse.close()
     }
 
     render() {
         switch (this.state.etatInterface) {
             case EtatInterfaceTchat.NORMAL:
+                console.log(this.individuSujet);
+                console.log(this.individusObjets);
+                console.log(this.toutIndividu);
+                console.log(this.state.selection);
                 return (
                     <CorpsContainer>
                         <Row>

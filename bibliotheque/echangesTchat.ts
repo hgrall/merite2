@@ -19,7 +19,11 @@ import {
 import {
     FormatSommetTchat, sommetTchat,
 } from "./types/sommet";
-import {TableIdentificationMutable} from "./types/tableIdentification";
+import {
+    FormatTableIdentification,
+    FormatTableIdentificationMutable,
+    TableIdentificationMutable
+} from "./types/tableIdentification";
 import {TableauParEnveloppe} from "./types/tableau";
 
 
@@ -36,7 +40,7 @@ export interface FormatConfigurationTchat<FSI extends FormatIdentifiable<"sommet
     readonly "date": FormatDateFr,
     readonly "nombreConnexions" : number,
     readonly "id": Identifiant<"sommet">,
-    readonly "voisinsActifs": TableIdentificationMutable<'sommet', FSI>;
+    readonly "voisinsActifs": FormatTableIdentification<'sommet', FSI>;
 }
 
 /**
@@ -111,7 +115,7 @@ export function configurationDeSommetTchat<FSI extends FormatIdentifiable<"somme
     n: FormatSommetTchat,
     date: FormatDateFr,
     nombreConnexions: number,
-    voisinsActifs: TableIdentificationMutable<'sommet', FSI>
+    voisinsActifs: FormatTableIdentification<'sommet', FSI>
 ): ConfigurationTchatParEnveloppe<FSI,C> {
     return new ConfigurationTchatParEnveloppe({
         "id": n.ID,
@@ -122,6 +126,7 @@ export function configurationDeSommetTchat<FSI extends FormatIdentifiable<"somme
         "voisinsActifs": voisinsActifs
     });
 }
+
 
 /**
  * Description JSON d'une erreur pour le prototype.

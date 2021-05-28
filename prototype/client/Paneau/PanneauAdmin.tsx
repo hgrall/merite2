@@ -16,7 +16,7 @@ interface ProprietesAdmin {
     tous: Individu;
     selection: Individu;
     modifSelection: (i: Individu) => void;
-    nombreConnexions: string
+    nombreConnexions: number
 }
 class ContenuPanelAdmin extends React.Component<ProprietesAdmin, {}> {
     render() {
