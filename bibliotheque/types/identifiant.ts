@@ -1,7 +1,9 @@
 /**
- * TODO
+ * Type représentant l'ensemble des sortes.
+ * 
+ * Définir un type union formé de singletons de type string.
  */
-export type EnsembleSortes = "sommet" | "message" | "test"; // à compléter
+export type EnsembleSortes = "sommet" | "message" | "test"; 
 
 /**
  * Identifiant au format JSON. Type paramétré et valeur paramétrée par la sorte des identifiants,
