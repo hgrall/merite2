@@ -198,7 +198,7 @@ export function informationNouvelleConnexionTchat<FSI extends FormatIdentifiable
 /**
  * Enumération des différents types de messages pour le prototype.
  */
-    export enum TypeErreurTchat  {
+export enum TypeErreurTchat  {
     ERREUR_CONNEXION = 'ERREUR_CONNEXION',
     ERREUR_EMET = 'ERREUR_EMET',
     ERREUR_DEST = 'ERREUR_DEST',

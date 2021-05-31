@@ -1,19 +1,26 @@
 import * as express from "express";
 import {GrapheMutableParTablesIdentification} from "../../bibliotheque/types/graphe";
 import {
-    Identifiant, GenerateurIdentifiants, creerGenerateurIdentifiantParCompteur,
+    creerGenerateurIdentifiantParCompteur,
+    GenerateurIdentifiants,
+    Identifiant,
 } from "../../bibliotheque/types/identifiant";
 import {
+    creerTableIdentificationMutableParEnveloppe,
     creerTableIdentificationMutableVide,
 } from "../../bibliotheque/types/tableIdentification";
-import {
-    FormatTableau, tableau, TableauParEnveloppe
-} from "../../bibliotheque/types/tableau";
+import {FormatTableau, TableauParEnveloppe} from "../../bibliotheque/types/tableau";
 import {dateMaintenant} from "../../bibliotheque/types/date";
 import {
     configurationDeSommetTchat,
+    ConfigurationTchatParEnveloppe,
+    FormatErreurTchat,
+    informationNouvelleConnexionTchat,
+    InformationNouvelleConnexionTchatParEnveloppe,
 } from "../../bibliotheque/echangesTchat";
 import {FormatSommetTchat} from "../../bibliotheque/types/sommet";
+import {TypeInformationTchat} from "../../bibliotheque/types/formats";
+import {creerTableMutableParEnveloppe} from "../../bibliotheque/types/table";
 
 
 abstract class Reseau {
@@ -21,14 +28,6 @@ abstract class Reseau {
     generateurIdentifiants: GenerateurIdentifiants<"sommet">;
 
     abstract genererReseau(taille: number, noms: ReadonlyArray<string>): void;
-
-    /*diffuserMessage<M>(message: M): void {
-        this.graphe.itererActifs((identifiant) => {
-            this.envoyerMessage(identifiant, message)
-        });
-        console.log("* " + dateMaintenant().representationLog()
-            + `- Le message ${JSON.stringify(message)} a été diffusé`);
-    }*/
 
     traitementFermetureConnectionLongue(idNoeud: Identifiant<"sommet">): void {
         if (this.graphe.aSommetActif(idNoeud)) {
@@ -41,7 +40,7 @@ abstract class Reseau {
             this.graphe.itererActifs((ID_sommet => {
                 const d = dateMaintenant();
                 const sommetActif = this.graphe.sommetActif(ID_sommet);
-                const config = configurationDeSommetTchat(sommetActif.sommetInactif, d.val(), this.graphe.tailleActifs(), sommetActif.voisinsActifs);
+                const config = configurationDeSommetTchat(sommetActif.sommetInactif, d.val(), this.graphe.tailleActifs(), sommetActif.voisinsActifs.val());
                 this.envoyerMessageTransit(ID_sommet, config);
             }));
         } else {
@@ -55,17 +54,27 @@ abstract class Reseau {
         try {
             // Active le sommet a partir de la nouvelle connexion
             const nouveauSommetActif = this.graphe.activerSommet(connexion);
-            // Envoie l'information de la nouvelle connexion a tous les sommets actifs
-            const idSommetsActifs = [];
+
+            // Envoie l'information de la nouvelle connexion a tous les sommets actifs et
+            // mets à jour les voisins du sommet
+            const d = dateMaintenant();
             this.graphe.itererActifs((ID_sommet => {
-                idSommetsActifs.push(ID_sommet);
-                const d = dateMaintenant();
                 const sommetActif = this.graphe.sommetActif(ID_sommet);
-                //Envoie le type de event source a recevoir côté client
-                connexion.write('event: config\n');
-                const config = configurationDeSommetTchat(sommetActif.sommetInactif, d.val(), this.graphe.tailleActifs(), sommetActif.voisinsActifs);
-                this.envoyerMessageTransit(ID_sommet, config);
+                if(sommetActif.voisinsActifs.contient(nouveauSommetActif.sommetInactif.ID)){
+                    sommetActif.voisinsActifs.ajouter(sommetActif.sommetInactif.ID,sommetActif.sommetInactif);
+                }
+                const information = informationNouvelleConnexionTchat({
+                    voisinsActifs: sommetActif.voisinsActifs.val(),
+                    nombreDeConnexions:this.graphe.tailleActifs(),
+                    type:TypeInformationTchat.NOUVELLE_CONNEXION,
+                    date:d.val(),
+                    ID_Destinataire:sommetActif.sommetInactif.ID
+                })
+                this.envoyerInformationNouvelleConnexion(ID_sommet, information, sommetActif.connexion);
             }));
+
+            const config = configurationDeSommetTchat(nouveauSommetActif.sommetInactif, d.val(), this.graphe.tailleActifs(), nouveauSommetActif.voisinsActifs.val());
+            this.envoyerConfiguraition(nouveauSommetActif.sommetInactif.ID, config, connexion)
             return nouveauSommetActif.sommetInactif.ID;
         } catch (e) {
             // TODO: Envoyer message d'erreur
@@ -96,6 +105,7 @@ abstract class Reseau {
     }
 
     envoyerMessageTransit<M>(idRecepteur: Identifiant<"sommet">, message: M): void {
+        // TODO: Revisar protocolo de mensajes
         console.log("* " + dateMaintenant().representationLog()
             + ` - Message a envoyer: ${JSON.stringify(message)}`);
         try {
@@ -112,6 +122,20 @@ abstract class Reseau {
             console.log("* " + dateMaintenant().representationLog()
                 + `- Erreur: ${e}`);
         }
+    }
+
+    envoyerInformationNouvelleConnexion(idRecepteur: Identifiant<"sommet">, information: InformationNouvelleConnexionTchatParEnveloppe<FormatSommetTchat>, connexion: express.Response){
+        connexion.write('event: config\n');
+        this.envoyerMessageTransit(idRecepteur, information);
+    }
+
+    envoyerConfiguraition(idRecepteur: Identifiant<"sommet">, configuration: ConfigurationTchatParEnveloppe<FormatSommetTchat, express.Response>, connexion: express.Response){
+        connexion.write('event: config\n');
+        this.envoyerMessageTransit(idRecepteur, configuration);
+    }
+
+    envoyerErreur(idRecepteur:Identifiant<"sommet">, erreur: FormatErreurTchat){
+
     }
 }
 
@@ -141,7 +165,7 @@ export class ReseauEtoile extends Reseau {
         const tableAdjacence = creerTableIdentificationMutableVide<'sommet', FormatTableau<Identifiant<'sommet'>>>("sommet");
 
         identifiants.forEach((identifiant, index) => {
-            inactifs.ajouter(identifiant, {ID: identifiant, pseudo: noms[index % noms.length], voisins: pseudos});
+            inactifs.ajouter(identifiant, {ID: identifiant, pseudo: noms[index % noms.length], voisins: pseudos.val()});
             tableAdjacence.ajouter(identifiant, {taille: taille, tableau: identifiants})
         });
 

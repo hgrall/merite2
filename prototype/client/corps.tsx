@@ -18,9 +18,14 @@ import {
     identifiant,
     Identifiant
 } from "../../bibliotheque/types/identifiant";
-import {DateFr} from "../../bibliotheque/types/date";
+import {dateEnveloppe, DateFr} from "../../bibliotheque/types/date";
 import {creerMessageAVoisin} from "../communication/Mapper/MessageMapper";
-import {configurationDeSommetTchat, configurationTchat, MessageTchat} from "../../bibliotheque/echangesTchat";
+import {
+    configurationDeSommetTchat,
+    configurationTchat,
+    erreurTchat, messageTchat,
+    MessageTchat, TypeMessageTchat
+} from "../../bibliotheque/echangesTchat";
 import {ecouterServeur, envoyerAVoisins} from "./Reseau/connexionServeur";
 import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
@@ -216,45 +221,114 @@ export class Corps extends React.Component<{}, Etat> {
             });
         });
 
+        this.sse .addEventListener('erreur',  (e:MessageEvent) => {
+            //TODO: TROUVER POSSIBLES AMELIORATIONS
+            let erreur = erreurTchat(e.data);
+            console.log("* Réception");
+            console.log("- de l'erreur rédhibitoire brute : " + erreur.brut());
+            console.log("- de l'erreur rédhibitoire nette : " + erreur.representation());
+            console.log("* Affichage de l'erreur");
+            this.messageErreur = erreur.representation();
+            // TODO: VERIFIER TYPE ERREUR
+            let codeErreur = erreur.val().erreurRedhibitoire;
+            if (codeErreur == 0) {
+                let typeReseau = "anneau";
+                if ((document.URL).includes("etoile")) {
+                    typeReseau = "etoile";
+                }
+                const nombreReseauIndex = (document.URL).indexOf(typeReseau) + 6
+                const nombreNouvelReseau = (Number(document.URL[nombreReseauIndex]) + 1)
+                if (nombreNouvelReseau < 5) {
+                    const url = document.URL.replace(typeReseau + document.URL[nombreReseauIndex], typeReseau + nombreNouvelReseau)
+                    window.location.href = url
+                } else {
+                    this.setState({
+                        etatInterface: EtatInterfaceTchat.ERRONE,
+                    });
+                }
+            } else {
+                this.setState({
+                    etatInterface: EtatInterfaceTchat.ERRONE,
+                });
+            }
+        });
+
+        this.sse .addEventListener('msg',  (e:MessageEvent) => {
+            //TODO: TROUVER POSSIBLES AMELIORATIONS
+            let msg = messageTchat(e.data);
+            console.log("* Réception");
+            console.log("- du message brut : " + msg.brut());
+            console.log("- du message net : " + msg.representation());
+
+            let contenu: string = msg.val().contenu;
+
+            /* Message en transit */
+            if (msg.val().type === TypeMessageTchat.TRANSIT) {
+                if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
+                    console.log("- message incohérent");
+                    return;
+                }
+                if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
+                    console.log("- message incohérent");
+                    return;
+                }
+                msg.val().ID_destinataires.iterer((_, val) => {
+                    let destinataire = this.individusObjets.valeur(val);
+                    this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
+                    return;
+                });
+                let emetteur: Individu = this.individusObjets.valeur(msg.val().ID_emetteur);
+                let destinataire: Individu = this.individuSujet;
+                this.ajouterMessage({
+                    ID: msg.val().ID,
+                    emetteur: emetteur,
+                    destinataire: destinataire,
+                    cachet: dateEnveloppe(msg.val().date).representation(),
+                    contenu: contenu,
+                    accuses: []
+                });
+                return;
+            }
+
+            /* Message accusant réception */
+            if (msg.val().type === TypeMessageTchat.AR) {
+                if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
+                    console.log("- message incohéent");
+                    return;
+                }
+                if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
+                    console.log("- message incohéent");
+                    return;
+                }
+                msg.val().ID_destinataires.iterer((_, val) => {
+                    let destinataire = this.individusObjets.valeur(val);
+                    this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
+                    return;
+                });
+            }
 
 
+            // TODO: REEMPLACER PAR MESSAGE D'INFORMATION
+            if (msg.val().type === TypeMessageTchat.INFO) {
+                this.setState({nombreConnexions: msg.val().contenu})
+                return;
+            }
 
-
-        // this.sse.onmessage = e => this.getRealtimeData(JSON.parse(e.data));
+            this.ajouterMessage({
+                ID: this.generateur.produire("message"),
+                emetteur: this.individu(msg.val().ID_emetteur),
+                destinataire: this.individu(msg.val().ID_destinataire),
+                cachet: dateEnveloppe(msg.val().date).representation(),
+                contenu: contenu,
+                accuses: []
+            });
+        });
         // this.sse.onerror = e => {
         //     // error log here
         //     console.log(e);
         //     this.sse.close();
         // }
 
-        //let config = configurationTchat(c);
-        // console.log("* Réception");
-        // console.log("- de la configuration brute : " + config.brut());
-        // console.log("- de la configuration nette : " + config.representation());
-        // console.log("* Initialisation du noeud du réseau");
-        // this.setState({nombreConnexions: config.net('nombreConnexions')})
-        // this.noeud = config.noeud();
-        // this.individuSujet = {
-        //     ID: this.noeud.val().centre.ID,
-        //     nom: this.noeud.val().centre.pseudo,
-        //     fond: COUPLE_FOND_ENCRE_SUJET.fond,
-        //     encre: COUPLE_FOND_ENCRE_SUJET.encre
-        // };
-        // this.generateur = creerGenerateurIdentifiantParCompteur(this.individuSujet.ID.val + "-ERR-");
-        // let suite = new SuiteCouplesFondEncre();
-        // this.individusObjets =
-        //     tableIdentification('sommet',
-        //         table(this.noeud.val().voisins.identification).application(s => {
-        //             let c = suite.courant();
-        //             return {
-        //                 ID: s.ID,
-        //                 nom: s.pseudo,
-        //                 fond: c.fond,
-        //                 encre: c.encre
-        //             };
-        //         }).val());
-        // this.setState({
-        //     etatInterface: EtatInterfaceTchat.NORMAL
         // });
 
         console.log("Le composant est monté.");

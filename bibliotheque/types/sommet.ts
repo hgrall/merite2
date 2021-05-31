@@ -4,8 +4,14 @@ import {
 import {
     Enveloppe, TypeEnveloppe
 } from "../types/enveloppe"
-import {TableIdentificationMutable} from "./tableIdentification";
+import {
+    creerTableIdentificationMutableParEnveloppe,
+    FormatTableIdentificationMutable,
+    tableIdentification,
+    TableIdentificationMutable
+} from "./tableIdentification";
 import {jamais} from "./typesAtomiques";
+import {table} from "./table";
 
 /**
  * Interface pour un sommet abstrait d'un réseau,
@@ -48,8 +54,9 @@ export abstract class SommetParEnveloppe<
  */
 export interface FormatSommetTchat extends FormatIdentifiable<'sommet'> {
     readonly pseudo: string,
-    readonly voisins:  TableIdentificationMutable<'sommet', string>
+    readonly voisins:  FormatTableIdentificationMutable<'sommet', string>
 }
+
 /**
  * Etiquettes pour un sommet du réseau de prototype.
  */
@@ -93,7 +100,7 @@ export class SommetTchatParEnveloppe
     }
 
     voisins(): TableIdentificationMutable<'sommet', string>{
-        return this.val().voisins;
+        return creerTableIdentificationMutableParEnveloppe("sommet", this.val().voisins);
     }
     /**
      * Représentation nette à partir des étiquettes "nom" et "ID".

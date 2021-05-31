@@ -1,4 +1,3 @@
-import { MessageTchat} from "../../../bibliotheque/echangesTchat";
 import axios from 'axios';
 
 export const envoyerAVoisins = async (

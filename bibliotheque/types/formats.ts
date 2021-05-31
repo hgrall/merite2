@@ -5,8 +5,10 @@ import {
 import {
     Enveloppe, TypeEnveloppe
 } from "./enveloppe";
-import {Identifiant} from "./identifiant";
+import {FormatIdentifiable, Identifiant} from "./identifiant";
 import {FormatDateFr} from "./date";
+import {FormatSommetTchat} from "./sommet";
+import {FormatTableIdentification} from "./tableIdentification";
 
 /**
  * Interface JSON servant de marqueur pour les configurations initiales.
@@ -28,22 +30,29 @@ export interface FormatErreurRedhibitoire {
 }
 
 /**
- * Interface JSON servant de marqueur pour les informations.
- * Elle possède une clé pour permettre la discrimination : cette
- * clé est inutilisable par les autres interfaces.
- * Cette interface pourrait être complétée à l'avenir.
- */
-export interface FormatInformation {
-    readonly "information": Unite
-}
-/**
  * Interface JSON servant de marqueur pour les messages.
  */
 export interface FormatMessage {
     readonly ID: Identifiant<'message'>,
     readonly ID_emetteur: Identifiant<'sommet'>,
-    readonly type: string ,
+    readonly type: string,
     readonly contenu: string,
+    readonly date: FormatDateFr
+}
+
+/**
+ * Enumération des différents types d'informations presents dans le jeu.
+ */
+export enum TypeInformationTchat {
+   NOUVELLE_CONNEXION = 'NOUVELLE_CONNEXION'
+}
+
+/**
+ * Interface JSON servant de marqueur pour les messages d'information.
+ */
+export interface FormatInformation {
+    readonly ID_Destinataire: Identifiant<'sommet'>,
+    readonly type: TypeInformationTchat,
     readonly date: FormatDateFr
 }
 
@@ -177,5 +186,21 @@ export abstract class InformationParEnveloppe<
     }
 }
 
+
+/**
+ * Description JSON d'une configuration pour le prototype.
+ * Structure :
+ * - configurationInitiale : marqueur des configurations
+ * - centre : sommet
+ * - voisins : table de sommets voisins contenant l'
+ * - date : date en français
+ */
+export interface FormatConfigurationTchat<FSI extends FormatIdentifiable<"sommet">,C> extends FormatConfigurationInitiale {
+    readonly "centre": FormatSommetTchat,
+    readonly "date": FormatDateFr,
+    readonly "nombreConnexions" : number,
+    readonly "id": Identifiant<"sommet">,
+    readonly "voisinsActifs": FormatTableIdentification<'sommet', FSI>;
+}
 
 
