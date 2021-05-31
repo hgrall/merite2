@@ -12,6 +12,7 @@
     "build": "npm run tsc && npm run webpack",
     "buildAvecVerif": "npm run tsc && npm run verif && npm run webpack",
     "test": "mocha -r ts-node/register test/general.ts",
+    "testApp": "mocha -r ts-node/register test/applis.ts",
     "verif": "tslint --exclude bibliotheque/js **/*.ts",
     "demarrer": "node build/routage/serveur/serveurRoutage",
     "documenter": "typedoc --out documentation/ bibliotheque/types"

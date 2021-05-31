@@ -33,3 +33,19 @@ export function testUnitaireJsonString<TO>(description : string, oracle : TO, ca
     test(description, 
         () => { chai.expect(cs).to.equal(os);});
 } 
+
+/**
+ * Test unitaire entre un oracle égal à une chaîne de caractères 
+ * et une valeur égale à une chaîne de caractères. La
+ * comparaison se fait sur les chaînes de caractères.
+ * @param description nom du test (fonction, contexte)
+ * @param oracle valeur attendue
+ * @param calcul valeur calculée par le programme
+ */
+export function testUnitaireStringString(description : string, oracle : string, calcul : string) : void {
+    let os = oracle;
+    let cs = calcul;
+    console.log(description + " - calcul : " + cs);
+    test(description, 
+        () => { chai.expect(cs).to.equal(os);});
+} 

@@ -12,7 +12,7 @@ import { FileMutableAPriorite, FormatFileAPriorite } from "../types/fileAPriorit
 import { ActivableMutable, jamais, Prioritarisable } from "../types/typesAtomiques";
 
 /**
- * Etat d'un graphe composé
+ * Etat d'un réseau composé
  * - d'un tableau mutable de sommets actifS,
  * - d'un tableau mutable de sommets inactifs,
  * - d'une table d'adjacence, associant à un identifiant de sommet
@@ -20,7 +20,7 @@ import { ActivableMutable, jamais, Prioritarisable } from "../types/typesAtomiqu
  *  (présents ou absents).
  * @param FS format JSON des sommets
  */
-export interface EtatGraphe<
+export interface EtatReseau<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C> {
     readonly sommets: TableIdentificationMutable<'sommet', FS>;
@@ -31,7 +31,7 @@ export interface EtatGraphe<
 
 
 /**
- * Format JSON d'un graphe composé
+ * Format JSON d'un réseau composé
  * - d'un tableau de sommets actifs,
  * - d'un tableau de sommets inactifs,
  * - d'une table d'adjacence, associant à un identifiant de sommet
@@ -40,7 +40,7 @@ export interface EtatGraphe<
  * TODO JSON vs non JSON
  * @param FS format JSON des sommets
  */
-export interface FormatGraphe<
+export interface FormatReseau<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C> {
     readonly sommets: FormatTableIdentification<'sommet', FS>;
@@ -49,25 +49,25 @@ export interface FormatGraphe<
 }
 
 /**
- * Etiquettes utilisées pour la représentation des graphes.
+ * Etiquettes utilisées pour la représentation des réseaux.
  * TODO à compléter à l'usage.
  */
-export type EtiquetteGraphe = 'sommets' | 'fileInactifs' | 'voisins';
+export type EtiquetteReseau = 'sommets' | 'fileInactifs' | 'voisins';
 
 /**
- * Interface pour un graphe, paramétrée par le type des sommets.
- * Le graphe définit une table d'adjacence pour tous les sommets.
+ * Interface pour un réseau, paramétrée par le type des sommets.
+ * Le réseau définit une table d'adjacence pour tous les sommets.
  * Les sommets peuvent être actifs ou inactifs.
  * TODO à enrichir et raffiner suivant l'usage.
  * @param FS type décrivant les sommets en JSON.
  * @param C type décrivant les connexions (serveur vers client)
  */
-export interface GrapheMutable<
+export interface ReseauMutable<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
-    C> extends TypeEnveloppe<EtatGraphe<FS, C>,
-    FormatGraphe<FS, C>, EtiquetteGraphe> {
+    C> extends TypeEnveloppe<EtatReseau<FS, C>,
+    FormatReseau<FS, C>, EtiquetteReseau> {
     /**
-     * Détermine si le  graphe possède le sommet identifié par l'argument.
+     * Détermine si le  réseau possède le sommet identifié par l'argument.
      * @param ID_sommet identité du sommet.
      * @returns true si le réseau possède ce sommet, false sinon.
      */
@@ -75,7 +75,7 @@ export interface GrapheMutable<
 
     /**
      * Détermine si les deux sommets identifiés par les arguments sont voisins.
-     * Précondition : les sommets appartiennent au graphe.
+     * Précondition : les sommets appartiennent au réseau.
      * @param ID_sommet1 identité du sommet.
      * @param ID_sommet2 identité du sommet.
      */
@@ -98,41 +98,41 @@ export interface GrapheMutable<
     connexion(ID_sommet: Identifiant<'sommet'>): C;
 
     /**
-     * Détermine si le graphe possède un sommet actif.
-     * @returns true si le graphe possède un sommet actif, false sinon.
+     * Détermine si le réseau possède un sommet actif.
+     * @returns true si le réseau possède un sommet actif, false sinon.
      */
     aUnSommetActif(): boolean;
 
     /**
-     * Détermine si le graphe possède un sommet inactif.
-     * @returns true si le graphe possède un sommet inactif, false sinon.
+     * Détermine si le réseau possède un sommet inactif.
+     * @returns true si le réseau possède un sommet inactif, false sinon.
      */
     aUnSommetInactif(): boolean;
 
     /**
      * Active un sommet inactif.
      * C'est le sommet le plus prioritaire qui est activé.
-     * Précondition : le graphe possède un sommet inactif.
+     * Précondition : le réseau possède un sommet inactif.
      * @returns Sommet activé.
      */
     activerSommet(connexion: C): Identifiant<'sommet'>;
 
     /**
      * Inactive le sommet identifié par l'argument.
-     * Précondition : le graphe possède ce sommet actif. 
+     * Précondition : le réseau possède ce sommet actif. 
      * @param ID_sommet identité du sommet à inactiver.
      */
     inactiverSommet(ID_sommet: Identifiant<'sommet'>): void;
 
     /**
-     * Nombre total de sommets inactifs dans le graphe.
+     * Nombre total de sommets inactifs dans le réseau.
      */
-    tailleInactifs(): number;
+    nombreInactifs(): number;
 
     /**
-     * Nombre total de sommets inactifs dans le graphe.
+     * Nombre total de sommets inactifs dans le réseau.
      */
-    tailleActifs(): number;
+    nombreActifs(): number;
 
     /**
      * Itère sur les voisins du sommet identifié par l'argument en leur appliquant une fonction.
@@ -154,12 +154,12 @@ export interface GrapheMutable<
 
 }
 
-export class GrapheMutableParEnveloppe<
+class ReseauMutableParEnveloppe<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C>
-    extends Enveloppe<EtatGraphe<FS, C>, 
-    FormatGraphe<FS, C>, EtiquetteGraphe>
-    implements GrapheMutable<FS, C>
+    extends Enveloppe<EtatReseau<FS, C>,
+    FormatReseau<FS, C>, EtiquetteReseau>
+    implements ReseauMutable<FS, C>
 {
 
     constructor(
@@ -169,14 +169,14 @@ export class GrapheMutableParEnveloppe<
             TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>
     ) {
         super({
-            sommets : sommets,
+            sommets: sommets,
             fileInactifs: fileInactifs,
             adjacence: adjacence,
             connexions: creerTableIdentificationMutableVide('sommet')
         });
     }
 
-    toJSON(): FormatGraphe<FS, C> {
+    toJSON(): FormatReseau<FS, C> {
         return {
             sommets: this.etat().sommets.toJSON(),
             fileInactifs: this.etat().fileInactifs.toJSON(),
@@ -232,12 +232,12 @@ export class GrapheMutableParEnveloppe<
             + ` - Sommets : ${this.net("sommets")}`);
     }
 
-    tailleInactifs(): number {
+    nombreInactifs(): number {
         return this.etat().fileInactifs.taille();
     }
 
-    tailleActifs(): number {
-        return this.etat().sommets.taille() - this.tailleInactifs();
+    nombreActifs(): number {
+        return this.etat().sommets.taille() - this.nombreInactifs();
     }
 
     itererVoisins(ID_sommet: Identifiant<"sommet">, f: (i: number, ID_sommet: Identifiant<"sommet">) => void): void {
@@ -253,7 +253,7 @@ export class GrapheMutableParEnveloppe<
         return this.etat().adjacence.valeur(ID_sommet);
     }
 
-    net(e: EtiquetteGraphe): string {
+    net(e: EtiquetteReseau): string {
         switch (e) {
             case "sommets":
                 return this.etat().sommets.representation();
@@ -268,4 +268,25 @@ export class GrapheMutableParEnveloppe<
     representation(): string {
         return `Sommets : ${this.net("sommets")} - Voisins : ${this.net("voisins")}`;
     }
-} 
+}
+
+export function creerReseauMutable<
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    C>
+    (
+        sommets: TableIdentificationMutable<'sommet', FS>,
+        fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
+        adjacence:
+            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>
+    ): ReseauMutable<FS, C> {
+    return new ReseauMutableParEnveloppe(sommets, fileInactifs, adjacence);
+}
+
+/**
+ * Interface pour un générateur de réseau.
+ */
+export interface GenerateurReseau<
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    C> {
+    engendrer(): ReseauMutable<FS, C>;
+}

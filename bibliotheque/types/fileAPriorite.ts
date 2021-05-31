@@ -4,7 +4,7 @@
 
 import { Enveloppe, TypeEnveloppe } from "./enveloppe";
 import { jamais, Mesurable } from "./typesAtomiques";
-import { ajoutListeCroissante, Liste, triCroissant } from "./liste";
+import { ajoutListeCroissante, Liste, listeVide, triCroissant } from "./liste";
 
 
 
@@ -136,7 +136,7 @@ class FileMutableAPrioriteParEnveloppe<T>
  * Fabrique d'une file à priorité.
  * @param tab tableau de valeurs, pouvant être énuméré ("var args")
  */
-export function fileAPriorite<T>(l : Liste<[T, number]>): FileMutableAPriorite<T> {
+export function creerFileAPriorite<T>(l : Liste<[T, number]> = listeVide()): FileMutableAPriorite<T> {
     return new FileMutableAPrioriteParEnveloppe<T>({
         liste : l
     });

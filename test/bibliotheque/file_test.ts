@@ -1,10 +1,10 @@
-import { fileAPriorite, FileMutableAPriorite } from "../../bibliotheque/types/fileAPriorite";
+import { creerFileAPriorite, FileMutableAPriorite } from "../../bibliotheque/types/fileAPriorite";
 import { liste } from "../../bibliotheque/types/liste";
 import { testUnitaireJsonJson } from '../utilitaires';
 
 describe('file à priorité', () => {
     let file: FileMutableAPriorite<number>
-        = fileAPriorite(
+        = creerFileAPriorite(
             liste([5, 1], [3, 3], [4, 2], [1, 5], [2, 4]));
     testUnitaireJsonJson(
         "taille +5",
