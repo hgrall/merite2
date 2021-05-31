@@ -3,9 +3,9 @@ import axios from 'axios';
 export const envoyerMessage = async (
     message: unknown,
     code: string,
-    jeu: string
+    // jeu: string
 ) => {
-    const url = `http://localhost:8080/envoyerAuxVoisins/${jeu}/${code}`;
+    const url = `http://localhost:8080/envoyerAuxVoisins/${code}`;
     console.log(url);
     return axios
         .post(url)

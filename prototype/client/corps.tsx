@@ -19,21 +19,13 @@ import {
     Identifiant
 } from "../../bibliotheque/types/identifiant";
 import {dateEnveloppe, DateFr} from "../../bibliotheque/types/date";
-import {creerMessageAVoisin} from "../communication/Mapper/MessageMapper";
-import {
-    configurationDeSommetTchat,
-    configurationTchat,
-    erreurTchat, messageTchat,
-    MessageTchat, TypeMessageTchat
-} from "../../bibliotheque/echangesTchat";
-import {ecouterServeur, envoyerAVoisins} from "./Reseau/connexionServeur";
+import {ecouterServeur, envoyerMessage} from "../communication/communicationServeur";
 import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
 import {tableau} from "../../bibliotheque/types/tableau";
 import {table} from "../../bibliotheque/types/table";
-import {FormatSommetTchat} from "../../bibliotheque/types/sommet";
 
 
 interface ProprietesCorps {
@@ -172,19 +164,21 @@ export class Corps extends React.Component<{}, Etat> {
             this.ajouterMessage(m);
             if (m.destinataire.ID.val === ID_TOUS) {
                 console.log("* Diffusion du message")
-                let msg: MessageTchat = creerMessageAVoisin(m.ID, m.emetteur.ID, m.contenu, tableau([]));
-                console.log("- brut : " + msg.brut());
-                console.log("- net : " + msg.representation());
-                envoyerAVoisins(msg, this.state.code).catch(reason => {
+                //TODO: utiliser le bon format
+                let msg: unknown = {identifiant: m.ID, identifiantEmmeteur: m.emetteur.ID, contenu: m.contenu, destinataires:tableau([])};
+                //console.log("- brut : " + msg.brut());
+                //console.log("- net : " + msg.representation());
+                envoyerMessage(msg, this.state.code).catch(reason => {
                     // TODO: AFFICHER ALERTE
                 });
                 return;
             }
-            let msg: MessageTchat = creerMessageAVoisin(m.ID, m.emetteur.ID, m.contenu, tableau([]));
+            // TODO: utiliser le bon format
+            let msg: unknown = {identifiant: m.ID, identifiantEmmeteur: m.emetteur.ID, contenu: m.contenu, destinataires:tableau([])};
             console.log("* Envoi du message");
-            console.log("- brut : " + msg.brut());
-            console.log("- net : " + msg.representation());
-            envoyerAVoisins(msg, this.state.code).catch(reason => {
+            //console.log("- brut : " + msg.brut());
+            //console.log("- net : " + msg.representation());
+            envoyerMessage(msg, this.state.code).catch(reason => {
                 // TODO: AFFICHER ALERTE
             });
         }
@@ -199,129 +193,127 @@ export class Corps extends React.Component<{}, Etat> {
         const self = this;
         this.sse .addEventListener('config',  (e:MessageEvent) => {
             const configJSON = JSON.parse(e.data);
-            console.log(configJSON);
-            const config = configurationTchat<FormatSommetTchat,Express.Request>(configJSON.etat);
-            self.individuSujet = {
-                ID: configJSON.etat.id,
-                nom: configJSON.etat.centre.pseudo,
-                fond: COUPLE_FOND_ENCRE_SUJET.fond,
-                encre: COUPLE_FOND_ENCRE_SUJET.encre
-            };
-            self.generateur = creerGenerateurIdentifiantParCompteur(configJSON.id + "-ERR-");
-            const suite = new SuiteCouplesFondEncre();
-            console.log(configJSON.etat.voisinsActifs);
-            console.log(configJSON.etat.voisinsActifs.etat.identification);
-            creerTableIdentificationMutableParEnveloppe("sommet", {identification:configJSON.etat.voisinsActifs.etat.identification,sorte:"sommet"}).iterer((ID_sorte, sommet: FormatSommetTchat) => {
-                    let c = suite.courant();
-                    self.individusObjets.ajouter(ID_sorte, {ID: sommet.ID,nom:sommet.pseudo, encre:c.encre, fond:c.fond })
-                });
-            self.setState({nombreConnexions: config.val().nombreConnexions});
+            // TODO: UPDATE CONFIGURATION FORMAT
+            // const config = configurationTchat<FormatSommetTchat,Express.Request>(configJSON.etat);
+            // self.individuSujet = {
+            //     ID: configJSON.etat.id,
+            //     nom: configJSON.etat.centre.pseudo,
+            //     fond: COUPLE_FOND_ENCRE_SUJET.fond,
+            //     encre: COUPLE_FOND_ENCRE_SUJET.encre
+            // };
+            // self.generateur = creerGenerateurIdentifiantParCompteur(configJSON.id + "-ERR-");
+            // const suite = new SuiteCouplesFondEncre();
+            // creerTableIdentificationMutableParEnveloppe("sommet", {identification:configJSON.etat.voisinsActifs.etat.identification,sorte:"sommet"}).iterer((ID_sorte, sommet: FormatSommetTchat) => {
+            //         let c = suite.courant();
+            //         self.individusObjets.ajouter(ID_sorte, {ID: sommet.ID,nom:sommet.pseudo, encre:c.encre, fond:c.fond })
+            //     });
+            // self.setState({nombreConnexions: config.val().nombreConnexions});
             self.setState({
                 etatInterface: EtatInterfaceTchat.NORMAL
             });
         });
 
         this.sse .addEventListener('erreur',  (e:MessageEvent) => {
-            //TODO: TROUVER POSSIBLES AMELIORATIONS
-            let erreur = erreurTchat(e.data);
-            console.log("* Réception");
-            console.log("- de l'erreur rédhibitoire brute : " + erreur.brut());
-            console.log("- de l'erreur rédhibitoire nette : " + erreur.representation());
-            console.log("* Affichage de l'erreur");
-            this.messageErreur = erreur.representation();
-            // TODO: VERIFIER TYPE ERREUR
-            let codeErreur = erreur.val().erreurRedhibitoire;
-            if (codeErreur == 0) {
-                let typeReseau = "anneau";
-                if ((document.URL).includes("etoile")) {
-                    typeReseau = "etoile";
-                }
-                const nombreReseauIndex = (document.URL).indexOf(typeReseau) + 6
-                const nombreNouvelReseau = (Number(document.URL[nombreReseauIndex]) + 1)
-                if (nombreNouvelReseau < 5) {
-                    const url = document.URL.replace(typeReseau + document.URL[nombreReseauIndex], typeReseau + nombreNouvelReseau)
-                    window.location.href = url
-                } else {
-                    this.setState({
-                        etatInterface: EtatInterfaceTchat.ERRONE,
-                    });
-                }
-            } else {
-                this.setState({
-                    etatInterface: EtatInterfaceTchat.ERRONE,
-                });
-            }
+            //TODO: HANDLE ERRORS IN CORRECT FORMAT
+            // let erreur = erreurTchat(e.data);
+            // console.log("* Réception");
+            // console.log("- de l'erreur rédhibitoire brute : " + erreur.brut());
+            // console.log("- de l'erreur rédhibitoire nette : " + erreur.representation());
+            // console.log("* Affichage de l'erreur");
+            // this.messageErreur = erreur.representation();
+            // // TODO: VERIFIER TYPE ERREUR
+            // let codeErreur = erreur.val().erreurRedhibitoire;
+            // if (codeErreur == 0) {
+            //     let typeReseau = "anneau";
+            //     if ((document.URL).includes("etoile")) {
+            //         typeReseau = "etoile";
+            //     }
+            //     const nombreReseauIndex = (document.URL).indexOf(typeReseau) + 6
+            //     const nombreNouvelReseau = (Number(document.URL[nombreReseauIndex]) + 1)
+            //     if (nombreNouvelReseau < 5) {
+            //         const url = document.URL.replace(typeReseau + document.URL[nombreReseauIndex], typeReseau + nombreNouvelReseau)
+            //         window.location.href = url
+            //     } else {
+            //         this.setState({
+            //             etatInterface: EtatInterfaceTchat.ERRONE,
+            //         });
+            //     }
+            // } else {
+            //     this.setState({
+            //         etatInterface: EtatInterfaceTchat.ERRONE,
+            //     });
+            // }
         });
 
         this.sse .addEventListener('msg',  (e:MessageEvent) => {
-            //TODO: TROUVER POSSIBLES AMELIORATIONS
-            let msg = messageTchat(e.data);
-            console.log("* Réception");
-            console.log("- du message brut : " + msg.brut());
-            console.log("- du message net : " + msg.representation());
-
-            let contenu: string = msg.val().contenu;
-
-            /* Message en transit */
-            if (msg.val().type === TypeMessageTchat.TRANSIT) {
-                if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
-                    console.log("- message incohérent");
-                    return;
-                }
-                if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
-                    console.log("- message incohérent");
-                    return;
-                }
-                msg.val().ID_destinataires.iterer((_, val) => {
-                    let destinataire = this.individusObjets.valeur(val);
-                    this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
-                    return;
-                });
-                let emetteur: Individu = this.individusObjets.valeur(msg.val().ID_emetteur);
-                let destinataire: Individu = this.individuSujet;
-                this.ajouterMessage({
-                    ID: msg.val().ID,
-                    emetteur: emetteur,
-                    destinataire: destinataire,
-                    cachet: dateEnveloppe(msg.val().date).representation(),
-                    contenu: contenu,
-                    accuses: []
-                });
-                return;
-            }
-
-            /* Message accusant réception */
-            if (msg.val().type === TypeMessageTchat.AR) {
-                if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
-                    console.log("- message incohéent");
-                    return;
-                }
-                if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
-                    console.log("- message incohéent");
-                    return;
-                }
-                msg.val().ID_destinataires.iterer((_, val) => {
-                    let destinataire = this.individusObjets.valeur(val);
-                    this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
-                    return;
-                });
-            }
-
-
-            // TODO: REEMPLACER PAR MESSAGE D'INFORMATION
-            if (msg.val().type === TypeMessageTchat.INFO) {
-                this.setState({nombreConnexions: msg.val().contenu})
-                return;
-            }
-
-            this.ajouterMessage({
-                ID: this.generateur.produire("message"),
-                emetteur: this.individu(msg.val().ID_emetteur),
-                destinataire: this.individu(msg.val().ID_destinataire),
-                cachet: dateEnveloppe(msg.val().date).representation(),
-                contenu: contenu,
-                accuses: []
-            });
+            //TODO: Handle messages using correct format
+            // let msg = messageTchat(e.data);
+            // console.log("* Réception");
+            // console.log("- du message brut : " + msg.brut());
+            // console.log("- du message net : " + msg.representation());
+            //
+            // let contenu: string = msg.val().contenu;
+            //
+            // /* Message en transit */
+            // if (msg.val().type === TypeMessageTchat.TRANSIT) {
+            //     if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
+            //         console.log("- message incohérent");
+            //         return;
+            //     }
+            //     if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
+            //         console.log("- message incohérent");
+            //         return;
+            //     }
+            //     msg.val().ID_destinataires.iterer((_, val) => {
+            //         let destinataire = this.individusObjets.valeur(val);
+            //         this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
+            //         return;
+            //     });
+            //     let emetteur: Individu = this.individusObjets.valeur(msg.val().ID_emetteur);
+            //     let destinataire: Individu = this.individuSujet;
+            //     this.ajouterMessage({
+            //         ID: msg.val().ID,
+            //         emetteur: emetteur,
+            //         destinataire: destinataire,
+            //         cachet: dateEnveloppe(msg.val().date).representation(),
+            //         contenu: contenu,
+            //         accuses: []
+            //     });
+            //     return;
+            // }
+            //
+            // /* Message accusant réception */
+            // if (msg.val().type === TypeMessageTchat.AR) {
+            //     if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
+            //         console.log("- message incohéent");
+            //         return;
+            //     }
+            //     if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
+            //         console.log("- message incohéent");
+            //         return;
+            //     }
+            //     msg.val().ID_destinataires.iterer((_, val) => {
+            //         let destinataire = this.individusObjets.valeur(val);
+            //         this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
+            //         return;
+            //     });
+            // }
+            //
+            //
+            // // TODO: REEMPLACER PAR MESSAGE D'INFORMATION
+            // if (msg.val().type === TypeMessageTchat.INFO) {
+            //     this.setState({nombreConnexions: msg.val().contenu})
+            //     return;
+            // }
+            //
+            // this.ajouterMessage({
+            //     ID: this.generateur.produire("message"),
+            //     emetteur: this.individu(msg.val().ID_emetteur),
+            //     destinataire: this.individu(msg.val().ID_destinataire),
+            //     cachet: dateEnveloppe(msg.val().date).representation(),
+            //     contenu: contenu,
+            //     accuses: []
+            // });
         });
         // this.sse.onerror = e => {
         //     // error log here
