@@ -2,7 +2,7 @@ import { Enveloppe, TypeEnveloppe } from './enveloppe';
 import { FormatTableMutable, FormatTable, MODULE_TABLE, EtiquetteTable, FABRIQUE_FORMAT_TABLE } from './table';
 import { EnsembleSortes, Identifiant, identifiant } from './identifiant';
 import { jamais } from './typesAtomiques';
-import { Option } from './option';
+import { option, Option, rienOption } from './option';
 
 
 /**
@@ -138,15 +138,15 @@ export interface TableIdentification<Sorte extends EnsembleSortes, T>
     domaine(): ReadonlyArray<Identifiant<Sorte>>;
     /**
      * Sélection d'un identifiant clé de la table.
-     * @returns un identifiant de la table s'il en existe, une erreur sinon.
+     * @returns une option contenant un identifiant de la table s'il en existe, vide sinon.
      */
-    selectionCle(): Identifiant<Sorte>;
+    selectionCle(): Option<Identifiant<Sorte>>;
     /**
      * Sélection d'un identifiant clé dont la valeur vérifie une propriété.
      * @param prop prédicat portant sur les valeurs.
-     * @returns un identifiant de la table s'il en existe un satisfaisant, une erreur sinon.
+     * @returns une option contenant un identifiant de la table s'il en existe un satisfaisant, vide sinon.
      */
-    selectionCleSuivantCritere(prop: (x: T) => boolean): Identifiant<Sorte>;
+    selectionCleSuivantCritere(prop: (x: T) => boolean): Option<Identifiant<Sorte>>;
     /**
      * Nombre d'associations dans la table.
      * @returns un entier naturel égal au nombre d'associations.
@@ -245,11 +245,17 @@ class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>
         // moins efficace : return MODULE_TABLE.domaine(this.val()).
         //    map((s) => { return { val: s, sorte: this.sorte } });
     }
-    selectionCle(): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCle(this.etat().identification),);
+    selectionCle(): Option<Identifiant<Sorte>> {
+        return MODULE_TABLE.selectionCle(this.etat().identification).filtrage(
+            (id) => option(identifiant(this.sorte, id)),
+            () => rienOption()
+        );
     }
-    selectionCleSuivantCritere(prop: (x: T) => boolean): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCleSuivantCritere(this.etat().identification, prop));
+    selectionCleSuivantCritere(prop: (x: T) => boolean): Option<Identifiant<Sorte>> {
+        return MODULE_TABLE.selectionCleSuivantCritere(this.etat().identification, prop).filtrage(
+            (id) => option(identifiant(this.sorte, id)),
+            () => rienOption()
+        );
     }
 
     taille(): number {
@@ -355,7 +361,7 @@ class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
          * @returns une nouvelle table égale à la composition f o this.
          */
     application<S>(f: (x: T) => S): TableIdentification<Sorte, S> {
-        return tableIdentification(this.sorte, MODULE_TABLE.applicationFonctorielle(this.etat().identification, f));
+        return tableIdentificationDeTable(this.sorte, MODULE_TABLE.applicationFonctorielle(this.etat().identification, f));
     }
 
     valeur(ID_sorte: Identifiant<Sorte>): T {
@@ -371,11 +377,17 @@ class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
     domaine(): ReadonlyArray<Identifiant<Sorte>> {
         return MODULE_TABLE.transformationFonctorielleEnTableau(this.etat().identification, (c, v) => identifiant(this.sorte, c));
     }
-    selectionCle(): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCle(this.etat().identification));
+    selectionCle(): Option<Identifiant<Sorte>> {
+        return MODULE_TABLE.selectionCle(this.etat().identification).filtrage(
+            (id) => option(identifiant(this.sorte, id)),
+            () => rienOption()
+        );
     }
-    selectionCleSuivantCritere(prop: (x: T) => boolean): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCleSuivantCritere(this.etat().identification, prop));
+    selectionCleSuivantCritere(prop: (x: T) => boolean): Option<Identifiant<Sorte>> {
+        return MODULE_TABLE.selectionCleSuivantCritere(this.etat().identification, prop).filtrage(
+            (id) => option(identifiant(this.sorte, id)),
+            () => rienOption()
+        );
     }
 
     taille(): number {
@@ -387,11 +399,22 @@ class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
 
 }
 
-export function tableIdentification<Sorte extends EnsembleSortes, TEX>(
+export function tableIdentification<Sorte extends EnsembleSortes, T>(
     sorte: Sorte,
-    table: FormatTable<TEX>)
-    : TableIdentification<Sorte, TEX> {
-    return new TableIdentificationParEnveloppe<Sorte, TEX>(
+    table: FormatTableIdentification<Sorte, T>)
+    : TableIdentification<Sorte, T> {
+    return new TableIdentificationParEnveloppe<Sorte, T>(
+        sorte,
+        table
+    );
+}
+
+
+export function tableIdentificationDeTable<Sorte extends EnsembleSortes, T>(
+    sorte: Sorte,
+    table: FormatTable<T>)
+    : TableIdentification<Sorte, T> {
+    return new TableIdentificationParEnveloppe<Sorte, T>(
         sorte,
         tableIdentificationAuFormat(table, sorte)
     );

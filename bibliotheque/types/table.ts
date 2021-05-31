@@ -218,30 +218,30 @@ class ModuleFormatTable {
     /**
      * Sélection d'une clé d'une table.
      * @param t table.
-     * @returns une clé de la table s'il en existe, une erreur sinon.
+     * @returns une option contenant une clé de la table s'il en existe, vide sinon.
      */
-    selectionCle<T>(t: FormatTable<T>): string {
+    selectionCle<T>(t: FormatTable<T>): Option<string> {
         // sélection d'une clé
         for (let c in t.table) { // une seule itération
-            return c;
+            return option(c);
         }
-        throw new Error("[Exception : selectionCle() non défini.]");
+        return rienOption();
     }
 
     /**
      * Sélection d'une clé dont la valeur vérifie une propriété.
      * @param t table.
      * @param prop prédicat portant sur les valeurs.
-     * @returns une clé de la table s'il en existe une satisfaisante, une erreur sinon.
+     * @returns une option contenant une clé de la table s'il en existe une satisfaisante, vide sinon.
      */
-    selectionCleSuivantCritere<T>(t: FormatTable<T>, prop: (x: T) => boolean): string {
+    selectionCleSuivantCritere<T>(t: FormatTable<T>, prop: (x: T) => boolean): Option<string> {
         // sélection d'une clé
         for (let c in t.table) {
             if (prop(t.table[c])) {
-                return c;
+                return option(c);
             }
         }
-        throw new Error("[Exception : selectionCleSuivantCritere() non défini.]");
+        return rienOption();
     }
 
     /**
@@ -374,15 +374,15 @@ extends TypeEnveloppe<FormatTable<T>, FormatTable<T>, EtiquetteTable> {
     estVide() : boolean;
     /**
      * Sélection d'une clé de la table.
-     * @returns une clé de la table s'il en existe, une erreur sinon.
+     * @returns une option contenant une clé de la table s'il en existe, vide sinon.
      */
-    selectionCle(): string;
+    selectionCle(): Option<string>;
     /**
      * Sélection d'une clé dont la valeur vérifie une propriété.
      * @param prop prédicat portant sur les valeurs.
-     * @returns une clé de la table s'il en existe une satisfaisante, une erreur sinon.
+     * @returns une option contenant une clé de la table s'il en existe une satisfaisante, vide sinon.
      */
-    selectionCleSuivantCritere(prop: (x: T) => boolean): string;
+    selectionCleSuivantCritere(prop: (x: T) => boolean): Option<string>;
     /**
      * Application fonctorielle de f à la table.
      * @param f fonction à appliquer à chaque valeur de la table.
@@ -497,7 +497,7 @@ class TableParEnveloppe<T>
      * Sélection d'une clé d'une table.
      * @returns une clé de la table s'il en existe, une erreur sinon.
      */
-    selectionCle(): string {
+    selectionCle(): Option<string> {
         return MODULE_TABLE.selectionCle(this.etat());
     }
     /**
@@ -505,7 +505,7 @@ class TableParEnveloppe<T>
      * @param prop prédicat portant sur les valeurs.
      * @returns une clé de la table s'il en existe une satisfaisante, une erreur sinon.
      */
-    selectionCleSuivantCritere(prop: (x: T) => boolean): string {
+    selectionCleSuivantCritere(prop: (x: T) => boolean): Option<string> {
         return MODULE_TABLE.selectionCleSuivantCritere(this.etat(), prop);
     }
     /**
@@ -671,7 +671,7 @@ class TableMutableParEnveloppe<T>
       * Sélection d'une clé d'une table.
       * @returns une clé de la table s'il en existe, une erreur sinon.
       */
-    selectionCle(): string {
+    selectionCle(): Option<string> {
         return MODULE_TABLE.selectionCle(this.etat());
     }
     /**
@@ -679,7 +679,7 @@ class TableMutableParEnveloppe<T>
      * @param prop prédicat portant sur les valeurs de la table mutable formant l'état.
      * @returns une clé de la table s'il en existe une satisfaisante, une erreur sinon.
      */
-    selectionCleSuivantCritere(prop: (x: T) => boolean): string {
+    selectionCleSuivantCritere(prop: (x: T) => boolean): Option<string> {
         return MODULE_TABLE.selectionCleSuivantCritere(this.etat(), prop);
     }
     /**

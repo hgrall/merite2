@@ -1,6 +1,5 @@
 import { Enveloppe, TypeEnveloppe } from "../types/enveloppe";
 import { FormatIdentifiable, Identifiant } from "../types/identifiant";
-import { option, Option, rienOption } from "../types/option";
 import { FormatTableau, Tableau } from "../types/tableau";
 import {
     creerTableIdentificationMutableVide,
@@ -10,7 +9,7 @@ import {
 } from "../types/tableIdentification";
 import { dateMaintenant } from "../types/date";
 import { FileMutableAPriorite, FormatFileAPriorite } from "../types/fileAPriorite";
-import { jamais, Prioritarisable } from "../types/typesAtomiques";
+import { ActivableMutable, jamais, Prioritarisable } from "../types/typesAtomiques";
 
 /**
  * Etat d'un graphe composé
@@ -22,11 +21,10 @@ import { jamais, Prioritarisable } from "../types/typesAtomiques";
  * @param FS format JSON des sommets
  */
 export interface EtatGraphe<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C> {
-    readonly actifs: TableIdentificationMutable<'sommet', FS>;
+    readonly sommets: TableIdentificationMutable<'sommet', FS>;
     readonly fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>;
-    readonly inactifs: TableIdentificationMutable<'sommet', FS>;
     readonly adjacence: TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>;
     readonly connexions: TableIdentificationMutable<'sommet', C>;
 }
@@ -43,11 +41,10 @@ export interface EtatGraphe<
  * @param FS format JSON des sommets
  */
 export interface FormatGraphe<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C> {
-    readonly actifs: FormatTableIdentification<'sommet', FS>;
+    readonly sommets: FormatTableIdentification<'sommet', FS>;
     readonly fileInactifs: FormatFileAPriorite<Identifiant<'sommet'>>;
-    readonly inactifs: FormatTableIdentification<'sommet', FS>;
     readonly adjacence: FormatTableIdentification<'sommet', FormatTableau<Identifiant<'sommet'>>>;
 }
 
@@ -55,18 +52,18 @@ export interface FormatGraphe<
  * Etiquettes utilisées pour la représentation des graphes.
  * TODO à compléter à l'usage.
  */
-export type EtiquetteGraphe = 'actifs' | 'inactifs' | 'fileInactifs' | 'voisins';
-
-
+export type EtiquetteGraphe = 'sommets' | 'fileInactifs' | 'voisins';
 
 /**
  * Interface pour un graphe, paramétrée par le type des sommets.
  * Le graphe définit une table d'adjacence pour tous les sommets.
  * Les sommets peuvent être actifs ou inactifs.
+ * TODO à enrichir et raffiner suivant l'usage.
  * @param FS type décrivant les sommets en JSON.
+ * @param C type décrivant les connexions (serveur vers client)
  */
 export interface GrapheMutable<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C> extends TypeEnveloppe<EtatGraphe<FS, C>,
     FormatGraphe<FS, C>, EtiquetteGraphe> {
     /**
@@ -87,23 +84,18 @@ export interface GrapheMutable<
 
     /**
      * Sommet actif identifié par l'argument.
+     * Précondition : le sommet est présent.
      * @param ID_sommet identité du sommet.
-     * @returns une option contenant la description du sommet actif, ou rien s'il n'est pas actif.
+     * @returns la description du sommet.
      */
-    sommetActif(ID_sommet: Identifiant<'sommet'>): Option<FS>;
+    sommet(ID_sommet: Identifiant<'sommet'>): FS;
 
     /**
      * Connexion associée au sommet identifié par l'argument.
+     * Précondition : le sommet est actif.
      * @param ID_sommet 
      */
     connexion(ID_sommet: Identifiant<'sommet'>): C;
-
-    /**
-     * Sommet inactif identifié par l'argument.
-     * @param ID_sommet identité du sommet.
-     * @returns une option contenant la description du sommet actif, ou rien s'il n'est pas actif.
-     */
-    sommetInactif(ID_sommet: Identifiant<'sommet'>): Option<FS>;
 
     /**
      * Détermine si le graphe possède un sommet actif.
@@ -153,7 +145,7 @@ export interface GrapheMutable<
      * Itère sur tous les sommets actifs en leur appliquant une fonction.
      * @param f function a appliquer a chaque association (identifant, sommet actif).
      */
-    itererActifs(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void;
+    itererSommets(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void;
 
     /**
      * Voisins du sommet identifié par l'argument.
@@ -163,23 +155,22 @@ export interface GrapheMutable<
 }
 
 export class GrapheMutableParEnveloppe<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
     C>
-    extends Enveloppe<EtatGraphe<FS, C>,
+    extends Enveloppe<EtatGraphe<FS, C>, 
     FormatGraphe<FS, C>, EtiquetteGraphe>
     implements GrapheMutable<FS, C>
 {
 
     constructor(
-        inactifs: TableIdentificationMutable<'sommet', FS>,
+        sommets: TableIdentificationMutable<'sommet', FS>,
         fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
         adjacence:
             TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>
     ) {
         super({
-            actifs: creerTableIdentificationMutableVide('sommet'),
+            sommets : sommets,
             fileInactifs: fileInactifs,
-            inactifs: inactifs,
             adjacence: adjacence,
             connexions: creerTableIdentificationMutableVide('sommet')
         });
@@ -187,81 +178,66 @@ export class GrapheMutableParEnveloppe<
 
     toJSON(): FormatGraphe<FS, C> {
         return {
-            actifs: this.etat().actifs.toJSON(),
+            sommets: this.etat().sommets.toJSON(),
             fileInactifs: this.etat().fileInactifs.toJSON(),
-            inactifs: this.etat().inactifs.toJSON(),
             adjacence: this.etat().adjacence.application((x) => x.toJSON()).toJSON()
         };
     }
 
     possedeSommet(ID_sommet: Identifiant<"sommet">): boolean {
-        return this.etat().actifs.contient(ID_sommet)
-            || this.etat().inactifs.contient(ID_sommet);
+        return this.etat().sommets.contient(ID_sommet);
     }
 
     sontVoisins(ID_sommet1: Identifiant<"sommet">, ID_sommet2: Identifiant<"sommet">): boolean {
         return this.etat().adjacence.valeur(ID_sommet1).contient(ID_sommet2);
     }
 
-    sommetActif(ID_sommet: Identifiant<"sommet">): Option<FS> {
-        if (!this.etat().actifs.contient(ID_sommet))
-            return rienOption();
-        return option(this.etat().actifs.valeur(ID_sommet));
+    sommet(ID_sommet: Identifiant<"sommet">): FS {
+        return this.etat().sommets.valeur(ID_sommet);
     }
 
     connexion(ID_sommet: Identifiant<"sommet">): C {
         return this.etat().connexions.valeur(ID_sommet);
     }
 
-    sommetInactif(ID_sommet: Identifiant<"sommet">): Option<FS> {
-        if (!this.etat().inactifs.contient(ID_sommet))
-            return rienOption();
-        return option(this.etat().inactifs.valeur(ID_sommet));
-    }
-
     aUnSommetActif(): boolean {
-        return !this.etat().actifs.estVide();
+        return this.etat().sommets.selectionCleSuivantCritere((s) => s.actif).estPresent();
     }
 
     aUnSommetInactif(): boolean {
-        return !this.etat().inactifs.estVide();
+        return this.etat().sommets.selectionCleSuivantCritere((s) => s.actif).estPresent();
     }
 
     activerSommet(connexion: C): Identifiant<"sommet"> {
         //Sélectionne le sommet le plus priorotaire.
         const ID_sommet = this.etat().fileInactifs.retirer();
-        const sommet = this.etat().inactifs.valeur(ID_sommet);
-        this.etat().inactifs.retirer(ID_sommet);
-        this.etat().actifs.ajouter(ID_sommet, sommet);
+        const sommet = this.etat().sommets.valeur(ID_sommet);
+        sommet.actif = true;
         this.etat().connexions.ajouter(ID_sommet, connexion);
         console.log("* " + dateMaintenant().representationLog()
             + "- Le sommet " + ID_sommet.val + " a été activé");
         console.log("* " + dateMaintenant().representationLog()
-            + ` - Sommets inactifs: ${this.net("inactifs")}`);
-        console.log("* " + dateMaintenant().representationLog()
-            + ` - Sommets actifs : ${this.net("actifs")}`);
+            + ` - Sommets : ${this.net("sommets")}`);
         return ID_sommet;
     }
 
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {
-        const sommet = this.etat().actifs.valeur(ID_sommet);
-        this.etat().actifs.retirer(ID_sommet);
+        const sommet = this.etat().sommets.valeur(ID_sommet);
+        sommet.actif = false;
         this.etat().connexions.retirer(ID_sommet);
         this.etat().fileInactifs.ajouter(ID_sommet, sommet.priorite);
         console.log("* " + dateMaintenant().representationLog()
             + "- Le sommet " + ID_sommet.val + " a été inactivé.");
         console.log("* " + dateMaintenant().representationLog()
-            + ` - Sommets inactifs: ${this.net("inactifs")}`);
-        console.log("* " + dateMaintenant().representationLog()
-            + ` - Sommets actifs : ${this.net("actifs")}`);
+            + ` - Sommets : ${this.net("sommets")}`);
     }
 
     tailleInactifs(): number {
-        return this.etat().inactifs.taille();
+        return this.etat().fileInactifs.taille();
     }
 
     tailleActifs(): number {
-        return this.etat().actifs.taille();
+        return this.etat().sommets.taille() - this.tailleInactifs();
     }
 
     itererVoisins(ID_sommet: Identifiant<"sommet">, f: (i: number, ID_sommet: Identifiant<"sommet">) => void): void {
@@ -269,8 +245,8 @@ export class GrapheMutableParEnveloppe<
 
     }
 
-    itererActifs(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void {
-        this.etat().actifs.iterer(f);
+    itererSommets(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void {
+        this.etat().sommets.iterer(f);
     }
 
     voisins(ID_sommet: Identifiant<"sommet">): Tableau<Identifiant<"sommet">> {
@@ -279,10 +255,8 @@ export class GrapheMutableParEnveloppe<
 
     net(e: EtiquetteGraphe): string {
         switch (e) {
-            case "actifs":
-                return this.etat().actifs.representation();
-            case "inactifs":
-                return this.etat().inactifs.representation();
+            case "sommets":
+                return this.etat().sommets.representation();
             case "voisins":
                 return this.etat().adjacence.representation();
             case "fileInactifs":
@@ -292,6 +266,6 @@ export class GrapheMutableParEnveloppe<
     }
 
     representation(): string {
-        return `Actifs: ${this.net("actifs")} - Inactifs: ${this.net("inactifs")} - Voisins: ${this.net("voisins")}`;
+        return `Sommets : ${this.net("sommets")} - Voisins : ${this.net("voisins")}`;
     }
 } 

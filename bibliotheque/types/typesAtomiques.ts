@@ -37,7 +37,25 @@ export interface Mesurable {
  */
 
 export interface Prioritarisable {
-    priorite : number;
+    readonly priorite : number;
+}
+
+/**
+ * Interface exprimant la propriété d'être activable.
+ * Attribut :
+ * - actif : booléen.
+ */
+export interface Activable {
+    readonly actif : boolean;
+}
+
+/**
+ * Interface exprimant la propriété d'être activable et mutable.
+ * Attribut :
+ * - actif : booléen.
+ */
+export interface ActivableMutable {
+    actif : boolean;
 }
 
 
