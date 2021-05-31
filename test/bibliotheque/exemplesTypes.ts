@@ -1,4 +1,6 @@
-import { isTypeNode } from "typescript";
+export interface TypeSerialisable {
+    a: string;
+}
 
 export interface TypeNonSerialisable {
     f: (x : number) => number;
@@ -10,7 +12,5 @@ export function creerTypeNonSerialisable(x : string) :  TypeNonSerialisable {
     return { f : (x) => x,  a : x , toJSON : () => ({a : x}) };
 }
 
-export interface TypeSerialisable {
-    a: string;
-}
+
 

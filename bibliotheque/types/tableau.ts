@@ -5,6 +5,7 @@
 
 import { Enveloppe, TypeEnveloppe } from "./enveloppe";
 import { MesurableMutable, jamais, Mesurable } from "./typesAtomiques";
+import { option, Option, rienOption } from "./option";
 import { entierAleatoire } from "./nombres";
 
 /**
@@ -212,6 +213,22 @@ class ModuleTableauEnJSON {
             return r;
         }
     }
+    /**
+     * Modifie un élément du tableau à une position donnée.
+     * @param t tableau mutable.
+     * @param i index (position)
+     * @param x nouvelle valeur
+     * @returns option contenant l'ancienne valeur si modifiée, vide sinon.
+     */
+    modifier<T>(t: FormatTableauMutable<T>, i : number, x: T): Option<T> {
+        if((0 <= i) && (i < t.taille)){
+            const a = t.tableau[i];
+            t.tableau[i] = x;
+            return option(a);
+        }else{
+            return rienOption();
+        }
+    }
 }
 
 /**
@@ -227,8 +244,7 @@ export type EtiquetteTableau = 'taille' | 'valeurs';
 /**
  * Conversion fonctorielle d'un tableau mutable en un tableau.
  * @param conv fonction de conversion des éléments.
- * @returns fonction de conversion transformant un tableau mutable en un nouveau tableau
- *          après composition avec conv.
+ * @returns fonction de conversion transformant un tableau mutable en un nouveau tableau après composition avec conv.
  */
 export function conversionFormatTableau<S, T>(conv: (x: S) => T)
     : (t: FormatTableau<S>) => FormatTableau<T> {
@@ -251,7 +267,7 @@ export function conversionFormatTableau<S, T>(conv: (x: S) => T)
  * @param T type des éléments du tableau.
  */
 export interface Tableau<T> extends
-    TypeEnveloppe<FormatTableau<T>, EtiquetteTableau> {
+    TypeEnveloppe<FormatTableau<T>, FormatTableau<T>,  EtiquetteTableau> {
     /**
      * Itère sur les éléments du tableau en appliquant la procédure passée
      * en argument.
@@ -274,95 +290,126 @@ export interface Tableau<T> extends
      * - neutre op v0 op v1 op ...
      * @param neutre élément neutre de l'opération.
      * @param op opération binaire appliquée aux éléments du tableau.
+     * @returns la valeur (...((neutre op t[0]) op t[1])...).
      */
     reduction(neutre: T, op: (x: T, y: T) => T): T;
     /**
-     * Valeur en position index. Précondition : la position est entre zéro et la
+     * Valeur en position index. 
+     * Précondition : la position est entre zéro et la
      * longueur moins un.
      * @param index position dans le tableau.
      */
     valeur(index: number): T;
     /**
      * Taille du tableau.
+     * @returns la taille.
      */
     taille(): number;
     /**
      * Détermine si ce tableau est vide.
      */
     estVide(): boolean;
+    /**
+     * Teste si la valeur appartient au tableau.
+     * @param valeur valeur à rechercher dans le tableau
+     */
+    contient(val: T): boolean;
 }
 
 /**
  * Tableau immutable implémenté par une enveloppe.
  * @param T type des valeurs dans le tableau.
  */
-export class TableauParEnveloppe<T>
-    extends Enveloppe<FormatTableau<T>, EtiquetteTableau>
+class TableauParEnveloppe<T>
+    extends Enveloppe<FormatTableau<T>, FormatTableau<T>, EtiquetteTableau>
     implements Tableau<T> {
 
     /**
-     * Constructeur à partir d'une tableau.
-     * Si T n'est pas un type JSON, une fonction de conversion doit 
-     * être fournie. 
-     * @param etat table au format JSON.
+     * Constructeur à partir d'un tableau au format.
+     * @param etat tableau au format
      */
     constructor(etat: FormatTableau<T>) {
             super(etat);
     }
     /**
+     * Représentation JSON du tableau.
+     * @returns le tableau au format.
+     */
+    toJSON(): FormatTableau<T> {
+        return this.etat();
+    }
+    /**
      * Représentation nette du tableau :
      * - taille : un entier naturel,
-     * - valeurs : TODO.
+     * - valeurs : [v1, v2, ...]
      */
     net(e: EtiquetteTableau): string {
         switch (e) {
             case 'taille': return JSON.stringify(this.taille());
-            case 'valeurs': return JSON.stringify(this.val().tableau);
+            case 'valeurs': return JSON.stringify(this.etat().tableau);
         }
         return jamais(e);
     }
     /**
      * Représentation du tableau sous la forme suivante :
-     * - TODO.
+     * - [v1, v2, ...]
      */
     representation(): string {
-        return "[" + this.net('valeurs') + "]";
+        return this.net('valeurs');
     }
     /**
-     * Délégation à la méthode iterer du module.
+     * Itère sur les éléments du tableau en appliquant 
+     * la procédure passée en argument.
+     * Implémentation par délégation au module.
+     * @param f procédure prenant la position, la valeur 
+     * et possiblement le tableau sous-jacent en entier.
      */
     iterer(
         f: (index: number, val: T, tab?: T[]) => void
     ): void {
-        MODULE_TABLEAU_JSON.iterer(f, this.val());
+        MODULE_TABLEAU_JSON.iterer(f, this.etat());
     }
     /**
-     * Délégation à la méthode application du module.
+     * Application fonctorielle de la fonction passée en argument.
+     * Un nouveau tableau immutable est créé dont les valeurs
+     *  sont les images des valeurs de ce tableau.
+     * Implémentation par délégation au module.
+     * @param f fonction à appliquer.
      */
     application<S>(f: (x: T) => S): Tableau<S> {
         return new TableauParEnveloppe<S>(
-            MODULE_TABLEAU_JSON.applicationFonctorielle(this.val(), f));
+            MODULE_TABLEAU_JSON.applicationFonctorielle(this.etat(), f));
     }
     /**
-     * Délégation à la méthode reduction du module.
+     * Réduction du tableau en une valeur. Implémentation par délégation au module.
+     * Le résultat est, en notation infixe :
+     * - neutre op v0 op v1 op ...
+     * @param neutre élément neutre de l'opération.
+     * @param op opération binaire appliquée aux éléments du tableau.
+     * @returns la valeur (...((neutre op t[0]) op t[1])...).
      */
     reduction(neutre: T, op: (x: T, y: T) => T): T {
         return MODULE_TABLEAU_JSON.reduction(
-            this.val(),
+            this.etat(),
             neutre,
             op);
     }
     /**
-     * Délégation à la méthode valeur du module.
+     * Valeur en position index. 
+     * Implémentation par délégation au module.
+     * Précondition : la position est entre zéro et la
+     * longueur moins un.
+     * @param index position dans le tableau.
      */
     valeur(i: number): T {
-        return MODULE_TABLEAU_JSON.valeur(this.val(), i);
+        return MODULE_TABLEAU_JSON.valeur(this.etat(), i);
     }
     /**
-     * Délégation à la méthode taille du module.
+     * Taille du tableau. Implémentation par délégation au module.
+     * @returns la taille.
      */
     taille(): number {
-        return MODULE_TABLEAU_JSON.taille(this.val());
+        return MODULE_TABLEAU_JSON.taille(this.etat());
     }
     /**
      * Teste si la taille vaut zéro.
@@ -370,11 +417,18 @@ export class TableauParEnveloppe<T>
     estVide(): boolean {
         return this.taille() === 0;
     }
+    /**
+     * Teste si la valeur appartient au tableau.
+     * @param valeur valeur à rechercher dans le tableau
+     */
+    contient(val: T): boolean{
+        return MODULE_TABLEAU_JSON.contient(this.etat(), (x: T) => x === val);
+    }
 }
 
 /**
  * Fabrique d'un tableau immutable à partir de sa description .
- * @param t tableau en JSON.
+ * @param t tableau natif.
  */
 export function tableau<T>(
     t: ReadonlyArray<T>): Tableau<T> {
@@ -389,11 +443,21 @@ export function tableau<T>(
  */
 export interface TableauMutable<T> extends Tableau<T> {
     /**
+     * Modifie la valeur en une position donnée et renvoie l'ancienne 
+     * valeur.
+     * @param i position
+     * @param x nouvelle valeur 
+     * @return une option contenant l'ancienne valeur en cas de modification, vide sinon.
+     */
+    modifier(i : number, x : T) : Option<T>;
+    /**
      * Ajoute en fin l'élément passé en argument.
+     * @param x élément ajouté.
      */
     ajouterEnFin(x: T): void;
     /**
      * Retire le dernier élément.
+     * @returns élément retiré ou déclenche une exception.
      */
     retirerEnFin(): T;
 }
@@ -403,17 +467,23 @@ export interface TableauMutable<T> extends Tableau<T> {
  * Tableau mutable implémenté par une enveloppe.
  * TODO Attention : la méthode "val" requiert un parcours du tableau formant l'état.
  */
-export class TableauMutableParEnveloppe<T>
-    extends Enveloppe<FormatTableauMutable<T>, EtiquetteTableau>
+class TableauMutableParEnveloppe<T>
+    extends Enveloppe<FormatTableauMutable<T>, FormatTableau<T>, EtiquetteTableau>
     implements TableauMutable<T> {
 
     /**
-     * Constructeur d'un tableau à partir d'une fonction de conversion
-     * et d'un tableau décrit en JSON.
-     * @param etat tableau au format JSON.
+     * Constructeur d'un tableau au format.
+     * @param etat tableau au format, par défaut vide.
      */
     constructor(etat: FormatTableauMutable<T> = FABRIQUE_TABLEAU_JSON.creerVideMutable()){
         super(etat);
+    }
+    /**
+     * Représentation JSON du tableau.
+     * @returns le tableau au format immutable.
+     */
+    toJSON(): FormatTableau<T> {
+        return this.etat();
     }
     /**
      * Représentation nette du tableau :
@@ -423,7 +493,7 @@ export class TableauMutableParEnveloppe<T>
     net(e: EtiquetteTableau): string {
         switch (e) {
             case 'taille': return JSON.stringify(this.taille());
-            case 'valeurs': return JSON.stringify(this.val().tableau);
+            case 'valeurs': return JSON.stringify(this.etat().tableau);
         }
         return jamais(e);
     }
@@ -432,30 +502,36 @@ export class TableauMutableParEnveloppe<T>
      * - TODO.
      */
     representation(): string {
-        return "[" + this.net('valeurs') + "]";
+        return this.net('valeurs');
     }
     /**
-     * Délégation à la méthode iterer du module. Méthode protégée.
+     * Itère sur les éléments du tableau en appliquant la procédure passée
+     * en argument.
+     * @param f procédure prenant la position, la valeur et possiblement
+     *          le tableau sous-jacent en entier.
      */
     iterer(
         f: (index: number, val: T, tab?: T[]) => void
     ): void {
-        MODULE_TABLEAU_JSON.iterer(f, this.val());
+        MODULE_TABLEAU_JSON.iterer(f, this.etat());
     }
     /**
-     * Délégation à la méthode application du module.
+     * Application fonctorielle de la fonction passée en argument.
+     * Un nouveau tableau mutable est créé 
+     * dont les valeurs sont les images des valeurs de ce tableau.
+     * @param f fonction à appliquer.
      */
     application<S>(f: (x: T) => S): TableauMutable<S> {
         return new TableauMutableParEnveloppe<S>(
             MODULE_TABLEAU_JSON.appliquerFonctoriellement(
-            this.val(), f));
+            this.etat(), f));
     }
     /**
      * Délégation aux méthodes application et reduction du module.
      */
     reduction(neutre: T, op: (x: T, y: T) => T): T {
         return MODULE_TABLEAU_JSON.reduction(
-            this.val(),
+            this.etat(),
             neutre,
             op);
     }
@@ -464,13 +540,13 @@ export class TableauMutableParEnveloppe<T>
      * @param i position dans le tableau.
      */
     valeur(i: number): T {
-        return MODULE_TABLEAU_JSON.valeur(this.val(), i);
+        return MODULE_TABLEAU_JSON.valeur(this.etat(), i);
     }
     /**
      * Délégation à la méthode taille du module.
      */
     taille(): number {
-        return MODULE_TABLEAU_JSON.taille(this.val());
+        return MODULE_TABLEAU_JSON.taille(this.etat());
     }
     /**
      * Teste si la taille vaut zéro.
@@ -479,25 +555,41 @@ export class TableauMutableParEnveloppe<T>
         return this.taille() === 0;
     }
     /**
+     * Teste si la valeur appartient au tableau.
+     * @param valeur valeur à rechercher dans le tableau
+     */
+    contient(val: T): boolean{
+        return MODULE_TABLEAU_JSON.contient(this.etat(), (x: T) => x === val);
+    }
+    /**
      * Délègue à la méthode ajouterEnFin du module.
      */
     ajouterEnFin(x: T): void {
-        MODULE_TABLEAU_JSON.ajouterEnFin(this.val(), x);
+        MODULE_TABLEAU_JSON.ajouterEnFin(this.etat(), x);
     }
     /**
      * Délègue à la méthode retirerEnFin du module.
      */
     retirerEnFin(): T {
-        return MODULE_TABLEAU_JSON.retirerEnFin(this.val());
+        return MODULE_TABLEAU_JSON.retirerEnFin(this.etat());
+    }
+    /**
+     * Modifie la valeur en une position donnée et renvoie l'ancienne 
+     * valeur.
+     * @param i position
+     * @param x nouvelle valeur 
+     * @return une option contenant l'ancienne valeur en cas de modification, vide sinon.
+     */
+    modifier(i : number, x : T) : Option<T> {
+        return MODULE_TABLEAU_JSON.modifier(this.etat(), i, x);
     }
 }
 
 /**
  * Fabrique un tableau mutable vide.
- * @param conversionInEx fonction de conversion de TIN vers T.
  */
-export function creerTableauMutableVide<T>() {
-    return new TableauMutableParEnveloppe();
+export function creerTableauMutableVide<T>() : TableauMutable<T> {
+    return new TableauMutableParEnveloppe<T>();
 }
 
 /**
@@ -506,7 +598,7 @@ export function creerTableauMutableVide<T>() {
  */
 export function creerTableauMutableParEnveloppe<T>(
     t: T[])
-    : TableauMutableParEnveloppe<T> {
+    : TableauMutable<T> {
     return new TableauMutableParEnveloppe(
         FABRIQUE_TABLEAU_JSON.creerEnveloppeMutable(t));
 }
@@ -518,8 +610,8 @@ export function creerTableauMutableParEnveloppe<T>(
  */
 export function creerTableauMutableParCopie<T>(
     t: T[]
-) {
-    let r = creerTableauMutableVide();
+) : TableauMutable<T> {
+    let r = creerTableauMutableVide<T>();
     MODULE_TABLEAU_JSON.iterer((c, v) => r.ajouterEnFin(v),
         FABRIQUE_TABLEAU_JSON.creerEnveloppeMutable(t));
     return r;

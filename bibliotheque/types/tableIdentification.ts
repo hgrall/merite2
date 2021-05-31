@@ -1,12 +1,13 @@
 import { Enveloppe, TypeEnveloppe } from './enveloppe';
-import { FormatTableMutable, FormatTable, MODULE_TABLE, EtiquetteTable, FABRIQUE_TABLE } from './table';
+import { FormatTableMutable, FormatTable, MODULE_TABLE, EtiquetteTable, FABRIQUE_FORMAT_TABLE } from './table';
 import { EnsembleSortes, Identifiant, identifiant } from './identifiant';
 import { jamais } from './typesAtomiques';
 import { Option } from './option';
 
 
 /**
- * Format pour les tables d'identification mutables. C'est un type JSON si et seulement si T est un type JSON. 
+ * Format pour les tables d'identification mutables. 
+ * Requis : T est convertible en un type JSON.
  * Structure :
  * - identification
  *   - taille : taille de la table
@@ -25,7 +26,7 @@ export interface FormatTableIdentificationMutable<Sorte extends string, T> {
 * Précondition : les clés de la table doivent être des valeurs d'identifiants de la sorte passée en argument.
  * @param Sorte type singleton représentant la sorte des identifiants 
  * @param T le type contenu dans la table
- * @param t une table mutable de T
+ * @param t une table mutable de T au format
  * @param s la sorte des identifiants
  */
 export function creerTableIdentificationMutableAuFormat<Sorte extends string, T>(
@@ -38,8 +39,9 @@ export function creerTableIdentificationMutableAuFormat<Sorte extends string, T>
 }
 
 /**
- * Format pour les tables d'identifications. C'est un type JSON si et seulement si T est un type JSON. 
-* Structure :
+ * Format pour les tables d'identifications. 
+ * Requis : T est convertible en un type JSON.
+ * Structure :
  * - identification
  *   - taille : taille de la table
  *   - table : type indexé associant à la valeur d'un identifiant
@@ -58,7 +60,7 @@ export interface FormatTableIdentification<Sorte extends string, T> {
  * Précondition : les clés de la table doivent être des valeurs d'identifiants de la sorte passée en argument.
  * @param Sorte type singleton représentant la sorte des identifiants 
  * @param T le type contenu dans la table
- * @param t une table mutable de T
+ * @param t une table mutable de T au format
  * @param s la sorte des identifiants
  */
 export function tableIdentificationAuFormat<Sorte extends string, T>(
@@ -73,10 +75,11 @@ export function tableIdentificationAuFormat<Sorte extends string, T>(
 /**
  * Conversion fonctorielle d'une table d'identification mutable
  * en une table d'identification.
- * @param conv fonction de conversion des éléments.
- * @returns fonction de conversion transformant une table d'identification
- *          mutable en une nouvelle table d'identification
- *          après composition avec conv.
+ * @param Sorte type singleton représentant la sorte des identifiants 
+ * @param S le type contenu dans la table de départ
+ * @param T le type contenu dans la table d'arrivée
+ * @param conv fonction de conversion des éléments de S vers T.
+ * @returns fonction de conversion transformant une table d'identification mutable en une nouvelle table d'identification après composition avec conv.
  */
 export function conversionFormatTableIdentification<
     Sorte extends string, S, T
@@ -93,20 +96,66 @@ export function conversionFormatTableIdentification<
 }
 
 /**
- * Interface pour les tables d'identification.
+ * Interface pour les tables d'identification. TODO à commenter
  */
 export interface TableIdentification<Sorte extends EnsembleSortes, T>
-    extends TypeEnveloppe<FormatTableIdentification<Sorte, T>, EtiquetteTable> {
+    extends TypeEnveloppe<
+        FormatTableIdentification<Sorte, T>, FormatTableIdentification<Sorte, T>, 
+        EtiquetteTable> {
+    /**
+     * Itère une procédure sur chaque association de la table.
+     * @param f procédure appelée à chaque itération.
+     */
     iterer(
         f: (ID_sorte: Identifiant<Sorte>, val: T, tab?: { [cle: string]: T }, taille?: number) => void
     ): void;
+    /**
+     * Application fonctorielle de f à la table.
+     * @param f fonction à appliquer à chaque valeur de la table.
+     * @returns une nouvelle table égale à la composition f o this.
+     */
+    application<S>(f: (x: T) => S): TableIdentification<Sorte, S>;
+    /**
+     * Valeur associée à l'identifiant.
+     * @param ID_sorte chaîne représentant une clé (précondition : this.contient(ID_sorte) == true).
+     * @returns valeur associée à cle.
+     */
     valeur(ID_sorte: Identifiant<Sorte>): T;
+    /**
+     * Teste si la clé appartient à la table.
+     * @param ID_sorte chaîne représentant une clé.
+     */
     contient(ID_sorte: Identifiant<Sorte>): boolean;
+    /**
+     * Liste des valeurs de la table.
+     * @returns un tableau listant les valeurs.
+     */
     image(): ReadonlyArray<T>;
+    /**
+     * Liste des identifiants de la table.
+     * @returns un tableau listant les identifiants servant de clé.
+     */
     domaine(): ReadonlyArray<Identifiant<Sorte>>;
+    /**
+     * Sélection d'un identifiant clé de la table.
+     * @returns un identifiant de la table s'il en existe, une erreur sinon.
+     */
     selectionCle(): Identifiant<Sorte>;
+    /**
+     * Sélection d'un identifiant clé dont la valeur vérifie une propriété.
+     * @param prop prédicat portant sur les valeurs.
+     * @returns un identifiant de la table s'il en existe un satisfaisant, une erreur sinon.
+     */
     selectionCleSuivantCritere(prop: (x: T) => boolean): Identifiant<Sorte>;
+    /**
+     * Nombre d'associations dans la table.
+     * @returns un entier naturel égal au nombre d'associations.
+     */
     taille(): number;
+    /**
+     * Teste si la table est vide ou non.
+     * @retuns true si la table est vide, false sinon.
+     */
     estVide(): boolean;
 }
 
@@ -117,7 +166,26 @@ export interface TableIdentification<Sorte extends EnsembleSortes, T>
  */
 export interface TableIdentificationMutable<Sorte extends EnsembleSortes, T>
     extends TableIdentification<Sorte, T> {
-    ajouter(ID_sorte: Identifiant<Sorte>, x: T): Option<T>;
+    /**
+     * Ajoute l'association (cle, x) à la table mutable si la 
+     * clé n'est pas présente.
+     * @param ID_sorte identifiant servant de clé.
+     * @param x valeur.
+     * @returns true si la clé est ajoutée, false sinon.
+     */
+    ajouter(ID_sorte: Identifiant<Sorte>, x: T): boolean;
+    /**
+     * Modifie ou ajoute l'association (cle, x) à la table mutable.
+     * @param ID_sorte identifiant servant de clé.
+     * @param x valeur.
+     * @returns une option contenant l'ancienne valeur en cas de modification, vide sinon.
+     */
+    modifier(ID_sorte: Identifiant<Sorte>, x: T): Option<T>;
+    /**
+     * Retire l'association (cle, ?) de la table mutable.
+     * @param ID_sorte identifiant servant de clé.
+     * @returns une option contenant la valeur retirée, vide sinon.
+     */
     retirer(ID_sorte: Identifiant<Sorte>): Option<T>;
 }
 
@@ -125,24 +193,28 @@ export interface TableIdentificationMutable<Sorte extends EnsembleSortes, T>
  * Table d'identification mutable utilisant la valeur d'identificateurs
  * comme clé.
  */
-export class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>
+class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>
     extends Enveloppe<
-    FormatTableIdentificationMutable<Sorte, T>,
-    EtiquetteTable>
+        FormatTableIdentificationMutable<Sorte, T>,
+        FormatTableIdentification<Sorte, T>,
+        EtiquetteTable>
     implements TableIdentificationMutable<Sorte, T> {
+    
     constructor(
         protected sorte: Sorte,
         etat: FormatTableIdentificationMutable<Sorte, T> =
-            creerTableIdentificationMutableAuFormat(FABRIQUE_TABLE.creerVideMutable(), sorte)) {
+            creerTableIdentificationMutableAuFormat(FABRIQUE_FORMAT_TABLE.creerVideMutable(), sorte)) {
         super(etat);
     }
-
+    toJSON(): FormatTableIdentification<Sorte, T> {
+        return this.etat();
+    }
     net(e: EtiquetteTable): string {
         switch (e) {
             case 'taille': return JSON.stringify(this.taille());
             case 'domaine': return JSON.stringify(this.domaine());
             case 'image': return JSON.stringify(this.image());
-            case 'graphe': return JSON.stringify(this.val().identification.table);
+            case 'graphe': return JSON.stringify(this.etat().identification.table);
         }
         return jamais(e);
     }
@@ -154,50 +226,61 @@ export class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes
         f: (ID_sorte: Identifiant<Sorte>, val: T, tab?: { [cle: string]: T }, taille?: number) => void
     ): void {
         MODULE_TABLE.iterer((id, v, tab, taille) =>
-            f(identifiant(this.sorte, id), v, tab, taille), this.val().identification);
+            f(identifiant(this.sorte, id), v, tab, taille), this.etat().identification);
     }
 
     valeur(ID_sorte: Identifiant<Sorte>): T {
-        return MODULE_TABLE.valeur(this.val().identification, ID_sorte.val);
+        return MODULE_TABLE.valeur(this.etat().identification, ID_sorte.val);
     }
 
     contient(ID_sorte: Identifiant<Sorte>): boolean {
-        return MODULE_TABLE.contient(this.val().identification, ID_sorte.val);
+        return MODULE_TABLE.contient(this.etat().identification, ID_sorte.val);
     }
     image(): ReadonlyArray<T> {
-        return MODULE_TABLE.image(this.val().identification);
+        return MODULE_TABLE.image(this.etat().identification);
     }
 
     domaine(): ReadonlyArray<Identifiant<Sorte>> {
-        return MODULE_TABLE.transformationFonctorielleEnTableau(this.val().identification, (c, v) => identifiant(this.sorte, c));
+        return MODULE_TABLE.transformationFonctorielleEnTableau(this.etat().identification, (c, v) => identifiant(this.sorte, c));
         // moins efficace : return MODULE_TABLE.domaine(this.val()).
         //    map((s) => { return { val: s, sorte: this.sorte } });
     }
     selectionCle(): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCle(this.val().identification),);
+        return identifiant(this.sorte, MODULE_TABLE.selectionCle(this.etat().identification),);
     }
     selectionCleSuivantCritere(prop: (x: T) => boolean): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCleSuivantCritere(this.val().identification, prop));
+        return identifiant(this.sorte, MODULE_TABLE.selectionCleSuivantCritere(this.etat().identification, prop));
     }
 
     taille(): number {
-        return MODULE_TABLE.taille(this.val().identification);
+        return MODULE_TABLE.taille(this.etat().identification);
     }
     estVide(): boolean {
         return this.taille() === 0;
     }
 
-    ajouter(ID_sorte: Identifiant<Sorte>, x: T): Option<T> {
-        return MODULE_TABLE.ajouter(this.val().identification, ID_sorte.val, x);
+    /**
+     * Application fonctorielle de f à la table.
+     * @param f fonction à appliquer à chaque valeur de la table.
+     * @returns une nouvelle table égale à la composition f o this.
+     */
+    application<S>(f: (x: T) => S): TableIdentificationMutable<Sorte, S> {
+        return creerTableIdentificationMutableParCopie(this.sorte, f, this.etat()); // TODO plus direct ?
     }
 
+    ajouter(ID_sorte: Identifiant<Sorte>, x: T): boolean {
+        return MODULE_TABLE.ajouter(this.etat().identification, ID_sorte.val, x);
+    }
+    modifier(ID_sorte: Identifiant<Sorte>, x: T): Option<T> {
+        return MODULE_TABLE.modifier(this.etat().identification, ID_sorte.val, x);
+    }
     retirer(ID_sorte: Identifiant<Sorte>): Option<T> {
-        return MODULE_TABLE.retirer(this.val().identification, ID_sorte.val);
+        return MODULE_TABLE.retirer(this.etat().identification, ID_sorte.val);
     }
 }
 export function creerTableIdentificationMutableVide<Sorte extends EnsembleSortes, T>(
     sorte: Sorte
-) {
+): TableIdentificationMutable<Sorte, T> {
     return new TableIdentificationMutableParEnveloppe<Sorte, T>(sorte);
 }
 /*
@@ -206,8 +289,8 @@ export function creerTableIdentificationMutableVide<Sorte extends EnsembleSortes
 export function creerTableIdentificationMutableParCopie<Sorte extends EnsembleSortes, S, T>(
     sorte: Sorte, transformation: (x: S) => T,
     table: FormatTableIdentification<Sorte, S>
-) {
-    let r = creerTableIdentificationMutableVide(sorte);
+): TableIdentificationMutable<Sorte, T> {
+    let r = creerTableIdentificationMutableVide<Sorte, T>(sorte);
     MODULE_TABLE.iterer((c, v) => r.ajouter(identifiant(sorte, c), transformation(v)), table.identification);
     return r;
 }
@@ -225,8 +308,9 @@ export function creerTableIdentificationMutableParEnveloppe<Sorte extends Ensemb
 
 
 // TODO commentaires version immutable.
-export class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
+class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
     extends Enveloppe<
+    FormatTableIdentification<Sorte, T>,
     FormatTableIdentification<Sorte, T>,
     EtiquetteTable>
     implements TableIdentification<Sorte, T> {
@@ -234,17 +318,20 @@ export class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
     constructor(
         protected sorte: Sorte,
         etat: FormatTableIdentification<Sorte, T> =
-            tableIdentificationAuFormat(FABRIQUE_TABLE.vide(), sorte)) {
+            tableIdentificationAuFormat(FABRIQUE_FORMAT_TABLE.vide(), sorte)) {
         super(etat);
     }
 
+    toJSON(): FormatTableIdentification<Sorte, T> {
+        return this.etat();
+    }
 
     net(e: EtiquetteTable): string {
         switch (e) {
             case 'taille': return JSON.stringify(this.taille());
             case 'domaine': return JSON.stringify(this.domaine());
             case 'image': return JSON.stringify(this.image());
-            case 'graphe': return JSON.stringify(this.val().identification.table);
+            case 'graphe': return JSON.stringify(this.etat().identification.table);
         }
         return jamais(e);
     }
@@ -252,38 +339,47 @@ export class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
         return this.net('graphe');
     }
 
-    val(): FormatTableIdentification<Sorte, T> {
-        return this.val();
+    etat(): FormatTableIdentification<Sorte, T> {
+        return this.etat();
     }
 
     iterer(
         f: (ID_sorte: Identifiant<Sorte>, val: T, tab?: { [cle: string]: T }, taille?: number) => void
     ): void {
-        MODULE_TABLE.iterer((id, v, tab, taille) => f(identifiant(this.sorte, id), v, tab, taille), this.val().identification);
+        MODULE_TABLE.iterer((id, v, tab, taille) => f(identifiant(this.sorte, id), v, tab, taille), this.etat().identification);
+    }
+
+    /**
+         * Application fonctorielle de f à la table.
+         * @param f fonction à appliquer à chaque valeur de la table.
+         * @returns une nouvelle table égale à la composition f o this.
+         */
+    application<S>(f: (x: T) => S): TableIdentification<Sorte, S> {
+        return tableIdentification(this.sorte, MODULE_TABLE.applicationFonctorielle(this.etat().identification, f));
     }
 
     valeur(ID_sorte: Identifiant<Sorte>): T {
-        return MODULE_TABLE.valeur(this.val().identification, ID_sorte.val);
+        return MODULE_TABLE.valeur(this.etat().identification, ID_sorte.val);
     }
 
     contient(ID_sorte: Identifiant<Sorte>): boolean {
-        return MODULE_TABLE.contient(this.val().identification, ID_sorte.val);
+        return MODULE_TABLE.contient(this.etat().identification, ID_sorte.val);
     }
     image(): ReadonlyArray<T> {
-        return MODULE_TABLE.image(this.val().identification);
+        return MODULE_TABLE.image(this.etat().identification);
     }
     domaine(): ReadonlyArray<Identifiant<Sorte>> {
-        return MODULE_TABLE.transformationFonctorielleEnTableau(this.val().identification, (c, v) => identifiant(this.sorte, c));
+        return MODULE_TABLE.transformationFonctorielleEnTableau(this.etat().identification, (c, v) => identifiant(this.sorte, c));
     }
     selectionCle(): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCle(this.val().identification));
+        return identifiant(this.sorte, MODULE_TABLE.selectionCle(this.etat().identification));
     }
     selectionCleSuivantCritere(prop: (x: T) => boolean): Identifiant<Sorte> {
-        return identifiant(this.sorte, MODULE_TABLE.selectionCleSuivantCritere(this.val().identification, prop));
+        return identifiant(this.sorte, MODULE_TABLE.selectionCleSuivantCritere(this.etat().identification, prop));
     }
 
     taille(): number {
-        return MODULE_TABLE.taille(this.val().identification);
+        return MODULE_TABLE.taille(this.etat().identification);
     }
     estVide(): boolean {
         return this.taille() === 0;

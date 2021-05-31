@@ -1,16 +1,16 @@
 import { DateFr, dateEnveloppe, dateMaintenant, conversionDate, FormatDateFr } from "../../bibliotheque/types/date";
-import { testUnitaire } from '../utilitaires';
+import { testUnitaireJsonJson } from '../utilitaires';
 
 describe('DateFr', () => {
     let r : DateFr = dateMaintenant();
-    let oracle = dateEnveloppe(r.val());
-    testUnitaire(
+    let oracle = dateEnveloppe(r.etat());
+    testUnitaireJsonJson(
         "fabrique",
-        oracle.val(),
-        r.val());
+        oracle.etat(),
+        r.etat());
     let dateStd = new Date(2018, 7, 21, 12, 2, 21, 5);
     let dateFr : FormatDateFr = conversionDate(dateStd);
-    testUnitaire(
+    testUnitaireJsonJson(
         "conversion Date standard",
         {
             seconde: 21,
@@ -23,18 +23,18 @@ describe('DateFr', () => {
         },
         dateFr
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "représentation",
         "12:02:21, le 21/08/2018",
         dateEnveloppe(dateFr).representation()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "représentation longue",
         "12:02:21, le mardi 21 aout 2018",
         dateEnveloppe(dateFr).representationLongue()
     );
 
-    testUnitaire(
+    testUnitaireJsonJson(
         "représentation log",
         "12:02:21 21/08/2018",
         dateEnveloppe(dateFr).representationLog()

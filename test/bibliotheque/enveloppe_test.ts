@@ -1,20 +1,23 @@
 import { Enveloppe } from "../../bibliotheque/types/enveloppe";
 import { jamais } from "../../bibliotheque/types/typesAtomiques";
-import { testUnitaire } from '../utilitaires';
+import { testUnitaireJsonJson } from '../utilitaires';
 
 import { creerTypeNonSerialisable, TypeNonSerialisable, TypeSerialisable } from "./exemplesTypes";
 
 type Etiquette = 'rep';
 
 
-class TestES extends Enveloppe<TypeSerialisable, Etiquette> {
+class TestES extends Enveloppe<TypeSerialisable, TypeSerialisable, Etiquette> {
+    toJSON(): TypeSerialisable {
+        return this.etat();
+    }
 
     constructor(etat: TypeSerialisable) {
         super(etat);
     }
 
     net(e: Etiquette): string {
-        let s = this.val();
+        let s = this.etat();
         switch (e) {
             case 'rep': return s.a;
         }
@@ -27,26 +30,30 @@ class TestES extends Enveloppe<TypeSerialisable, Etiquette> {
 
 describe("Enveloppe d'un type sérialisable", () => {
     let t = new TestES({ a: "coco" });
-    testUnitaire(
+    testUnitaireJsonJson(
         "valeur",
         { a: "coco" },
-        t.val()
+        t.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "brut",
         JSON.stringify({ a: "coco" }),
         t.brut()
     );
 });
 
-class TestENS extends Enveloppe<TypeNonSerialisable, Etiquette> {
-
+class TestENS extends Enveloppe<TypeNonSerialisable, TypeSerialisable, Etiquette> {
+    
     constructor(etat: TypeNonSerialisable) {
         super(etat);
     }
 
+    toJSON(): TypeSerialisable {
+        return this.etat();
+    }
+    
     net(e: Etiquette): string {
-        let s = this.val();
+        let s = this.etat();
         switch (e) {
             case 'rep': return s.a;
         }
@@ -59,12 +66,12 @@ class TestENS extends Enveloppe<TypeNonSerialisable, Etiquette> {
 
 describe("Enveloppe d'un type non sérialisable", () => {
     let t = new TestENS(creerTypeNonSerialisable("coco"));
-    testUnitaire(
+    testUnitaireJsonJson(
         "valeur",
         { a: "coco" },
-        t.val()
+        t.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "brut",
         JSON.stringify({ a: "coco" }),
         t.brut()

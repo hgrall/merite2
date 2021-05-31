@@ -1,5 +1,5 @@
 import { TableMutable, creerTableMutableVide } from "../../bibliotheque/types/table";
-import { testUnitaire } from '../utilitaires';
+import { testUnitaireJsonJson } from '../utilitaires';
 import { creerTypeNonSerialisable, TypeNonSerialisable, TypeSerialisable } from './exemplesTypes';
 
 describe('TableMutable avec type sérialisable', () => {
@@ -7,88 +7,88 @@ describe('TableMutable avec type sérialisable', () => {
         = creerTableMutableVide();
     table.ajouter("a1", { a: "coco1" });
     table.ajouter("a2", { a: "coco2" });
-    testUnitaire(
+    testUnitaireJsonJson(
         "taille +2",
         2,
         table.taille()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2",
         ["a1", "a2"],
         table.domaine()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "état +2",
         {
             table : {a1 : {a : "coco1"}, a2 : {a : "coco2"}},
             taille : 2
         },
-        table.val()
+        table.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2",
         false,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "image +2",
         [{a : "coco1"}, {a : "coco2"}],
         table.image()
     );
     table.retirer("a1");
-    testUnitaire(
+    testUnitaireJsonJson(
         "taille +2-1",
         1,
         table.taille()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2-1",
         ["a2"],
         table.domaine()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "état +2-1",
         {
             table : {a2 : {a : "coco2"}},
             taille : 1
         },
-        table.val()
+        table.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1",
         false,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "image +2-1",
         [{a : "coco2"}],
         table.image()
     );
     table.retirer("a2");
-    testUnitaire(
+    testUnitaireJsonJson(
         "taille +2-1-1",
         0,
         table.taille()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2-1-1",
         [],
         table.domaine()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "état +2-1-1",
         {
             table : {},
             taille : 0
         },
-        table.val()
+        table.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1-1",
         true,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "image +2-1-1",
         [],
         table.image()
@@ -102,88 +102,88 @@ describe('TableMutable avec type non sérialisable', () => {
     table.ajouter("a1", creerTypeNonSerialisable("coco1"));
     table.ajouter("a2", creerTypeNonSerialisable("coco2"));
 
-    testUnitaire(
+    testUnitaireJsonJson(
         "taille +2",
         2,
         table.taille()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2",
         ["a1", "a2"],
         table.domaine()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "état +2",
         {
             table : {a1 : {a : "coco1"}, a2 : {a : "coco2"}},
             taille : 2
         },
-        table.val()
+        table.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2",
         false,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "image +2",
         [{a : "coco1"}, {a : "coco2"}],
         table.image()
     );
     table.retirer("a1");
-    testUnitaire(
+    testUnitaireJsonJson(
         "taille +2-1",
         1,
         table.taille()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2-1",
         ["a2"],
         table.domaine()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "état +2-1",
         {
             table : {a2 : {a : "coco2"}},
             taille : 1
         },
-        table.val()
+        table.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1",
         false,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "image +2-1",
         [{a : "coco2"}],
         table.image()
     );
     table.retirer("a2");
-    testUnitaire(
+    testUnitaireJsonJson(
         "taille +2-1-1",
         0,
         table.taille()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2-1-1",
         [],
         table.domaine()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "état +2-1-1",
         {
             table : {},
             taille : 0
         },
-        table.val()
+        table.etat()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1-1",
         true,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "image +2-1-1",
         [],
         table.image()

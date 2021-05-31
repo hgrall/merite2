@@ -8,8 +8,14 @@ console.log("* Début des tests");
 import "./bibliotheque/date_test";
 import "./bibliotheque/enveloppe_test";
 import "./bibliotheque/identification_test";
+import "./bibliotheque/liste_test";
+import "./bibliotheque/file_test";
 import "./bibliotheque/table_test";
+import "./bibliotheque/tableau_test";
 import "./bibliotheque/tableIdentification_test";
+import "./bibliotheque/nombres_test";
+import "./bibliotheque/option_test";
+
 //import "./tchat/commun/tchat_test";
 //import "./distribution/serveur/generationReseau_test";
 

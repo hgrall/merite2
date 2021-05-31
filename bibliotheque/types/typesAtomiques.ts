@@ -30,8 +30,16 @@ export interface Mesurable {
     readonly taille: number
 }
 
-/*
-*/
+/**
+ * Interface exprimant la propriété d'être prioritarisable.
+ * Attribut :
+ * - priorité : entier naturel.
+ */
+
+export interface Prioritarisable {
+    priorite : number;
+}
+
 
 /**
  * Fonction renvoyant une erreur exprimant l'impossibilité d'une exécution.

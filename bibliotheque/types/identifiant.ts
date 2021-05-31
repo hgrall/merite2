@@ -1,5 +1,5 @@
 /**
- * Type représentant l'ensemble des sortes.
+ * Type représentant l'ensemble des sortes pour les identifiants.
  * 
  * Définir un type union formé de singletons de type string.
  */
@@ -12,7 +12,7 @@ export type EnsembleSortes = "sommet" | "message" | "test";
  * Exemple : Identifiant<"sommet"> ("sommet" étant aussi un type singleton sous-type de string),
  * { val : un_identifiant, sorte : "sommet" }.
  *
- * Remarque : les identifiants sont toujours accéder via un champ nommé ID ou ID_x.
+ * Remarque : les identifiants sont toujours accédés via un champ nommé ID ou ID_x.
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  */
 export type Identifiant<Sorte extends EnsembleSortes> = {

@@ -54,10 +54,18 @@ export type EtiquetteDateFr =
     | 'date' | 'dateLongue';
 
 /**
- * Interface structurelle définissant une date.
+ * Interface définissant une date.
  */
-export interface DateFr extends TypeEnveloppe<FormatDateFr, EtiquetteDateFr> {
+export interface DateFr extends TypeEnveloppe<FormatDateFr, FormatDateFr, EtiquetteDateFr> {
+    /**
+     * Représentation longue de la date.
+     * @returns la date sous la forme 12:53:53, le vendredi 02 fevrier 2017.
+     */
     representationLongue(): string;
+    /**
+     * Représentation de la date pour les logs.
+     * @returns la date sous la forme 12:53:53 02/02/2017.
+     */
     representationLog(): string;
 }
 
@@ -79,61 +87,61 @@ export function conversionDate(d: Date): FormatDateFr {
 }
 
 /**
- * Classe enveloppe représentant les datess.
+ * Classe enveloppe représentant les dates.
  */
-class DateFrEnveloppe extends Enveloppe<FormatDateFr, EtiquetteDateFr>
+class DateFrEnveloppe extends Enveloppe<FormatDateFr, FormatDateFr, EtiquetteDateFr>
     implements DateFr {
 
     /**
      * Réprésentation des composantes sélectionnées de la date.
      * @param e étiquette pour sélection des composants de la date.
-     * @returns une chaîne de caratères représentant les composantes.
+     * @returns une chaîne de caractères représentant les composantes.
      */
     net(e: EtiquetteDateFr): string {
         switch (e) {
             case 'heure': {
-                let s = normalisationNombre(this.val().seconde, 2);
-                let min = normalisationNombre(this.val().minute, 2);
-                let h = normalisationNombre(this.val().heure, 2);
+                let s = normalisationNombre(this.etat().seconde, 2);
+                let min = normalisationNombre(this.etat().minute, 2);
+                let h = normalisationNombre(this.etat().heure, 2);
                 return `${h}:${min}:${s}`;
             }
             case 'jourSemaine': {
-                let js = this.val().jourSemaine;
+                let js = this.etat().jourSemaine;
                 let jsL = Semaine[js].toLowerCase();
                 return jsL;
             }
             case 'jourMois': {
-                let jm = normalisationNombre(this.val().jourMois, 2);
+                let jm = normalisationNombre(this.etat().jourMois, 2);
                 return jm;
             }
             case 'moisLettre': {
-                let mo = this.val().mois;
+                let mo = this.etat().mois;
                 let moL = Mois[mo].toLowerCase();
                 return moL;
             }
             case 'moisNumero': {
-                let mo = this.val().mois;
+                let mo = this.etat().mois;
                 let moN = normalisationNombre(mo + 1, 2);
                 return moN;
             }
             case 'annee': {
-                let a = this.val().annee.toString();
+                let a = this.etat().annee.toString();
                 return a;
             }
             case 'date': {
-                let a = this.val().annee.toString();
-                let jm = normalisationNombre(this.val().jourMois, 2);
-                let mo = this.val().mois;
+                let a = this.etat().annee.toString();
+                let jm = normalisationNombre(this.etat().jourMois, 2);
+                let mo = this.etat().mois;
                 let moN = normalisationNombre(mo + 1, 2);
                 return `${jm}/${moN}/${a}`;
             }
             case 'dateLongue': {
-                let js = this.val().jourSemaine;
+                let js = this.etat().jourSemaine;
                 let jsL = Semaine[js].toLowerCase();
-                let jm = normalisationNombre(this.val().jourMois, 2);
-                let mo = this.val().mois;
+                let jm = normalisationNombre(this.etat().jourMois, 2);
+                let mo = this.etat().mois;
                 let moL = Mois[mo].toLowerCase();
-                let a = this.val().annee.toString();
+                let a = this.etat().annee.toString();
                 return `${jsL} ${jm} ${moL} ${a}`;
             }
         }
@@ -164,6 +172,14 @@ class DateFrEnveloppe extends Enveloppe<FormatDateFr, EtiquetteDateFr>
         return this.net('heure') + " " + this.net('date');
     }
 
+    /**
+     * Représentation en JSON.
+     * @returns la représentation JSON de la date.
+     */
+    toJSON(): FormatDateFr {
+        return this.etat();
+    }
+
 }
 
 /**
@@ -178,7 +194,7 @@ export function dateMaintenant(): DateFr {
 /**
  * Fabrique d'une date à partir d'une decription JSON.
  * @param d date Fr au format JSON
- * @returns la date correspondant au format JSON (, format français).
+ * @returns la date correspondant au format JSON (format français).
  */
 export function dateEnveloppe(d: FormatDateFr): DateFr {
     return new DateFrEnveloppe(d);

@@ -1,5 +1,5 @@
 import { TableIdentificationMutable, creerTableIdentificationMutableVide } from "../../bibliotheque/types/tableIdentification";
-import { testUnitaire } from '../utilitaires';
+import { testUnitaireJsonJson } from '../utilitaires';
 import { creerTypeNonSerialisable, TypeNonSerialisable, TypeSerialisable } from './exemplesTypes';
 
 
@@ -8,29 +8,29 @@ describe('TableIdentificationMutable - type sérialisable', () => {
         = creerTableIdentificationMutableVide('test');
     table.ajouter({ val: "id1", sorte: 'test' }, { a: "coco1" });
     table.ajouter({ val: "id2", sorte: 'test' }, { a: "coco2" });
-    testUnitaire("taille +2", 2, table.taille());
-    testUnitaire(
+    testUnitaireJsonJson("taille +2", 2, table.taille());
+    testUnitaireJsonJson(
         "valeur +2",
         { a: "coco1" }, 
         table.valeur({ val: "id1", sorte: 'test' }));
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2",
         false,
         table.estVide()
     );
     table.retirer({ val: "id1", sorte: 'test' });
-    testUnitaire("taille +2-1", 1, table.taille());
-    testUnitaire(
+    testUnitaireJsonJson("taille +2-1", 1, table.taille());
+    testUnitaireJsonJson(
         "valeur +2-1",
         { a: "coco2" }, 
         table.valeur({ val: "id2", sorte: 'test' }));
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1",
         false,
         table.estVide()
     );
     table.retirer({ val: "id2", sorte: 'test' });
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1-1",
         true,
         table.estVide()
@@ -46,39 +46,39 @@ describe('TableIdentificationMutable - type non sérialisable', () => {
     table.ajouter(
         { val: "id2", sorte: 'test' }, 
         creerTypeNonSerialisable("coco2"));
-    testUnitaire("taille +2", 2, table.taille());
-    testUnitaire(
+    testUnitaireJsonJson("taille +2", 2, table.taille());
+    testUnitaireJsonJson(
         "valeur +2",
         { a: "coco1" }, 
         table.valeur({ val: "id1", sorte: 'test' }));
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2",
         false,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2",
         [{val: "id1", sorte: "test"},{val: "id2", sorte: "test"}],
         table.domaine()
     );
     table.retirer({ val: "id1", sorte: 'test' });
-    testUnitaire("taille +2-1", 1, table.taille());
-    testUnitaire(
+    testUnitaireJsonJson("taille +2-1", 1, table.taille());
+    testUnitaireJsonJson(
         "valeur +2-1",
         { a: "coco2" }, 
         table.valeur({ val: "id2", sorte: 'test' }));
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1",
         false,
         table.estVide()
     );
-    testUnitaire(
+    testUnitaireJsonJson(
         "domaine +2-1",
         [{"val":"id2","sorte":"test"}],
         table.domaine()
     );
     table.retirer({ val: "id2", sorte: 'test' });
-    testUnitaire(
+    testUnitaireJsonJson(
         "vacuité +2-1-1",
         true,
         table.estVide()

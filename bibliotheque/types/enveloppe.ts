@@ -13,17 +13,18 @@
  * Cette interface est implémentée par "Enveloppe".
  *
  * @param T type de l'état
+ * @param J type JSON pour représenter l'état
  * @param E étiquettes utiles pour une représentation (cf. le méthode net).
  *
  */
-export interface TypeEnveloppe<T, E extends string> {
+export interface TypeEnveloppe<T, J, E extends string> {
     /**
      * Valeur de l'état.
      */
-    val(): T;
+    etat(): T;
     /**
-     * Représentation en JSON de l'état après conversion.
-     * @returns une chaîne représentant le document JSON.
+     * Représentation brute de l'état. 
+     * @returns une chaîne représentant l'état.
      */
     brut(): string;
     /**
@@ -33,10 +34,14 @@ export interface TypeEnveloppe<T, E extends string> {
      */
     net(etiquette: E): string;
     /**
-     * Une représentation jugée utile spécifique.
+     * Une représentation spécifique jugée utile .
      * @returns une chaîne de représentation.
      */
     representation(): string;
+    /**
+     * Une représentation JSON de l'état.
+     */
+    toJSON() : J;
 }
 
 /**
@@ -44,7 +49,7 @@ export interface TypeEnveloppe<T, E extends string> {
  * @param T type de l'état
  * @param E étiquettes utiles pour une représentation (cf. le méthode net).
  */
-export abstract class Enveloppe<T, E extends string> implements TypeEnveloppe<T, E> {
+export abstract class Enveloppe<T, J, E extends string> implements TypeEnveloppe<T, J, E> {
 
     /**
      * Constructeur appelé par les sous-classes. 
@@ -53,20 +58,22 @@ export abstract class Enveloppe<T, E extends string> implements TypeEnveloppe<T,
      * du constructeur et l'instance construite.
      * @param etat valeur initiale de l'état
      */
-    constructor(private etat: T) {
+    constructor(private _etat: T) {
     }
     /**
      * Valeur de l'état.
      */
-    val(): T {
-        return this.etat;
+    etat(): T {
+        return this._etat;
     }
     /**
-     * Représentation en JSON de l'état après conversion.
+     * Représentation de l'état par une chaîne.
+     * C'est la méthode toJSON() qui est appelée puis 
+     * JSON.stringify.
      * @returns une chaîne représentant le document JSON.
      */
     brut(): string {
-        return JSON.stringify(this.val());
+        return JSON.stringify(this);
     };
     /**
      * Représentation paramétrée à implémenter.
@@ -78,6 +85,10 @@ export abstract class Enveloppe<T, E extends string> implements TypeEnveloppe<T,
      * @returns une chaîne de représentation.
      */
     abstract representation(): string;
+    /**
+     * Une représentation JSON de l'état.
+     */
+    abstract toJSON() : J;
 }
 
 
