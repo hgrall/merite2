@@ -1,7 +1,15 @@
 import {
-    FormatMessage, MessageParEnveloppe, Message,
-    FormatConfigurationInitiale, ConfigurationParEnveloppe, Configuration,
-    FormatErreurRedhibitoire, ErreurRedhibitoireParEnveloppe, ErreurRedhibitoire
+    FormatMessage,
+    MessageParEnveloppe,
+    Message,
+    ConfigurationParEnveloppe,
+    Configuration,
+    FormatErreurRedhibitoire,
+    ErreurRedhibitoireParEnveloppe,
+    ErreurRedhibitoire,
+    FormatInformation,
+    Information,
+    InformationParEnveloppe, FormatConfigurationTchat
 } from "./types/formats";
 
 import {
@@ -17,31 +25,18 @@ import {
     Identifiant
 } from "./types/identifiant";
 import {
-    FormatSommetTchat, sommetTchat,
+    FormatSommetTchat,
+    sommetTchat,
 } from "./types/sommet";
 import {
     FormatTableIdentification,
-    FormatTableIdentificationMutable,
+    FormatTableIdentificationMutable, tableIdentification,
     TableIdentificationMutable
 } from "./types/tableIdentification";
-import {TableauParEnveloppe} from "./types/tableau";
+import {creerTableauMutableParCopie, FormatTableau, tableau, TableauParEnveloppe} from "./types/tableau";
+import {creerTableMutableParCopie, table} from "./types/table";
 
 
-/**
- * Description JSON d'une configuration pour le prototype.
- * Structure :
- * - configurationInitiale : marqueur des configurations
- * - centre : sommet
- * - voisins : table de sommets voisins contenant l'
- * - date : date en français
- */
-export interface FormatConfigurationTchat<FSI extends FormatIdentifiable<"sommet">,C> extends FormatConfigurationInitiale {
-    readonly "centre": FormatSommetTchat,
-    readonly "date": FormatDateFr,
-    readonly "nombreConnexions" : number,
-    readonly "id": Identifiant<"sommet">,
-    readonly "voisinsActifs": FormatTableIdentification<'sommet', FSI>;
-}
 
 /**
  * Etiquettes utiles pour représenter une configuration.
@@ -127,6 +122,89 @@ export function configurationDeSommetTchat<FSI extends FormatIdentifiable<"somme
     });
 }
 
+/**
+ * Description JSON d'une configuration pour le prototype.
+ * Structure :
+ * - configurationInitiale : marqueur des configurations
+ * - centre : sommet
+ * - voisins : table de sommets voisins contenant l'
+ * - date : date en français
+ */
+export interface FormatInformationNouvelleConnexionTchat<FSI extends FormatIdentifiable<"sommet">> extends FormatInformation {
+    readonly "voisinsActifs": FormatTableIdentification<'sommet', FSI>;
+    readonly "nombreDeConnexions": number;
+}
+
+/**
+ * Etiquettes utiles pour représenter une configuration.
+ */
+export type EtiquetteInformationTchat = 'type' | 'date' |'ID_à'| 'voisinsActifs';
+
+/**
+ * Interface pour les informations d'une nouvelle connexion
+ */
+export interface InformationNouvelleConnexionTchat
+    extends Information<FormatInformation, EtiquetteInformationTchat> {
+}
+
+/**
+ * Configuration initiale d'un client du prototype implémentée
+ * par une enveloppe.
+ */
+export class InformationNouvelleConnexionTchatParEnveloppe <FSI extends FormatIdentifiable<"sommet">>
+    extends InformationParEnveloppe<
+        FormatInformationNouvelleConnexionTchat<FSI>,
+        EtiquetteInformationTchat>{
+    /**
+     * Représentation nette du centre et des voisins, ainsi que de la date.
+     * - centre : nom (ID)
+     * - voisins : {
+     *     "ID": "nom",
+     *     etc. }
+     * - date : 12:53:53, le 02/02/2017 par exemple
+     * @param e une étiquette, "centre" ou "voisins"
+     */
+    net(e: EtiquetteInformationTchat): string {
+        let info = this.val();
+        switch (e) {
+            case "ID_à": return info.ID_Destinataire.val;
+            case "date":return dateEnveloppe(info.date).representation();
+            case "type": return info.type;
+            case "voisinsActifs": return tableIdentification<"sommet", FSI>("sommet", info.voisinsActifs.identification).representation();
+        }
+        return jamais(e);
+    }
+
+    /**
+     * Représentation de la configuration sous la forme suivante :
+     * - "(centre : nom (ID); voisins : { "ID" : "nom", etc. }) crée à heure, le date".
+     */
+    representation(): string {
+        let va = this.net('voisinsActifs');
+        let dc = this.net('date');
+        let type = this.net('type');
+        return "(type : " + type + " ; voisins actifs: " +  va +") créée à " + dc;
+    }
+}
+/**
+ * Fabrique d'une configuration initiale d'un client du prototype,
+ * à partir de sa description en JSON.
+ * @param c description de la configuration en JSON
+ */
+export function informationNouvelleConnexionTchat<FSI extends FormatIdentifiable<"sommet">>(i: FormatInformationNouvelleConnexionTchat<FSI>) {
+    return new InformationNouvelleConnexionTchatParEnveloppe(i);
+}
+
+/**
+ * Enumération des différents types de messages pour le prototype.
+ */
+    export enum TypeErreurTchat  {
+    ERREUR_CONNEXION = 'ERREUR_CONNEXION',
+    ERREUR_EMET = 'ERREUR_EMET',
+    ERREUR_DEST = 'ERREUR_DEST',
+    ERREUR_TYPE =  'ERREUR_TYPE',
+    INTERDICTION =  'INTERDICTION'
+}
 
 /**
  * Description JSON d'une erreur pour le prototype.
@@ -137,13 +215,14 @@ export function configurationDeSommetTchat<FSI extends FormatIdentifiable<"somme
  */
 export interface FormatErreurTchat extends FormatErreurRedhibitoire {
     readonly "messageErreur": string,
-    readonly "date": FormatDateFr
+    readonly "date": FormatDateFr,
+    readonly "type": TypeErreurTchat
 }
 
 /**
  * Etiquettes utiles pour représenter une erreur.
  */
-export type EtiquetteErreurTchat = 'messageErreur' | 'date';
+export type EtiquetteErreurTchat = 'messageErreur' | 'date'| 'type';
 
 /**
  * Interfaces pour les erreurs du prototype.
@@ -170,6 +249,7 @@ export class ErreurTchatParEnveloppe
         switch (e) {
             case 'messageErreur': return erreur.messageErreur;
             case 'date': return dateEnveloppe(erreur.date).representation();
+            case "type": return erreur.type;
         }
         return jamais(e);
     }
@@ -197,11 +277,12 @@ export function erreurTchat(err: FormatErreurTchat): ErreurTchatParEnveloppe {
  * @param n texte du message d'erreur
  * @param date date en français au format JSON
  */
-export function erreurTchatDeMessage(msg: string, date: FormatDateFr): ErreurTchatParEnveloppe {
+export function erreurTchatDeMessage(msg: string, date: FormatDateFr, type: TypeErreurTchat): ErreurTchatParEnveloppe {
     return new ErreurTchatParEnveloppe({
         "erreurRedhibitoire": Unite.ZERO,
         "messageErreur": msg,
-        "date": date
+        "date": date,
+        "type": type
     });
 }
 
@@ -213,13 +294,7 @@ export function erreurTchatDeMessage(msg: string, date: FormatDateFr): ErreurTch
 export const TypeMessageTchat =  {
     COM: 'COM',
     TRANSIT:  'TRANSIT',
-    AR:  'AR',
-    ERREUR_CONNEXION:  'ERREUR_CONNEXION',
-    ERREUR_EMET:  'ERREUR_EMET',
-    ERREUR_DEST:  'ERREUR_DEST',
-    ERREUR_TYPE:  'ERREUR_TYPE',
-    INTERDICTION:  'INTERDICTION',
-    INFO:  'INFO'
+    AR:  'AR'
 } as const
 
 /**
@@ -230,7 +305,7 @@ export const TypeMessageTchat =  {
  * ou bien de juste un voisin spécifique.
  */
 export interface FormatMessageTchat extends FormatMessage {
-    readonly ID_destinataires: TableauParEnveloppe<Identifiant<"sommet">>;
+    readonly ID_destinataires: FormatTableau<Identifiant<"sommet">>;
 }
 
 /**
@@ -278,7 +353,7 @@ export class MessageTchatParEnveloppe
             case 'date': return dateEnveloppe(msg.date).representation();
             case 'ID_de': return msg.ID_emetteur.val;
             case 'contenu': return msg.contenu;
-            case "ID_à": return  msg.ID_destinataires.representation();
+            case "ID_à": return  tableau(msg.ID_destinataires.tableau).representation();
         }
         return jamais(e);
     }
@@ -345,30 +420,9 @@ export function creerMessage(id: Identifiant<'message'>,
     return new MessageTchatParEnveloppe({
         ID: id,
         ID_emetteur: idEmetteur,
-        ID_destinataires: idDestinataires,
+        ID_destinataires: idDestinataires.val(),
         type: type,
         contenu: texte,
         date: date
     })
-}
-/**
- * Fabrique d'un message d'information
- * @param id identifiant du message
- * @param idEmetteur identifiant de l'émetteur
- * @param idDestinataire identifiant du destinataire
- * @param texte contenu
- * @param date date (en français)
- */
-export function creerMessageInformation(id: Identifiant<'message'>,
-                                   idEmetteur: Identifiant<'sommet'>,
-                                   texte: string, date: FormatDateFr,
-                                   idDestinataires: TableauParEnveloppe<Identifiant<"sommet">>): MessageTchat {
-    return new MessageTchatParEnveloppe({
-        ID: id,
-        ID_emetteur: idEmetteur,
-        ID_destinataires: idDestinataires,
-        type: TypeMessageTchat.INFO,
-        contenu: texte,
-        date: date
-    });
 }
