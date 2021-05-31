@@ -1,3 +1,4 @@
+import { dateEnveloppe, DateFr, FormatDateFr } from "../types/date";
 import { Enveloppe, TypeEnveloppe } from "../types/enveloppe";
 import { FormatIdentifiable, Identifiant } from "../types/identifiant";
 import { FormatTableIdentification, TableIdentification, tableIdentification } from "../types/tableIdentification";
@@ -64,6 +65,10 @@ export interface Noeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable 
      */
     itererVoisins(proc: (ID_sommet: Identifiant<'sommet'>, v: S) => void): void;
 
+    /**
+     * Nombre de connexions actives.
+     */
+    nombreConnexionsActives() : number;
 }
 
 class NoeudParEnveloppe<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>
@@ -94,7 +99,14 @@ implements Noeud<S> {
             voisins : this.etat().voisins.toJSON()
         };
     }
-    
+     /**
+     * Nombre de connexions actives.
+     */
+    nombreConnexionsActives() : number {
+        let r = 0;
+        this.itererVoisins((id, s) => {if(s.actif) r++;});
+        return r;
+    }
 }
 
 /**
@@ -105,3 +117,6 @@ implements Noeud<S> {
 export function noeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>(n: FormatNoeud<S>): Noeud<S> {
     return new NoeudParEnveloppe<S>(etatNoeud(n));
 }
+
+
+

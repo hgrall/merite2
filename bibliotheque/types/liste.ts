@@ -136,6 +136,10 @@ export interface Liste<T> extends
      * Miroir de la liste.
      */
     miroir() : Liste<T> ;
+    /**
+     * Filtre les éléments vérifiant une propriété.
+     */
+    filtre(prop : (x : T) => boolean) : Liste<T>;
 }
 
 /**
@@ -244,6 +248,18 @@ class ListeParEnveloppe<T>
         let r = listeVide<T>();
         r.iterer((v) => r = listeCons(v, r));
         return r;
+    }
+    /**
+     * Filtre les éléments vérifiant une propriété.
+     */
+    filtre(prop : (x : T) => boolean) : Liste<T> {
+        if(this.estVide())
+            return this;
+        if(prop(this.tete())){
+            return listeCons(this.tete(), this.reste().filtre(prop));
+        }else{
+            return this.reste();
+        }
     }
 }
 
