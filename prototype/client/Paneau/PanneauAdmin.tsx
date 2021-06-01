@@ -18,10 +18,10 @@ interface ProprietesAdmin {
     modifSelection: (i: Individu) => void;
     nombreConnexions: number
 }
-class ContenuPanelAdmin extends React.Component<ProprietesAdmin, {}> {
+export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
     render() {
         return (
-            <div className={this.props.className}>
+            <PanneauAdminDiv>
                 <SujetAdminContainer>
                     <PastilleAdmin fond={this.props.sujet.fond}/>
                     <Pseudo>
@@ -42,12 +42,12 @@ class ContenuPanelAdmin extends React.Component<ProprietesAdmin, {}> {
                                     nom={this.props.tous.nom}
                 />
                 <TexteInformation> Nombre de connexions: {this.props.nombreConnexions}/5 </TexteInformation>
-            </div>
+            </PanneauAdminDiv>
         );
     }
 }
 
-export const PanneauAdmin = styled(ContenuPanelAdmin)`
+const PanneauAdminDiv = styled.div`
   border-right: 5px solid ${CADRE};
   background: ${FOND}
   height: 100%;
@@ -58,7 +58,7 @@ const SujetAdminContainer = styled.div`
   flex: auto;
   margin: 0;
   background: ${CADRE};
-  height: 100%;
+  height: 90px;
 
   display: flex;
   flex-direction: row;

@@ -1,31 +1,20 @@
 import axios from 'axios';
+import {FormatMessageEnvoiTchat} from "../../tchat/commun/echangesTchat";
 
-export const envoyerMessage = async (
-    message: unknown,
+export const envoyerMessageEnvoi = async (
+    message: FormatMessageEnvoiTchat,
     code: string,
     // jeu: string
 ) => {
     const url = `http://localhost:8080/envoyer/A1`;
     console.log(url);
+    console.log(message);
     return axios
         .post(url, {
             message
         })
         .then((response) => {
-            console.log(response.data);
-        })
-        .catch((error) => {});
-};
-
-export const ecouterServeur = async (
-    code: string
-) => {
-    const url = `http://localhost:8080/listen/${code}`;
-    console.log(url);
-    return axios
-        .get(url)
-        .then((response) => {
-            return response.data;
+            console.log(response);
         })
         .catch((error) => {});
 };

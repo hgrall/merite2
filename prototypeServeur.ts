@@ -9,15 +9,17 @@ import {
 } from "./bibliotheque/types/tableIdentification";
 import {noeud, Noeud} from "./bibliotheque/applications/noeud";
 import {
+    FormatConfigurationTchat,
     FormatNoeudTchat,
     FormatSommetTchat,
-    MessageConfigurationTchat,
     sommetTchat
 } from "./tchat/commun/echangesTchat";
 import {dateEnveloppe, dateMaintenant} from "./bibliotheque/types/date";
+import {option, Option} from "./bibliotheque/types/option";
 
 const serveurApplications = creerServeurApplicationsExpress(8080);
-const generateurIdentifiants = creerGenerateurIdentifiantParCompteur<"sommet">("sommet")
+const generateurIdentifiantsSommets = creerGenerateurIdentifiantParCompteur<"sommet">("sommet")
+const generateurIdentifiantsMessages = creerGenerateurIdentifiantParCompteur<"message">("message")
 
 interface DataType {
     message: string,
@@ -28,7 +30,7 @@ interface DataType {
 const noms: ReadonlyArray<string> = ["dede", "fifi", "jojo", "lulu", "zaza"];
 let sommets: TableIdentificationMutable<"sommet",FormatSommetTchat> = creerTableIdentificationMutableVide("sommet");
 noms.forEach((value, index) => {
-    const nouveauIdentifiant = generateurIdentifiants.produire("sommet");
+    const nouveauIdentifiant = generateurIdentifiantsSommets.produire("sommet");
     sommets.ajouter(nouveauIdentifiant, {ID:nouveauIdentifiant, pseudo: value,actif:true, priorite:index})
 });
 const connexions = creerTableIdentificationMutableVide("sommet");
@@ -50,7 +52,7 @@ const traitementConnexion = (request: express.Request, response: express.Respons
     connexions.ajouter(nouvelleConnexion.valeur().ID,response);
 
     const formatNoeud: FormatNoeudTchat = {centre: sommetTchat(nouvelleConnexion.valeur().ID,nouvelleConnexion.valeur().priorite, nouvelleConnexion.valeur().actif, nouvelleConnexion.valeur().pseudo), voisins: sommets.toJSON()}
-    const config: MessageConfigurationTchat = {corps:formatNoeud,date: dateMaintenant().etat(),type:'noeud'}
+    const config: FormatConfigurationTchat = {ID:generateurIdentifiantsMessages.produire("message"),corps:formatNoeud,date: dateMaintenant().etat(),type:'noeud'}
 
     response.write('event: config\n');
     response.write(`data: ${JSON.stringify(config)}\n\n`);
@@ -58,7 +60,6 @@ const traitementConnexion = (request: express.Request, response: express.Respons
 
     if (nouvelleConnexion != undefined){
         request.on("close", () => {
-            //reseauEtoile.traitementFermetureConnectionLongue(id_sommet);
             connexions.retirer(nouvelleConnexion.valeur().ID);
             sommets.ajouter(nouvelleConnexion.valeur().ID, nouvelleConnexion.valeur());
         });
@@ -76,24 +77,26 @@ serveurApplications.specifierTraitementRequeteGETLongue(
 
 const traducctionSortiePost = ( sortie: DataType, canalSortie: express.Response) =>{
     connexions.iterer((_, val: express.Response) => {
-        val.write(`data: msg \n\n`)
-        val.write(`data: ${JSON.stringify(sortie)} \n\n`)
+        console.log("envio mensaje");
+
+        val.write(`event: mensaje\n\n`)
+        val.write(`data: ${JSON.stringify({data: "holaaaaa"})} \n\n`)
     })
-    canalSortie.write(`data: msg \n\n`)
-    canalSortie.write(`data: ${JSON.stringify(sortie)} \n\n`)
+    // canalSortie.write(`event: mensaje\n\n`)
+    // canalSortie.write(`data: ${JSON.stringify({data: "holaaaaa"})}`)
 };
 
 
-const traducctionEntree = (request: express.Request): DataType =>{
+const traducctionEntree = (request: express.Request): Option<unknown> =>{
     console.log(request.body);
-    return {message: request.body.contenu, id: request.body.identifiant, numConnexions: connexions.taille()};
+    return option(request.body);
 };
 
 const traitementPOST= (message: DataType): DataType =>  {
     return message;
 };
 
-serveurApplications.specifierTraitementRequetePOST<DataType,DataType>(
+serveurApplications.specifierTraitementRequetePOST<unknown,unknown>(
     "envoyer",
     "A1",
     "",

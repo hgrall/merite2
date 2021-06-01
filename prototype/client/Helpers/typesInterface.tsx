@@ -10,7 +10,7 @@ export interface Individu {
 export interface Message {
   readonly ID: Identifiant<'message'>;
   readonly emetteur: Individu;
-  readonly destinataire: Individu;
+  readonly destinataires: Individu[];
   readonly cachet: string;
   readonly contenu: string;
   readonly accuses: Couleur[]; // Couleurs des individus destinataires

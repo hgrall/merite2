@@ -2,7 +2,6 @@ import styled from "styled-components";
 import {COUPLE_FOND_ENCRE_SUJET, FOND, FOND_TEXTE} from "../bibliotheque/interface/couleur";
 
 export const PanneauMessageContainer = styled.div`
-    height: 830px;
     background: ${FOND}
 `;
 
