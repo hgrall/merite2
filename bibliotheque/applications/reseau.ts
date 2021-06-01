@@ -9,7 +9,8 @@ import {
 } from "../types/tableIdentification";
 import { dateMaintenant } from "../types/date";
 import { FileMutableAPriorite, FormatFileAPriorite } from "../types/fileAPriorite";
-import { ActivableMutable, jamais, Prioritarisable } from "../types/typesAtomiques";
+import { Activable, jamais, Prioritarisable } from "../types/typesAtomiques";
+import { noeud, Noeud } from "./noeud";
 
 /**
  * Etat d'un réseau composé
@@ -21,7 +22,7 @@ import { ActivableMutable, jamais, Prioritarisable } from "../types/typesAtomiqu
  * @param FS format JSON des sommets
  */
 export interface EtatReseau<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
     C> {
     readonly sommets: TableIdentificationMutable<'sommet', FS>;
     readonly fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>;
@@ -41,7 +42,7 @@ export interface EtatReseau<
  * @param FS format JSON des sommets
  */
 export interface FormatReseau<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
     C> {
     readonly sommets: FormatTableIdentification<'sommet', FS>;
     readonly fileInactifs: FormatFileAPriorite<Identifiant<'sommet'>>;
@@ -63,7 +64,7 @@ export type EtiquetteReseau = 'sommets' | 'fileInactifs' | 'voisins';
  * @param C type décrivant les connexions (serveur vers client)
  */
 export interface ReseauMutable<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
     C> extends TypeEnveloppe<EtatReseau<FS, C>,
     FormatReseau<FS, C>, EtiquetteReseau> {
     /**
@@ -142,6 +143,13 @@ export interface ReseauMutable<
     itererVoisins(ID_sommet: Identifiant<'sommet'>, f: (i: number, ID_sommet: Identifiant<'sommet'>) => void): void;
 
     /**
+     * Noeud de cente le sommet identifié par l'argument.
+     * @param identifant du sommet
+     * @returns noeud de centre le sommet identifié
+     */
+    noeud(ID_sommet: Identifiant<'sommet'>) : Noeud<FS>;
+    
+    /**
      * Itère sur tous les sommets actifs en leur appliquant une fonction.
      * @param f function a appliquer a chaque association (identifant, sommet actif).
      */
@@ -155,7 +163,7 @@ export interface ReseauMutable<
 }
 
 class ReseauMutableParEnveloppe<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
     C>
     extends Enveloppe<EtatReseau<FS, C>,
     FormatReseau<FS, C>, EtiquetteReseau>
@@ -166,7 +174,8 @@ class ReseauMutableParEnveloppe<
         sommets: TableIdentificationMutable<'sommet', FS>,
         fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
         adjacence:
-            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>
+            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>,
+        private modificationActivite : (s : FS) => FS
     ) {
         super({
             sommets: sommets,
@@ -209,27 +218,27 @@ class ReseauMutableParEnveloppe<
     }
 
     activerSommet(connexion: C): Identifiant<"sommet"> {
-        //Sélectionne le sommet le plus priorotaire.
+        //Sélectionne le sommet le plus prioritaire.
         const ID_sommet = this.etat().fileInactifs.retirer();
         const sommet = this.etat().sommets.valeur(ID_sommet);
-        sommet.actif = true;
+        this.etat().sommets.modifier(ID_sommet, this.modificationActivite(sommet));
         this.etat().connexions.ajouter(ID_sommet, connexion);
-        console.log("* " + dateMaintenant().representationLog()
+        /* console.log("* " + dateMaintenant().representationLog()
             + "- Le sommet " + ID_sommet.val + " a été activé");
         console.log("* " + dateMaintenant().representationLog()
-            + ` - Sommets : ${this.net("sommets")}`);
+            + ` - Sommets : ${this.net("sommets")}`); */
         return ID_sommet;
     }
 
     inactiverSommet(ID_sommet: Identifiant<"sommet">): void {
         const sommet = this.etat().sommets.valeur(ID_sommet);
-        sommet.actif = false;
+        this.etat().sommets.modifier(ID_sommet, this.modificationActivite(sommet));
         this.etat().connexions.retirer(ID_sommet);
         this.etat().fileInactifs.ajouter(ID_sommet, sommet.priorite);
-        console.log("* " + dateMaintenant().representationLog()
-            + "- Le sommet " + ID_sommet.val + " a été inactivé.");
-        console.log("* " + dateMaintenant().representationLog()
-            + ` - Sommets : ${this.net("sommets")}`);
+        // console.log("* " + dateMaintenant().representationLog()
+        //     + "- Le sommet " + ID_sommet.val + " a été inactivé.");
+        // console.log("* " + dateMaintenant().representationLog()
+        //     + ` - Sommets : ${this.net("sommets")}`);
     }
 
     nombreInactifs(): number {
@@ -243,6 +252,21 @@ class ReseauMutableParEnveloppe<
     itererVoisins(ID_sommet: Identifiant<"sommet">, f: (i: number, ID_sommet: Identifiant<"sommet">) => void): void {
         this.etat().adjacence.valeur(ID_sommet).iterer(f);
 
+    }
+
+    /**
+     * Noeud de cente le sommet identifié par l'argument.
+     * @param identifant du sommet
+     * @returns noeud de centre le sommet identifié
+     */
+    noeud(ID_sommet: Identifiant<'sommet'>) : Noeud<FS> {
+        const tableVoisins : TableIdentificationMutable<'sommet', FS> = creerTableIdentificationMutableVide('sommet');
+        this.itererVoisins(ID_sommet, (i, id) => tableVoisins.ajouter(id, this.etat().sommets.valeur(id)));
+        return noeud({
+            centre : this.etat().sommets.valeur(ID_sommet),
+            voisins : tableVoisins.toJSON()
+        }
+        );
     }
 
     itererSommets(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void {
@@ -271,22 +295,23 @@ class ReseauMutableParEnveloppe<
 }
 
 export function creerReseauMutable<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
     C>
     (
         sommets: TableIdentificationMutable<'sommet', FS>,
         fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
         adjacence:
-            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>
+            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>,
+        modificationActivite : (s : FS) => FS
     ): ReseauMutable<FS, C> {
-    return new ReseauMutableParEnveloppe(sommets, fileInactifs, adjacence);
+    return new ReseauMutableParEnveloppe(sommets, fileInactifs, adjacence, modificationActivite);
 }
 
 /**
  * Interface pour un générateur de réseau.
  */
 export interface GenerateurReseau<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & ActivableMutable,
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
     C> {
     engendrer(): ReseauMutable<FS, C>;
 }

@@ -50,13 +50,13 @@ export interface Activable {
 }
 
 /**
- * Interface exprimant la propriété d'être activable et mutable.
+ * TODO inutile Interface exprimant la propriété d'être activable et mutable.
  * Attribut :
  * - actif : booléen.
  */
-export interface ActivableMutable {
+/*export interface ActivableMutable {
     actif : boolean;
-}
+}*/
 
 
 /**

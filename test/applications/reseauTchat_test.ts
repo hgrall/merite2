@@ -90,5 +90,9 @@ describe('Réseau tchat anneau', () => {
         22,
         r.connexion(id3)
     ); 
-    
+    testUnitaireStringString(
+        "sommets",
+        r.net('sommets'),
+        r.net('sommets'),
+    );
 });

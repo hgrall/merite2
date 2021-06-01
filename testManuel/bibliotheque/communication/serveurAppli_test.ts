@@ -16,6 +16,7 @@ Tests
 import { creerServeurApplicationsExpress, ServeurApplications } from "../../../bibliotheque/communication/serveurApplications";
 
 import { FormatIdentifiable, identifiant, Identifiant } from "../../../bibliotheque/types/identifiant";
+import { option, Option } from '../../../bibliotheque/types/option';
 
 const serveurApplications: ServeurApplications<express.Request, express.Response> = creerServeurApplicationsExpress(8080);
 
@@ -36,15 +37,15 @@ interface TypeSortie extends FormatIdentifiable<"sommet"> {
 
 
 
-function traductionEntreeConstante(cste : string, requete: express.Request): TypeEntree {
-    return {
+function traductionEntreeConstante(cste : string, requete: express.Request, reponse : express.Response): Option<TypeEntree> {
+    return option({
         messageEntree: cste,
         ID: identifiant("sommet", "id1")
-    };
+    });
 }
 
-function traductionEntreeCorps(requete: express.Request): TypeEntree {
-    return <TypeEntree>requete.body;
+function traductionEntreeCorps(requete: express.Request, reponse : express.Response): Option<TypeEntree> {
+    return option(<TypeEntree>requete.body);
 }
 
 function traitement(e : TypeEntree) : TypeSortie {
@@ -58,7 +59,7 @@ function traduireSortie(s : TypeSortie, reponse : express.Response) : void {
     reponse.send(s);
 }
 
-serveurApplications.specifierTraitementRequeteGET<TypeEntree, TypeSortie>("c", "d", "e", traitement, (req) => traductionEntreeConstante("salut GET", req), traduireSortie);
+serveurApplications.specifierTraitementRequeteGET<TypeEntree, TypeSortie>("c", "d", "e", traitement, (req, rep) => traductionEntreeConstante("salut GET", req, rep), traduireSortie);
 
 serveurApplications.specifierTraitementRequetePOST<TypeEntree, TypeSortie>("c", "d", "e", traitement, traductionEntreeCorps, traduireSortie);
 

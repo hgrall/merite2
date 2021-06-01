@@ -345,10 +345,7 @@ class TableIdentificationParEnveloppe<Sorte extends EnsembleSortes, T>
         return this.net('graphe');
     }
 
-    etat(): FormatTableIdentification<Sorte, T> {
-        return this.etat();
-    }
-
+    
     iterer(
         f: (ID_sorte: Identifiant<Sorte>, val: T, tab?: { [cle: string]: T }, taille?: number) => void
     ): void {

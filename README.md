@@ -56,3 +56,9 @@
 - Installer typescript et ts-node (localement).
 - Définir dans `test/general.ts` les tests à effectuer.
 - Lancer `npm run test`.
+
+# A faire
+
+- Vérification du type lors de la désérialisation. Voir [io-ts](https://gcanti.github.io/io-ts/) 
+  - https://dev.to/ruizb/using-fp-ts-and-io-ts-types-and-implementation-1k6a
+  - https://medium.com/swlh/typescript-runtime-validation-with-io-ts-456f095b7f86

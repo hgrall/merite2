@@ -6,24 +6,26 @@ import * as shell from "shelljs";
 import {
     dateMaintenant
 } from "../types/date";
+import { Option } from '../types/option';
 
-const SEPARATEUR : string = "/";
+const SEPARATEUR: string = "/";
 
 /**
  * Concaténation des châines en argument, en les séparant (en interne)
  * par SEPARATEUR.
  * @param ch tabeau de chaînes de caractères, donné sous la forme d'arguments dits "var args")
  */
-export function chemin(...ch : string[]) : string {
+export function chemin(...ch: string[]): string {
     return ch.filter(v => v !== "").join(SEPARATEUR);
 }
 
 /**
  * Concaténation des châines en argument, en les séparant (en interne)
- * par SEPARATEUR et en ajoutant SEPARATEUR au début.
+ * par SEPARATEUR et en ajoutant SEPARATEUR au début. 
+ * Le séparateur est requis pour indiquer un chemin d'URL. 
  * @param ch tabeau de chaînes de caractères, donné sous la forme d'arguments dits "var args")
  */
-export function cheminURL(...ch : string[]) : string {
+export function cheminURL(...ch: string[]): string {
     return SEPARATEUR + ch.filter(v => v !== "").join(SEPARATEUR);
 }
 
@@ -91,10 +93,10 @@ export interface ServeurApplications<EConcret, SConcret> {
      */
     specifierTraitementRequeteAuthentification<E, S>(
         prefixe: string,
-        traitement : ((entree : E) => S),
-        traductionEntree : (e : EConcret) => E,
-        traduireSortie : (s : S, canalSortie : SConcret) => void,
-    ) : void;
+        traitement: ((entree: E) => S),
+        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
+        traduireSortie: (s: S, canalSortie: SConcret) => void,
+    ): void;
 
     /**
      * Spécifie l'application à servir étant donné un code 
@@ -110,9 +112,9 @@ export interface ServeurApplications<EConcret, SConcret> {
      * @param repertoire répertoire contenant l'application
      * @param application nom du fichier de l'application à servir
      */
-    specifierApplicationAServir(prefixe : string, code : string,
-        suffixe : string, repertoire: string, application : string): void;
-    
+    specifierApplicationAServir(prefixe: string, code: string,
+        suffixe: string, repertoire: string, application: string): void;
+
     /**
      * Spécifie le traitement d'une requête GET.
      * Requête :
@@ -135,12 +137,12 @@ export interface ServeurApplications<EConcret, SConcret> {
      * @param traitement fonction transformant une entrée en sortie 
      * @param traductionEntree fonction traduisant la requête reçue en une entrée
      * @param traduireSortie procédure transformant la sortie en une réponse
-     */ 
+     */
     specifierTraitementRequeteGET<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : EConcret) => E,
-        traduireSortie : (s : S, canalSortie : SConcret) => void,
-    ) : void;
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
+        traduireSortie: (s: S, canalSortie: SConcret) => void,
+    ): void;
 
     /**
      * Spécifie le traitement d'une requête POST.
@@ -163,13 +165,13 @@ export interface ServeurApplications<EConcret, SConcret> {
      * @param traitement fonction transformant une entrée en sortie 
      * @param traductionEntree fonction traduisant la requête reçue en une entrée
      * @param traduireSortie procédure transformant la sortie en une réponse
-     **/ 
+     **/
     specifierTraitementRequetePOST<E, S>(
-        prefixe : string, code : string, suffixe : string,
-        traitement : (entree : E) => S,
-        traductionEntree : (e : EConcret) => E,
-        traduireSortie : (s : S, canalSortie : SConcret) => void,
-    ) : void;
+        prefixe: string, code: string, suffixe: string,
+        traitement: (entree: E) => S,
+        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
+        traduireSortie: (s: S, canalSortie: SConcret) => void,
+    ): void;
 
     /**
      * Spécifie le traitement d'une requête PUT.
@@ -192,13 +194,13 @@ export interface ServeurApplications<EConcret, SConcret> {
      * @param traitement fonction transformant une entrée en sortie 
      * @param traductionEntree fonction traduisant la requête reçue en une entrée
      * @param traduireSortie procédure transformant la sortie en une réponse
-     **/ 
+     **/
     specifierTraitementRequetePUT<E, S>(
-        prefixe : string, code : string, suffixe : string,
-        traitement : ((entree : E) => S),
-        traductionEntree : (e : EConcret) => E,
-        traduireSortie : (s : S, canalSortie : SConcret) => void,
-    ) : void;
+        prefixe: string, code: string, suffixe: string,
+        traitement: ((entree: E) => S),
+        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
+        traduireSortie: (s: S, canalSortie: SConcret) => void,
+    ): void;
 
     /**
      * Spécifie le traitement d'une requête GET persistante.
@@ -207,17 +209,17 @@ export interface ServeurApplications<EConcret, SConcret> {
      * - url : prefixe/code/suffixe
      * - connexion maintenue en vie pour permettre au serveur
      * d'envoyer un flux de messages.
-     *
+     * // TODO : distinguer ouverture de connexion, fermeture de connexion, envoi de messages
      * @param prefixe préfixe du chemin de l'URL
      * @param code code identifiant l'école
      * @param suffixe suffixe du chemin de l'URL
      * @param traitementConnexion procédure permettant de traiter la connexion persistante
      **/
     specifierTraitementRequeteGETLongue(
-        prefixe : string, code : string, suffixe : string,
-        traitementConnexion :
-            (canalEntree : EConcret, canalSortie : SConcret) => void,
-    ) : void;
+        prefixe: string, code: string, suffixe: string,
+        traitementConnexion:
+            (canalEntree: EConcret, canalSortie: SConcret) => void,
+    ): void;
 
 }
 
@@ -243,7 +245,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
     /**
      * Répertoire de lancement du serveur (de travail donc) à partir duquel les chemins relatifssont donnés.
      */
-    private repertoire : string;
+    private repertoire: string;
     /**
      * Application express sous-jacente.
      */
@@ -263,9 +265,9 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         this.appli.use(bodyParser.json());
         this.repertoire = shell.pwd();
         console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur a pour répertoire de travail " + this.repertoire + ".");
+            + " - Le serveur a pour répertoire de travail " + this.repertoire + ".");
     }
-    
+
     /**
      * Démarre le serveur Express.
      * 
@@ -291,7 +293,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      */
     specifierRepertoireScriptsEmbarques(rep: string): void {
         console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur utilise le répertoire suivant de scripts : " + rep + ".");
+            + " - Le serveur utilise le répertoire suivant de scripts : " + rep + ".");
         this.appli.use(express.static(rep)); // répertoire local visible
     }
 
@@ -312,22 +314,24 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      */
     specifierTraitementRequeteAuthentification<E, S>(
         prefixe: string,
-        traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traduireSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
-        const churl = cheminURL(prefixe); 
+        traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
+        traduireSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
+        const churl = cheminURL(prefixe);
         this.appli.get(
             churl,
             (requete: express.Request,
                 reponse: express.Response) => {
-                    const entree = traductionEntree(requete);
-                    const sortie = traitement(entree);
+                const optionEntree = traductionEntree(requete, reponse);
+                if (optionEntree.estPresent()) {
+                    const sortie = traitement(optionEntree.valeur());
                     traduireSortie(sortie, reponse);
                 }
+            }
         );
         console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur enregistre le traitement d'une requête d'authentification en " + churl + ".");
+            + " - Le serveur enregistre le traitement d'une requête d'authentification en " + churl + ".");
     }
     /**
      * Spécifie l'application à servir étant donné un code 
@@ -343,7 +347,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * @param cheminAppli chemin relatif menant à l'application
      * @param application nom du fichier de l'application à servir
      */
-    specifierApplicationAServir(prefixe : string, code : string,  suffixe : string, cheminAppli: string, application: string): void {
+    specifierApplicationAServir(prefixe: string, code: string, suffixe: string, cheminAppli: string, application: string): void {
         const churl = cheminURL(prefixe, code, suffixe);
         this.appli.get(
             churl,
@@ -353,52 +357,55 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                 };
                 response.sendFile(application, options);
                 console.log("* " + dateMaintenant().representationLog()
-                + " - Le serveur envoie l'application " + chemin(options.root, application) + " après une requête en " + churl + "."); 
+                    + " - Le serveur envoie l'application " + chemin(options.root, application) + " après une requête en " + churl + ".");
             }
         );
     }
-   /**
-     * Spécifie le traitement d'une requête GET.
-     * Requête :
-     * - méthode http : GET
-     * - url : prefixe/code/suffixe
-     * 
-     * L'entrée pour le traitement est d'un format sous-type de E. 
-     * Elle est calculée à partir de la requête : partie requête 
-     * formée d'associations (clé, valeur) de l'URL, 
-     * en-tête de la requête http. Conformément à l'usage, 
-     * le corps de la requête est supposé vide. La réponse est 
-     * produite par la procédure en utilisant la sortie du
-     * traitement. La requête est supposée pure et idempotente.
-     *
-     * Effet dans la console : "Le serveur enregistre le traitement d'une requête GET.".
-     * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
-     * @param S format JSON pour les sorties (allant au client, sortant du serveur)
-     * @param prefixe préfixe du chemin de l'URL
-     * @param code code identifiant l'école
-     * @param suffixe suffixe du chemin de l'URL
-     * @param traitement fonction transformant une entrée en sortie 
-     * @param traductionEntree fonction traduisant la requête reçue en une entrée
-     * @param traduireSortie procédure transformant la sortie en une réponse
-     */ 
+    /**
+      * Spécifie le traitement d'une requête GET.
+      * Requête :
+      * - méthode http : GET
+      * - url : prefixe/code/suffixe
+      * 
+      * L'entrée pour le traitement est d'un format sous-type de E. 
+      * Elle est calculée à partir de la requête : partie requête 
+      * formée d'associations (clé, valeur) de l'URL, 
+      * en-tête de la requête http. Conformément à l'usage, 
+      * le corps de la requête est supposé vide. La réponse est 
+      * produite par la procédure en utilisant la sortie du
+      * traitement. La requête est supposée pure et idempotente.
+      *
+      * Effet dans la console : "Le serveur enregistre le traitement d'une requête GET.".
+      * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
+      * @param S format JSON pour les sorties (allant au client, sortant du serveur)
+      * @param prefixe préfixe du chemin de l'URL
+      * @param code code identifiant l'école
+      * @param suffixe suffixe du chemin de l'URL
+      * @param traitement fonction transformant une entrée en sortie 
+      * @param traductionEntree fonction traduisant la requête reçue en une entrée
+      * @param traduireSortie procédure transformant la sortie en une réponse
+      */
     specifierTraitementRequeteGET<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traduireSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
-        const churl = cheminURL(prefixe, code, suffixe); 
+        prefixe: string, code: string, suffixe: string,
+        traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
+        traduireSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
+        const churl = cheminURL(prefixe, code, suffixe);
         this.appli.get(
             churl,
             (requete: express.Request, reponse: express.Response) => {
-                const entree = traductionEntree(requete);
-                const sortie = traitement(entree);
-                traduireSortie(sortie, reponse);
+                const optionEntree = traductionEntree(requete, reponse);
+                if (optionEntree.estPresent()) {
+                    const sortie = traitement(optionEntree.valeur());
+                    traduireSortie(sortie, reponse);
+                }
             }
         );
         console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur enregistre le traitement d'une requête GET en " + churl + ".");
+            + " - Le serveur enregistre le traitement d'une requête GET en " + churl + ".");
     }
-    
+
     /**
      * Spécifie le traitement d'une requête POST.
      * Requête :
@@ -422,23 +429,25 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * @param traitement fonction transformant une entrée en sortie 
      * @param traductionEntree fonction traduisant la requête reçue en une entrée
      * @param traduireSortie procédure transformant la sortie en une réponse
-     **/ 
+     **/
     specifierTraitementRequetePOST<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traduireSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
-        const churl = cheminURL(prefixe, code, suffixe); 
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
+        traduireSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
+        const churl = cheminURL(prefixe, code, suffixe);
         this.appli.post(
             churl,
             (requete: express.Request, reponse: express.Response) => {
-                const entree = traductionEntree(requete);
-                const sortie = traitement(entree);
-                traduireSortie(sortie, reponse);
+                const optionEntree = traductionEntree(requete, reponse);
+                if (optionEntree.estPresent()) {
+                    const sortie = traitement(optionEntree.valeur());
+                    traduireSortie(sortie, reponse);
+                }
             }
         );
         console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur enregistre le traitement d'une requête POST en " + churl + ".");
+            + " - Le serveur enregistre le traitement d'une requête POST en " + churl + ".");
     }
     /**
      * Spécifie le traitement d'une requête PUT.
@@ -463,23 +472,25 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * @param traitement fonction transformant une entrée en sortie 
      * @param traductionEntree fonction traduisant la requête reçue en une entrée
      * @param traduireSortie procédure transformant la sortie en une réponse
-     **/ 
+     **/
     specifierTraitementRequetePUT<E, S>(
-        prefixe : string, code : string,  suffixe : string, traitement : ((entree : E) => S),
-        traductionEntree : (e : express.Request) => E,
-        traduireSortie : (s : S, canalSortie : express.Response) => void,
-    ) : void {
-        const churl = cheminURL(prefixe, code, suffixe); 
+        prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
+        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
+        traduireSortie: (s: S, canalSortie: express.Response) => void,
+    ): void {
+        const churl = cheminURL(prefixe, code, suffixe);
         this.appli.put(
             churl,
-            (requete:express.Request, reponse: express.Response) => {
-                const entree = traductionEntree(requete);
-                const sortie = traitement(entree);
-                traduireSortie(sortie, reponse);
+            (requete: express.Request, reponse: express.Response) => {
+                const optionEntree = traductionEntree(requete, reponse);
+                if (optionEntree.estPresent()) {
+                    const sortie = traitement(optionEntree.valeur());
+                    traduireSortie(sortie, reponse);
+                }
             }
         );
         console.log("* " + dateMaintenant().representationLog()
-        + " - Le serveur enregistre le traitement d'une requête PUT en " + churl + ".");
+            + " - Le serveur enregistre le traitement d'une requête PUT en " + churl + ".");
     }
     /**
      * Spécifie le traitement d'une requête GET persistante.
@@ -503,7 +514,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         traitementConnexion: (canalEntree: express.Request, canalSortie: express.Response) => void):
         void {
 
-        const churl = cheminURL(prefixe, code, suffixe); 
+        const churl = cheminURL(prefixe, code, suffixe);
         this.appli.get(
             churl,
             (requete: express.Request, reponse: express.Response) => {
@@ -516,10 +527,10 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
             }
         );
         console.log("* " + dateMaintenant().representationLog()
-        + " - Le serveur enregistre le traitement d'une requête GET persistante en " + churl + ".");
+            + " - Le serveur enregistre le traitement d'une requête GET persistante en " + churl + ".");
     }
 }
 
-export function creerServeurApplicationsExpress(port: number) : ServeurApplications<express.Request, express.Response> {
+export function creerServeurApplicationsExpress(port: number): ServeurApplications<express.Request, express.Response> {
     return new ServeurApplicationsExpress(port);
 }

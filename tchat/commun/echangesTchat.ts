@@ -1,5 +1,5 @@
 import {
-    jamais, Prioritarisable, Activable, ActivableMutable
+    Prioritarisable, Activable
 } from "../../bibliotheque/types/typesAtomiques";
 
 import {
@@ -25,16 +25,14 @@ import { FormatTableau } from "../../bibliotheque/types/tableau";
 export interface FormatSommetTchat extends FormatIdentifiable<'sommet'>, Prioritarisable, Activable {
     readonly pseudo: string,
 }
-/**
- * Format JSON mutable pour un sommet du réseau de tchat.
- * Structure :
- * - ID : identifiant
- * - priorite : entier naturel n indiquant la priorité par (1/(n+1))
- * - pseudo : nom
- * - actif : booléen - seul champ mutable
- */
-export interface FormatMutableSommetTchat extends FormatIdentifiable<'sommet'>, Prioritarisable, ActivableMutable {
-    readonly pseudo: string,
+
+export function modificationActivite(s : FormatSommetTchat) : FormatSommetTchat {
+    return {
+        ID : s.ID,
+        priorite : s.priorite,
+        actif : !s.actif,
+        pseudo : s.pseudo
+    };
 }
 
 /**
@@ -75,7 +73,6 @@ export type MessageConfigurationTchat = FormatMessage<'noeud', FormatNoeudTchat>
  * - contenu : le contenu textuel du message
  */
 export interface FormatEnvoiTchat  {
-    readonly ID: Identifiant<'message'>;
     readonly ID_emetteur: Identifiant<'sommet'>;
     readonly ID_destinataire: FormatTableau<Identifiant<'sommet'>>;
     readonly contenu: string;
