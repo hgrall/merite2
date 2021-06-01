@@ -2,8 +2,19 @@ import * as express from 'express';
 import * as shell from "shelljs";
 import {creerGenerateurIdentifiantParCompteur, identifiant, Identifiant} from "./bibliotheque/types/identifiant";
 import {creerServeurApplicationsExpress} from "./bibliotheque/communication/serveurApplications";
-import {creerTableIdentificationMutableVide} from "./bibliotheque/types/tableIdentification";
+import {
+    creerTableIdentificationMutableParEnveloppe,
+    creerTableIdentificationMutableVide,
+    FormatTableIdentification, TableIdentificationMutable
+} from "./bibliotheque/types/tableIdentification";
 import {noeud, Noeud} from "./bibliotheque/applications/noeud";
+import {
+    FormatNoeudTchat,
+    FormatSommetTchat,
+    MessageConfigurationTchat,
+    sommetTchat
+} from "./tchat/commun/echangesTchat";
+import {dateEnveloppe, dateMaintenant} from "./bibliotheque/types/date";
 
 const serveurApplications = creerServeurApplicationsExpress(8080);
 const generateurIdentifiants = creerGenerateurIdentifiantParCompteur<"sommet">("sommet")
@@ -15,6 +26,11 @@ interface DataType {
 }
 
 const noms: ReadonlyArray<string> = ["dede", "fifi", "jojo", "lulu", "zaza"];
+let sommets: TableIdentificationMutable<"sommet",FormatSommetTchat> = creerTableIdentificationMutableVide("sommet");
+noms.forEach((value, index) => {
+    const nouveauIdentifiant = generateurIdentifiants.produire("sommet");
+    sommets.ajouter(nouveauIdentifiant, {ID:nouveauIdentifiant, pseudo: value,actif:true, priorite:index})
+});
 const connexions = creerTableIdentificationMutableVide("sommet");
 
 serveurApplications.demarrer();
@@ -28,17 +44,23 @@ const traitementConnexion = (request: express.Request, response: express.Respons
     //
     // response.flushHeaders();
     //const id_sommet = reseauEtoile.traitementOvertureConnectionLongue(response);
-    const nouveauIdentifiant = generateurIdentifiants.produire("sommet");
-    connexions.ajouter(nouveauIdentifiant,response);
+    const nouvelleConnexion = sommets.retirer(sommets.selectionCle().valeur());
+    console.log(nouvelleConnexion);
+
+    connexions.ajouter(nouvelleConnexion.valeur().ID,response);
+
+    const formatNoeud: FormatNoeudTchat = {centre: sommetTchat(nouvelleConnexion.valeur().ID,nouvelleConnexion.valeur().priorite, nouvelleConnexion.valeur().actif, nouvelleConnexion.valeur().pseudo), voisins: sommets.toJSON()}
+    const config: MessageConfigurationTchat = {corps:formatNoeud,date: dateMaintenant().etat(),type:'noeud'}
 
     response.write('event: config\n');
-    response.write(`data: ${JSON.stringify({id: nouveauIdentifiant, numConnexions: connexions.taille()})}\n\n`);
+    response.write(`data: ${JSON.stringify(config)}\n\n`);
 
 
-    if (nouveauIdentifiant != undefined){
+    if (nouvelleConnexion != undefined){
         request.on("close", () => {
             //reseauEtoile.traitementFermetureConnectionLongue(id_sommet);
-            connexions.retirer(nouveauIdentifiant);
+            connexions.retirer(nouvelleConnexion.valeur().ID);
+            sommets.ajouter(nouvelleConnexion.valeur().ID, nouvelleConnexion.valeur());
         });
     }
 }

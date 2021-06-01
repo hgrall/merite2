@@ -5,10 +5,12 @@ export const envoyerMessage = async (
     code: string,
     // jeu: string
 ) => {
-    const url = `http://localhost:8080/envoyerAuxVoisins/${code}`;
+    const url = `http://localhost:8080/envoyer/A1`;
     console.log(url);
     return axios
-        .post(url)
+        .post(url, {
+            message
+        })
         .then((response) => {
             console.log(response.data);
         })

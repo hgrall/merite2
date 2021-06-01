@@ -58,7 +58,7 @@ const SujetAdminContainer = styled.div`
   flex: auto;
   margin: 0;
   background: ${CADRE};
-  height: 7ex;
+  height: 100%;
 
   display: flex;
   flex-direction: row;
