@@ -26,12 +26,12 @@ export interface FormatSommetTchat extends FormatIdentifiable<'sommet'>, Priorit
     readonly pseudo: string,
 }
 
-export function modificationActivite(s : FormatSommetTchat) : FormatSommetTchat {
+export function modificationActivite(s: FormatSommetTchat): FormatSommetTchat {
     return {
-        ID : s.ID,
-        priorite : s.priorite,
-        actif : !s.actif,
-        pseudo : s.pseudo
+        ID: s.ID,
+        priorite: s.priorite,
+        actif: !s.actif,
+        pseudo: s.pseudo
     };
 }
 
@@ -39,12 +39,12 @@ export function modificationActivite(s : FormatSommetTchat) : FormatSommetTchat 
  * Fabrique d'un sommet.
  * @param s sommet au format JSON.
  */
-export function sommetTchat(ID_sommet : Identifiant<'sommet'>, priorite : number, actif : boolean, pseudo : string) : FormatSommetTchat {
+export function sommetTchat(ID_sommet: Identifiant<'sommet'>, priorite: number, actif: boolean, pseudo: string): FormatSommetTchat {
     return {
-        ID : ID_sommet,
-        priorite : priorite,
-        actif : actif,
-        pseudo : pseudo
+        ID: ID_sommet,
+        priorite: priorite,
+        actif: actif,
+        pseudo: pseudo
     };
 }
 
@@ -54,7 +54,7 @@ export type FormatNoeudTchat = FormatNoeud<FormatSommetTchat>;
 /**
  * Types de messages pour le tchat. TODO : actuellement inutile !
  */
-export type TypeMessageTchat = 'noeud' | 'envoi' | 'AR' |'transit' | 'erreur';
+export type TypeMessageTchat = 'noeud' | 'envoi' | 'AR' | 'transit' | 'erreur';
 
 /** 
  * Message au format JSON contenant une configuration du tchat, soit un noeud du graphe.
@@ -62,7 +62,7 @@ export type TypeMessageTchat = 'noeud' | 'envoi' | 'AR' |'transit' | 'erreur';
  * - corps : le noeud,
  * - date : la date lors de l'émission.
 */
-export type MessageConfigurationTchat = FormatMessage<'noeud', FormatNoeudTchat>; 
+export type FormatConfigurationTchat = FormatMessage<'noeud', FormatNoeudTchat>;
 
 /**
  * Description JSON du corps d'un message pour le tchat.
@@ -72,9 +72,9 @@ export type MessageConfigurationTchat = FormatMessage<'noeud', FormatNoeudTchat>
  * - ID_destinataire : tableau dormé des identifiants des sommets destinataires destinataire
  * - contenu : le contenu textuel du message
  */
-export interface FormatEnvoiTchat  {
+export interface FormatEnvoiTchat {
     readonly ID_emetteur: Identifiant<'sommet'>;
-    readonly ID_destinataire: FormatTableau<Identifiant<'sommet'>>;
+    readonly ID_destinataires: FormatTableau<Identifiant<'sommet'>>;
     readonly contenu: string;
 }
 
@@ -84,7 +84,7 @@ export interface FormatEnvoiTchat  {
  * - corps : le message envoyé,
  * - date : la date lors de l'émission.
 */
-export type MessageEnvoiTchat = FormatMessage<'envoi', FormatEnvoiTchat>; 
+export type FormatMessageEnvoiTchat = FormatMessage<'envoi', FormatEnvoiTchat>;
 
 /**
  * Description JSON du corps d'un accusé de réception (AR) pour le tchat.
@@ -95,12 +95,10 @@ export type MessageEnvoiTchat = FormatMessage<'envoi', FormatEnvoiTchat>;
  * - ID_destinataire : identifiant du sommet destinataire
  * - contenu : contenu textuel (TODO utile ?)
  */
-export interface FormatARTchat  {
-    readonly ID: Identifiant<'message'>;
-    readonly ID_envoi: Identifiant<'message'>;
+export interface FormatARTchat {
     readonly ID_emetteur: Identifiant<'sommet'>;
-    readonly ID_destinataire: Identifiant<'sommet'>;
-    readonly contenu: string;
+    readonly ID_envoi: Identifiant<'message'>;
+    readonly ID_destinataires: FormatTableau<Identifiant<'sommet'>>;
 }
 
 /** 
@@ -109,5 +107,5 @@ export interface FormatARTchat  {
  * - corps : l'accusé de réception,
  * - date : la date lors de l'émission.
 */
-export type MessageARTchat = FormatMessage<'AR', FormatARTchat>; 
+export type FormatMessageARTchat = FormatMessage<'AR', FormatARTchat>;
 

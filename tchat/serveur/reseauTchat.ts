@@ -15,7 +15,7 @@ class GenerateurReseauAnneau<C> implements GenerateurReseau<FormatSommetTchat, C
         code: string,
         private nombreTchats: number,
         private noms: ReadonlyArray<string>) {
-        this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur(code + "-" + "etoile");
+        this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur(code + "-" + "anneau-");
     }
 
     engendrer(): ReseauMutable<FormatSommetTchat, C> {
@@ -71,7 +71,7 @@ class GenerateurReseauEtoile<C> implements GenerateurReseau<FormatSommetTchat, C
         code: string,
         private nombreTchats: number,
         private noms: ReadonlyArray<string>) {
-        this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur(code + "-" + "etoile");
+        this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur(code + "-" + "etoile-");
     }
 
     engendrer(): ReseauMutable<FormatSommetTchat, C> {

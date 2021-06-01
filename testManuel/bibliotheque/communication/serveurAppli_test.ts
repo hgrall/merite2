@@ -16,7 +16,7 @@ Tests
 import { creerServeurApplicationsExpress, ServeurApplications } from "../../../bibliotheque/communication/serveurApplications";
 
 import { FormatIdentifiable, identifiant, Identifiant } from "../../../bibliotheque/types/identifiant";
-import { option, Option } from '../../../bibliotheque/types/option';
+import { option, Option, rienOption } from '../../../bibliotheque/types/option';
 
 const serveurApplications: ServeurApplications<express.Request, express.Response> = creerServeurApplicationsExpress(8080);
 
@@ -45,7 +45,13 @@ function traductionEntreeConstante(cste : string, requete: express.Request, repo
 }
 
 function traductionEntreeCorps(requete: express.Request, reponse : express.Response): Option<TypeEntree> {
-    return option(<TypeEntree>requete.body);
+    const msg = <TypeEntree>requete.body;
+    if("messageEntree" in msg){
+        console.log('* Requête POST - Message en entrée : ' + msg.messageEntree);
+        return option(msg);
+    }
+    console.log('* Requête POST - Message en entrée incorrect.');
+    return rienOption();
 }
 
 function traitement(e : TypeEntree) : TypeSortie {
