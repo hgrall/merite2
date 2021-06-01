@@ -35,7 +35,9 @@ const reseau: ReseauMutable<FormatSommetTchat, express.Response> = creerGenerate
 * Service de réception d'un message (POST).
 */
 
-function traitementPOST(msg: FormatMessageEnvoiTchat): [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>] {
+function traitementPOST(
+    msg: FormatMessageEnvoiTchat)
+    : [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>] {
     const idsDest: Tableau<Identifiant<'sommet'>> = tableau(msg.corps.ID_destinataires.tableau);
     const ar = traductionEnvoiEnAR(msg, generateurIdentifiantsMessages.produire('message'));
     const msgsTransit =
@@ -56,7 +58,7 @@ function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTr
     msgs[1].iterer((i, msg) => {
         const canal = reseau.connexion(msg.corps.ID_destinataire);
         canal.write('event: transit\n');
-        canal.write('data: ${JSON.stringify(msg)}\n\n');
+        canal.write(`data: ${JSON.stringify(msg)}\n\n`);
     });
 }
 
@@ -75,10 +77,17 @@ export function traiterGETpersistant(requete: express.Request, reponse: express.
     const noeud = reseau.noeud(ID_sommet);
     // TODO une abstraction serait utile
     reponse.write('event: config\n');
-    reponse.write('data: ${JSON.stringify(noeud)}\n\n');
+    reponse.write(`data: ${JSON.stringify(noeud)}\n\n`);
     // Traitement de la fermeture de la déconnexion
     requete.on("close", () => {
         reseau.inactiverSommet(ID_sommet);
+        reseau.itererVoisins(ID_sommet, (i, id) => {
+            if(reseau.sommet(id).actif){
+                const canal = reseau.connexion(id);
+                canal.write('event: config\n');
+                canal.write(`data: ${JSON.stringify(reseau.noeud(id))}\n\n`);
+            }
+        });
     });
 
 }
