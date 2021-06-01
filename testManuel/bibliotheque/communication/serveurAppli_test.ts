@@ -1,4 +1,5 @@
 import * as express from 'express';
+import { Connexion, ConnexionLongue } from '../../../bibliotheque/communication/connexion';
 
 /*
 Tests 
@@ -37,15 +38,15 @@ interface TypeSortie extends FormatIdentifiable<"sommet"> {
 
 
 
-function traductionEntreeConstante(cste : string, requete: express.Request, reponse : express.Response): Option<TypeEntree> {
+function traductionEntreeConstante(cste : string, canal : Connexion<express.Request, express.Response>): Option<TypeEntree> {
     return option({
         messageEntree: cste,
         ID: identifiant("sommet", "id1")
     });
 }
 
-function traductionEntreeCorps(requete: express.Request, reponse : express.Response): Option<TypeEntree> {
-    const msg = <TypeEntree>requete.body;
+function traductionEntreeCorps(canal : Connexion<express.Request, express.Response>): Option<TypeEntree> {
+    const msg : TypeEntree = canal.lire();
     if("messageEntree" in msg){
         console.log('* Requête POST - Message en entrée : ' + msg.messageEntree);
         return option(msg);
@@ -61,20 +62,22 @@ function traitement(e : TypeEntree) : TypeSortie {
     };
 }
 
-function traduireSortie(s : TypeSortie, reponse : express.Response) : void {
+function traduireSortie(s : TypeSortie, canal: Connexion<express.Request, express.Response>) : void {
     console.log("méthode json utilisée");
-    reponse.json(s);
+    canal.envoyerJSON(s);
 }
 
-serveurApplications.specifierTraitementRequeteGET<TypeEntree, TypeSortie>("c", "d", "e", traitement, (req, rep) => traductionEntreeConstante("salut GET", req, rep), traduireSortie);
+serveurApplications.specifierTraitementRequeteGET<TypeEntree, TypeSortie>("c", "d", "e", traitement, (c) => traductionEntreeConstante("salut GET", c), traduireSortie);
 
 serveurApplications.specifierTraitementRequetePOST<TypeEntree, TypeSortie>("c", "d", "e", traitement, traductionEntreeCorps, traduireSortie);
 
-let canalSortie : express.Response;
+let canalSortie : ConnexionLongue<express.Request, express.Response>;
 
-serveurApplications.specifierTraitementRequeteGETLongue("x", "y", "z", (ce, cs) => {
-    cs.write("connexion longue etablie");
-    canalSortie = cs;});
+serveurApplications.specifierTraitementRequeteGETLongue("x", "y", "z", (c) => {
+    c.envoyerJSON('essai', "connexion longue etablie");
+    canalSortie = c;
+    c.enregistrerTraitementDeconnexion(() => {console.log("* déconnexion du client ! ");})
+});
 
 let compteur = 0;
 
@@ -86,9 +89,9 @@ function traitementCompteur(e : TypeEntree) : TypeSortie {
     };
 }
 
-function traduireSortiePOST(s : TypeSortie, reponse : express.Response) : void {
-    reponse.send(s);
-    canalSortie.write(" - " + s.messageSortie);
+function traduireSortiePOST(s : TypeSortie, canal : Connexion<express.Request, express.Response>) : void {
+    canal.envoyerJSON(s);
+    canalSortie.envoyerJSON('essai', " - " + s.messageSortie);
 }
 
 serveurApplications.specifierTraitementRequetePOST<TypeEntree, TypeSortie>("x", "y", "z", traitementCompteur, traductionEntreeCorps, traduireSortiePOST);

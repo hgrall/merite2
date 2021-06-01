@@ -7,6 +7,7 @@ import {
     dateMaintenant
 } from "../types/date";
 import { Option } from '../types/option';
+import { Connexion, connexionExpress, ConnexionLongue, connexionLongueExpress } from './connexion';
 
 const SEPARATEUR: string = "/";
 
@@ -94,8 +95,8 @@ export interface ServeurApplications<EConcret, SConcret> {
     specifierTraitementRequeteAuthentification<E, S>(
         prefixe: string,
         traitement: ((entree: E) => S),
-        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
-        traduireSortie: (s: S, canalSortie: SConcret) => void,
+        traductionEntree: (canal: Connexion<EConcret, SConcret>) => Option<E>,
+        traduireSortie: (s: S, canal: Connexion<EConcret, SConcret>) => void,
     ): void;
 
     /**
@@ -140,8 +141,8 @@ export interface ServeurApplications<EConcret, SConcret> {
      */
     specifierTraitementRequeteGET<E, S>(
         prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
-        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
-        traduireSortie: (s: S, canalSortie: SConcret) => void,
+        traductionEntree: (canal : Connexion<EConcret, SConcret>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<EConcret, SConcret>) => void,
     ): void;
 
     /**
@@ -169,8 +170,8 @@ export interface ServeurApplications<EConcret, SConcret> {
     specifierTraitementRequetePOST<E, S>(
         prefixe: string, code: string, suffixe: string,
         traitement: (entree: E) => S,
-        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
-        traduireSortie: (s: S, canalSortie: SConcret) => void,
+        traductionEntree: (canal : Connexion<EConcret, SConcret>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<EConcret, SConcret>) => void,
     ): void;
 
     /**
@@ -198,8 +199,8 @@ export interface ServeurApplications<EConcret, SConcret> {
     specifierTraitementRequetePUT<E, S>(
         prefixe: string, code: string, suffixe: string,
         traitement: ((entree: E) => S),
-        traductionEntree: (e: EConcret, canalSortie: SConcret) => Option<E>,
-        traduireSortie: (s: S, canalSortie: SConcret) => void,
+        traductionEntree: (canal : Connexion<EConcret, SConcret>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<EConcret, SConcret>) => void,
     ): void;
 
     /**
@@ -218,7 +219,7 @@ export interface ServeurApplications<EConcret, SConcret> {
     specifierTraitementRequeteGETLongue(
         prefixe: string, code: string, suffixe: string,
         traitementConnexion:
-            (canalEntree: EConcret, canalSortie: SConcret) => void,
+            (canal : ConnexionLongue<EConcret, SConcret>) => void,
     ): void;
 
 }
@@ -315,18 +316,19 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
     specifierTraitementRequeteAuthentification<E, S>(
         prefixe: string,
         traitement: ((entree: E) => S),
-        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
-        traduireSortie: (s: S, canalSortie: express.Response) => void,
+        traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
         const churl = cheminURL(prefixe);
         this.appli.get(
             churl,
             (requete: express.Request,
                 reponse: express.Response) => {
-                const optionEntree = traductionEntree(requete, reponse);
+                const canal = connexionExpress(requete, reponse);
+                const optionEntree = traductionEntree(canal);
                 if (optionEntree.estPresent()) {
                     const sortie = traitement(optionEntree.valeur());
-                    traduireSortie(sortie, reponse);
+                    traduireSortie(sortie, canal);
                 }
             }
         );
@@ -388,17 +390,19 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
     specifierTraitementRequeteGET<E, S>(
         prefixe: string, code: string, suffixe: string,
         traitement: ((entree: E) => S),
-        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
-        traduireSortie: (s: S, canalSortie: express.Response) => void,
+        traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
         const churl = cheminURL(prefixe, code, suffixe);
+        
         this.appli.get(
             churl,
             (requete: express.Request, reponse: express.Response) => {
-                const optionEntree = traductionEntree(requete, reponse);
+                const canal = connexionExpress(requete, reponse);
+                const optionEntree = traductionEntree(canal);
                 if (optionEntree.estPresent()) {
                     const sortie = traitement(optionEntree.valeur());
-                    traduireSortie(sortie, reponse);
+                    traduireSortie(sortie, canal);
                 }
             }
         );
@@ -432,17 +436,18 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      **/
     specifierTraitementRequetePOST<E, S>(
         prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
-        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
-        traduireSortie: (s: S, canalSortie: express.Response) => void,
+        traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
         const churl = cheminURL(prefixe, code, suffixe);
         this.appli.post(
             churl,
             (requete: express.Request, reponse: express.Response) => {
-                const optionEntree = traductionEntree(requete, reponse);
+                const canal = connexionExpress(requete, reponse);
+                const optionEntree = traductionEntree(canal);
                 if (optionEntree.estPresent()) {
                     const sortie = traitement(optionEntree.valeur());
-                    traduireSortie(sortie, reponse);
+                    traduireSortie(sortie, canal);
                 }
             }
         );
@@ -475,17 +480,18 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      **/
     specifierTraitementRequetePUT<E, S>(
         prefixe: string, code: string, suffixe: string, traitement: ((entree: E) => S),
-        traductionEntree: (e: express.Request, canalSortie: express.Response) => Option<E>,
-        traduireSortie: (s: S, canalSortie: express.Response) => void,
+        traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
+        traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
         const churl = cheminURL(prefixe, code, suffixe);
         this.appli.put(
             churl,
             (requete: express.Request, reponse: express.Response) => {
-                const optionEntree = traductionEntree(requete, reponse);
+                const canal = connexionExpress(requete, reponse);                
+                const optionEntree = traductionEntree(canal);
                 if (optionEntree.estPresent()) {
                     const sortie = traitement(optionEntree.valeur());
-                    traduireSortie(sortie, reponse);
+                    traduireSortie(sortie, canal);
                 }
             }
         );
@@ -511,7 +517,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      **/
     specifierTraitementRequeteGETLongue(
         prefixe: string, code: string, suffixe: string,
-        traitementConnexion: (canalEntree: express.Request, canalSortie: express.Response) => void):
+        traitementConnexion: (canal : ConnexionLongue<express.Request, express.Response>) => void):
         void {
 
         const churl = cheminURL(prefixe, code, suffixe);
@@ -523,7 +529,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                     Connection: "keep-alive",
                     "Cache-Control": "no-cache, no-store",
                 });
-                traitementConnexion(requete, reponse);
+                traitementConnexion(connexionLongueExpress(requete, reponse));
             }
         );
         console.log("* " + dateMaintenant().representationLog()

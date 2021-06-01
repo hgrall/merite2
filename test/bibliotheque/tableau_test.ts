@@ -209,3 +209,23 @@ describe('Tableau de Tableau', () => {
         tab.toJSON()
     );
 });
+
+describe('Tableau de nombres', () => {
+    let tab: Tableau<number> 
+    = tableau([1, 2, 3, 4, 5, 6]);
+    testUnitaireJsonJson(
+        "filtre parité",
+        [2, 4, 6],
+        tab.filtre((x) => (x%2 === 0)).toJSON().tableau
+    );
+    testUnitaireJsonJson(
+        "réduction",
+        21,
+        tab.reduction(0, (x, y) => x + y)
+    );
+    testUnitaireJsonJson(
+        "application",
+        [2, 3, 4, 5, 6, 7],
+        tab.application((x) => x + 1).toJSON().tableau
+    );
+});

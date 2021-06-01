@@ -1,5 +1,6 @@
 import * as express from 'express';
 import { ReseauMutable } from '../../bibliotheque/applications/reseau';
+import { Connexion, ConnexionLongue } from '../../bibliotheque/communication/connexion';
 
 import { chemin, creerServeurApplicationsExpress, ServeurApplications } from "../../bibliotheque/communication/serveurApplications";
 
@@ -29,7 +30,7 @@ serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETO
 * Définition du réseau en étoile.
 */
 
-const reseau: ReseauMutable<FormatSommetTchat, express.Response> = creerGenerateurReseauEtoile<express.Response>(CODE, 3, ["coco", "lulu", "zaza"]).engendrer();
+const reseau: ReseauMutable<FormatSommetTchat, ConnexionLongue<express.Request, express.Response>> = creerGenerateurReseauEtoile<ConnexionLongue<express.Request, express.Response>>(CODE, 3, ["coco", "lulu", "zaza"]).engendrer();
 
 /*
 * Service de réception d'un message (POST).
@@ -46,19 +47,18 @@ function traitementPOST(
             .application((id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id));
     return [ar, msgsTransit];
 }
-function traductionEntreePost(requete: express.Request, reponse: express.Response): Option<FormatMessageEnvoiTchat> {
-    const msg = <FormatMessageEnvoiTchat>requete.body;
+function traductionEntreePost(canal : Connexion<express.Request, express.Response>): Option<FormatMessageEnvoiTchat> {
+    const msg : FormatMessageEnvoiTchat = canal.lire();
     if (("type" in msg) && msg.type === "envoi") {
         return option(msg);
     }
     return rienOption<FormatMessageEnvoiTchat>();
 }
-function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canalSortie: express.Response): void {
-    canalSortie.json(msgs[0]);
+function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canal : Connexion<express.Request, express.Response>): void {
+    canal.envoyerJSON(msgs[0]);
     msgs[1].iterer((i, msg) => {
         const canal = reseau.connexion(msg.corps.ID_destinataire);
-        canal.write('event: transit\n');
-        canal.write(`data: ${JSON.stringify(msg)}\n\n`);
+        canal.envoyerJSON('transit', msg);
     });
 }
 
@@ -68,24 +68,21 @@ serveurApplications.specifierTraitementRequetePOST<FormatMessageEnvoiTchat, [For
 * Service de connexion persistance pour permettre une communication du serveur vers chaque client connecté.
 */
 
-export function traiterGETpersistant(requete: express.Request, reponse: express.Response): void {
+export function traiterGETpersistant(canal : ConnexionLongue<express.Request, express.Response>): void {
     if (!reseau.aUnSommetInactif()) {
         // TODO message d'erreur : réseau complet
     }
     // Envoi de la configuration initiale 
-    const ID_sommet = reseau.activerSommet(reponse);
+    const ID_sommet = reseau.activerSommet(canal);
     const noeud = reseau.noeud(ID_sommet);
-    // TODO une abstraction serait utile
-    reponse.write('event: config\n');
-    reponse.write(`data: ${JSON.stringify(noeud)}\n\n`);
+    canal.envoyerJSON('config', noeud);
     // Traitement de la fermeture de la déconnexion
-    requete.on("close", () => {
+    canal.enregistrerTraitementDeconnexion(() => {
         reseau.inactiverSommet(ID_sommet);
         reseau.itererVoisins(ID_sommet, (i, id) => {
             if(reseau.sommet(id).actif){
                 const canal = reseau.connexion(id);
-                canal.write('event: config\n');
-                canal.write(`data: ${JSON.stringify(reseau.noeud(id))}\n\n`);
+                canal.envoyerJSON('config', reseau.noeud(id));
             }
         });
     });
@@ -95,50 +92,3 @@ export function traiterGETpersistant(requete: express.Request, reponse: express.
 serveurApplications.specifierTraitementRequeteGETLongue(PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, RECEPTION), traiterGETpersistant);
 
 
-
-/*
-
-function traductionEntreeConstante(cste : string, requete: express.Request): TypeEntree {
-    return {
-        messageEntree: cste,
-        ID: identifiant("sommet", "id1")
-    };
-}
-
-function traductionEntreeCorps(requete: express.Request): TypeEntree {
-    return <TypeEntree>requete.body;
-}
-
-
-
-function traduireSortie(s : TypeSortie, reponse : express.Response) : void {
-    reponse.send(s);
-}
-
-serveurApplications.specifierTraitementRequeteGET<TypeEntree, TypeSortie>("c", "d", "e", traitement, (req) => traductionEntreeConstante("salut GET", req), traduireSortie);
-
-
-let canalSortie : express.Response;
-
-serveurApplications.specifierTraitementRequeteGETLongue("x", "y", "z", (ce, cs) => {
-    cs.write("connexion longue etablie");
-    canalSortie = cs;});
-
-let compteur = 0;
-
-function traitementCompteur(e : TypeEntree) : TypeSortie {
-    compteur++;
-    return {
-        messageSortie : e.messageEntree + " " + compteur,
-        ID: e.ID
-    };
-}
-
-function traduireSortiePOST(s : TypeSortie, reponse : express.Response) : void {
-    reponse.send(s);
-    canalSortie.write(" - " + s.messageSortie);
-}
-
-serveurApplications.specifierTraitementRequetePOST<TypeEntree, TypeSortie>("x", "y", "z", traitementCompteur, traductionEntreeCorps, traduireSortiePOST);
-
-*/
