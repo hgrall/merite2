@@ -188,7 +188,21 @@ class ModuleTableauEnJSON {
         }, t);
         return r;
     }
-
+    /**
+     * Filtre les éléments du tableau vérifiant le prédicat.
+     * @param t tableau au format
+     * @param prop prédicat utilisé pour filtrer
+     */
+    filtre<T>(t : FormatTableau<T>, prop : (x : T) => boolean) : FormatTableau<T> {
+        let r : T[] = [];
+        this.iterer((i, x) => {
+            if(prop(x)){
+                r.push(x);
+            }
+        }, t
+        );
+        return FABRIQUE_TABLEAU_JSON.enveloppe(r);
+    }
     /**
      * Ajoute un element à la fin du tableau et incrémente la taille.
      * @param t tableau mutable.
@@ -294,6 +308,12 @@ export interface Tableau<T> extends
      */
     reduction(neutre: T, op: (x: T, y: T) => T): T;
     /**
+     * Filtre les éléments du tableau vérifiant le prédicat.
+     * @param t tableau au format
+     * @param prop prédicat utilisé pour filtrer
+     */
+    filtre(prop : (x : T) => boolean) : Tableau<T>;
+    /**
      * Valeur en position index. 
      * Précondition : la position est entre zéro et la
      * longueur moins un.
@@ -393,6 +413,16 @@ class TableauParEnveloppe<T>
             this.etat(),
             neutre,
             op);
+    }
+    /**
+     * Filtre les éléments du tableau vérifiant le prédicat.
+     * @param t tableau au format
+     * @param prop prédicat utilisé pour filtrer
+     */
+    filtre(prop : (x : T) => boolean) : Tableau<T> {
+        return new TableauParEnveloppe<T>(
+            MODULE_TABLEAU_JSON.filtre(this.etat(), prop)
+        );
     }
     /**
      * Valeur en position index. 
@@ -534,6 +564,16 @@ class TableauMutableParEnveloppe<T>
             this.etat(),
             neutre,
             op);
+    }
+    /**
+     * Filtre les éléments du tableau vérifiant le prédicat.
+     * @param t tableau au format
+     * @param prop prédicat utilisé pour filtrer
+     */
+    filtre(prop : (x : T) => boolean) : Tableau<T> {
+        return new TableauParEnveloppe<T>(
+            MODULE_TABLEAU_JSON.filtre(this.etat(), prop)
+        );
     }
     /**
      * Délégation à la méthode valeur du module.

@@ -3,7 +3,8 @@ import { creerFileAPriorite, FileMutableAPriorite } from "../../bibliotheque/typ
 import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
 import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/types/tableau";
 import { creerTableIdentificationMutableVide, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
-import { FormatSommetTchat, modificationActivite } from "../commun/echangesTchat";
+import { FormatSommetTchat } from "../commun/echangesTchat";
+import { modificationActivite } from "./echangesServeurTchat";
 
 
 

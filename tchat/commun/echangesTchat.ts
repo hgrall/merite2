@@ -19,20 +19,11 @@ import { FormatTableau } from "../../bibliotheque/types/tableau";
  * Structure :
  * - ID : identifiant
  * - priorite : entier naturel n indiquant la priorité par (1/(n+1))
- * - pseudo : nom
  * - actif : booléen
+ * - pseudo : nom
  */
 export interface FormatSommetTchat extends FormatIdentifiable<'sommet'>, Prioritarisable, Activable {
     readonly pseudo: string,
-}
-
-export function modificationActivite(s: FormatSommetTchat): FormatSommetTchat {
-    return {
-        ID: s.ID,
-        priorite: s.priorite,
-        actif: !s.actif,
-        pseudo: s.pseudo
-    };
 }
 
 /**
@@ -54,22 +45,22 @@ export type FormatNoeudTchat = FormatNoeud<FormatSommetTchat>;
 /**
  * Types de messages pour le tchat. TODO : actuellement inutile !
  */
-export type TypeMessageTchat = 'noeud' | 'envoi' | 'AR' | 'transit' | 'erreur';
+export type TypeMessageTchat = 'config' | 'envoi' | 'AR' | 'transit' | 'erreur';
 
 /** 
  * Message au format JSON contenant une configuration du tchat, soit un noeud du graphe.
- * -  type : 'noeud',
+ * - ID : identifiant
+ * - type : 'config',
  * - corps : le noeud,
  * - date : la date lors de l'émission.
 */
-export type FormatConfigurationTchat = FormatMessage<'noeud', FormatNoeudTchat>;
+export type FormatConfigurationTchat = FormatMessage<'config', FormatNoeudTchat>;
 
 /**
- * Description JSON du corps d'un message pour le tchat.
+ * Corps d'un message d'envoi pour le tchat.
  * Structure :
- * - ID : identifiant
  * - ID_emetteur : identifiant du sommet émetteur
- * - ID_destinataire : tableau dormé des identifiants des sommets destinataires destinataire
+ * - ID_destinataires : tableau des identifiants des sommets destinataires
  * - contenu : le contenu textuel du message
  */
 export interface FormatEnvoiTchat {
@@ -80,32 +71,53 @@ export interface FormatEnvoiTchat {
 
 /** 
  * Message au format JSON contenant un envoi d'un client du tchat.
+ * - ID : identifiant
  * - type : 'envoi',
- * - corps : le message envoyé,
+ * - corps : l'envoi,
  * - date : la date lors de l'émission.
 */
 export type FormatMessageEnvoiTchat = FormatMessage<'envoi', FormatEnvoiTchat>;
 
 /**
- * Description JSON du corps d'un accusé de réception (AR) pour le tchat.
+ * Corps d'un accusé de réception (AR) pour le tchat.
  * Structure :
- * - ID : identifiant du message
  * - ID_envoi : identifiant du message dont on accuse réception
- * - ID_emetteur : identifiant du sommet émetteur
- * - ID_destinataire : identifiant du sommet destinataire
- * - contenu : contenu textuel (TODO utile ?)
+ * - ID_destinataires : tableau des identifiants des sommets effectivement destinataires
  */
 export interface FormatARTchat {
-    readonly ID_emetteur: Identifiant<'sommet'>;
     readonly ID_envoi: Identifiant<'message'>;
     readonly ID_destinataires: FormatTableau<Identifiant<'sommet'>>;
 }
 
 /** 
  * Message au format JSON contenant un accusé de réception.
+ * - ID : identifiant
  * - type : 'AR',
  * - corps : l'accusé de réception,
  * - date : la date lors de l'émission.
 */
 export type FormatMessageARTchat = FormatMessage<'AR', FormatARTchat>;
 
+/**
+ * Corps d'un message de transit pour le tchat.
+ * Structure :
+ * - ID_envoi : identifiant du message envoyé
+ * - ID_emetteur : identifiant du sommet émetteur
+ * - ID_destinataire : identifiant du sommet destinataire
+ * - contenu : le contenu textuel du message
+ */
+export interface FormatTransitTchat {
+    readonly ID_envoi: Identifiant<'message'>;
+    readonly ID_emetteur: Identifiant<'sommet'>;
+    readonly ID_destinataire: Identifiant<'sommet'>;
+    readonly contenu: string;
+}
+
+/** 
+ * Message au format JSON contenant un message en transit du serveur vers un client destinataire, suite à un envoi.
+ * - ID : identifiant
+ * - type : 'transit',
+ * - corps : l'envoi,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageTransitTchat = FormatMessage<'transit', FormatTransitTchat>;

@@ -62,7 +62,8 @@ function traitement(e : TypeEntree) : TypeSortie {
 }
 
 function traduireSortie(s : TypeSortie, reponse : express.Response) : void {
-    reponse.send(s);
+    console.log("méthode json utilisée");
+    reponse.json(s);
 }
 
 serveurApplications.specifierTraitementRequeteGET<TypeEntree, TypeSortie>("c", "d", "e", traitement, (req, rep) => traductionEntreeConstante("salut GET", req, rep), traduireSortie);
