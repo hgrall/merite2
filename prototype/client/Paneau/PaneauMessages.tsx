@@ -1,7 +1,7 @@
 import * as React from "react";
 import {DateFr} from "../../../bibliotheque/types/date"
 import {Individu, Message} from "../Helpers/typesInterface";
-import {ContainerMessageEmis, ContainerMessageRecu} from "../Message/Message";
+import {ContainerMessageEmis, ContainerMessageReçu} from "../Message/Message";
 import {EntreeMessage} from '../ChampDeTexte/EntreeMessage'
 import Alert from "react-bootstrap/Alert";
 import {StyledAlert} from "../../../shared/MessageAlert";
@@ -55,7 +55,7 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
                         this.props.messages.map((m: Message) =>
                             ((m.emetteur.nom === this.props.sujet.nom) ?
                                     <ContainerMessageEmis message={m}/> :
-                                    <ContainerMessageRecu message={m}/>
+                                    <ContainerMessageReçu message={m}/>
                             )
                         )
                     }

@@ -2,9 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/prototype/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/Helpers/typesInterface.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prototype/client/Message/Message.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/Message/Message.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prototype/client/Paneau/PaneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/Paneau/PaneauMessages.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prototype/client/Paneau/PanneauAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/Paneau/PanneauAdmin.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prototype/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/corps.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts" beforeDir="false" afterPath="$PROJECT_DIR$/serveurTchatEtoile.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prototypeServeur.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/serveurTchatEtoile.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,8 +57,8 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/tchat/serveur" />
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />

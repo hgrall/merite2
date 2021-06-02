@@ -12,21 +12,19 @@ import {
     TEXTE_ERREUR
 } from "../../bibliotheque/interface/couleur";
 import {
-    creerGenerateurIdentifiantParCompteur,
-    GenerateurIdentifiants,
     identifiant,
     Identifiant
 } from "../../bibliotheque/types/identifiant";
-import {dateEnveloppe, DateFr, dateMaintenant} from "../../bibliotheque/types/date";
+import {dateEnveloppe, dateMaintenant} from "../../bibliotheque/types/date";
 import {envoyerMessageEnvoi} from "../communication/communicationServeur";
 import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
-import {creerTableauMutableParCopie, creerTableauMutableVide, tableau} from "../../bibliotheque/types/tableau";
+import {creerTableauMutableParCopie, creerTableauMutableVide} from "../../bibliotheque/types/tableau";
 import { Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
-    FormatARTchat, FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat,
+    FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat,
     FormatSommetTchat
 } from "../../tchat/commun/echangesTchat";
 
@@ -55,8 +53,6 @@ interface Etat {
 
 export class Corps extends React.Component<{}, Etat> {
 
-    private generateurIDMessage: GenerateurIdentifiants<'message'>;
-
     private messageErreur: string;
 
     private individuSujet: Individu;
@@ -67,13 +63,6 @@ export class Corps extends React.Component<{}, Etat> {
 
     constructor(props: {}) {
         super(props);
-        // this.urlServeur = location.toString()
-        //     .replace(/^http/, 'ws'); // Même url, au protocole près
-
-        //TODO: DEPRONTO TOCA BORRARLO
-        const code = "A1"
-        this.generateurIDMessage = creerGenerateurIdentifiantParCompteur("prototype");
-
 
         this.sse = new EventSource(`http://localhost:8080/tchat/code/etoile/reception`,
             {withCredentials: false});
@@ -162,16 +151,16 @@ export class Corps extends React.Component<{}, Etat> {
 
 
     envoyerMessage(m: Message) {
-        if (this.state.nombreConnexions < this.state.nombreTotalConnexions) {
-            this.setState({
-                afficherAlerte: true,
-                messageAlerte: "Le nombre de connexions est insuffisant, il faut que la salle soit complète pour pouvoir envoyer le message."
-            })
-        } else {
+        // if (this.state.nombreConnexions < this.state.nombreTotalConnexions) {
+        //     this.setState({
+        //         afficherAlerte: true,
+        //         messageAlerte: "Le nombre de connexions est insuffisant, il faut que la salle soit complète pour pouvoir envoyer le message."
+        //     })
+        // } else {
 
             let destinataires = creerTableauMutableVide<Identifiant<"sommet">>();
             if ( m.destinataire.ID.val === ID_TOUS) {
-                // Rempli un tableu de destinataires avec tous les voisins du sommet
+                // Rempli un tableau de destinataires avec tous les voisins du sommet
                 this.state.voisins.iterer((ID_sorte) => {
                     destinataires.ajouterEnFin(ID_sorte);
                 })
@@ -184,8 +173,6 @@ export class Corps extends React.Component<{}, Etat> {
                 date: dateMaintenant().toJSON(),
                 corps: {ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON()}
             };
-            //console.log("- brut : " + msg.brut());
-            //console.log("- net : " + msg.representation());
             envoyerMessageEnvoi(msg).then(response => {
                 const msg: FormatMessageARTchat = response.data;
                 this.mettreAJourAccuses(msg);
@@ -193,7 +180,7 @@ export class Corps extends React.Component<{}, Etat> {
                 // TODO: AFFICHER ALERTE
             });
             this.ajouterMessage(m);
-        }
+       // }
     }
 
     remplirIndividuSujet(noeudSujet: Noeud<FormatSommetTchat>) {
@@ -222,10 +209,6 @@ export class Corps extends React.Component<{}, Etat> {
         this.setState({
             etatInterface: EtatInterfaceTchat.INITIAL
         });
-        // TODO
-        // - poster un message de connexion (service rest, requête post)
-        // - établir une connexion SSE et recevoir les avertissements de connexion
-        // - afficher ces messages
         const self = this;
         this.sse.addEventListener('config', (e: MessageEvent) => {
             const noeudSujet = noeud<FormatSommetTchat>(JSON.parse(e.data));
@@ -269,9 +252,6 @@ export class Corps extends React.Component<{}, Etat> {
             let msg: FormatMessageTransitTchat = JSON.parse(e.data);
             console.log(msg);
             console.log("* Réception");
-            // console.log("- du message brut : " + msg.brut());
-            // console.log("- du message net : " + msg.representation());
-            /* Message en transit */
 
             if (!this.state.voisins.contient(msg.corps.ID_emetteur)) {
                 console.log("- message incohérent");
