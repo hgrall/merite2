@@ -15,7 +15,9 @@ export interface ConnexionLongue<EConcret, SConcret> {
     enregistrerTraitementDeconnexion(traiter: () => void): void;
 }
 
-class ConnexionExpress implements Connexion<express.Request, express.Response> {
+export type ConnexionExpress = Connexion<express.Request, express.Response>;
+
+class ConnexionParExpress implements ConnexionExpress {
     constructor(
         private requete: express.Request,
         private reponse: express.Response
@@ -34,7 +36,9 @@ class ConnexionExpress implements Connexion<express.Request, express.Response> {
     }
 }
 
-class ConnexionLongueExpress implements ConnexionLongue<express.Request, express.Response> {
+export type ConnexionLongueExpress = ConnexionLongue<express.Request, express.Response>;
+
+class ConnexionLongueParExpress implements ConnexionLongueExpress {
     constructor(
         private requete: express.Request,
         private reponse: express.Response
@@ -58,10 +62,10 @@ class ConnexionLongueExpress implements ConnexionLongue<express.Request, express
 
 }
 
-export function connexionExpress(requete: express.Request, reponse: express.Response) {
-    return new ConnexionExpress(requete, reponse);
+export function connexionExpress(requete: express.Request, reponse: express.Response) : ConnexionExpress {
+    return new ConnexionParExpress(requete, reponse);
 }
 
-export function connexionLongueExpress(requete: express.Request, reponse: express.Response) {
-    return new ConnexionLongueExpress(requete, reponse);
+export function connexionLongueExpress(requete: express.Request, reponse: express.Response) : ConnexionLongueExpress {
+    return new ConnexionLongueParExpress(requete, reponse);
 }

@@ -2,13 +2,9 @@ import {
     Prioritarisable, Activable
 } from "../../bibliotheque/types/typesAtomiques";
 
-import {
-    FormatDateFr, dateEnveloppe, dateMaintenant,
-} from "../../bibliotheque/types/date";
 
 import {
-    Identifiant, FormatIdentifiable, identifiant
-} from "../../bibliotheque/types/identifiant";
+    Identifiant, FormatIdentifiable} from "../../bibliotheque/types/identifiant";
 
 import { FormatNoeud, Noeud } from "../../bibliotheque/applications/noeud";
 import { FormatMessage } from "../../bibliotheque/applications/message";

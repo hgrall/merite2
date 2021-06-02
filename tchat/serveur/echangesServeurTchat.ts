@@ -19,7 +19,7 @@ export function modificationActivite(s: FormatSommetTchat): FormatSommetTchat {
     return {
         ID: s.ID,
         priorite: s.priorite,
-        actif: !s.actif,
+        actif: !(s.actif),
         pseudo: s.pseudo
     };
 }

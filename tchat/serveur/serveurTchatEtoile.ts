@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { ReseauMutable } from '../../bibliotheque/applications/reseau';
-import { Connexion, ConnexionLongue } from '../../bibliotheque/communication/connexion';
+import { Connexion, ConnexionExpress, ConnexionLongue, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
 
 import { chemin, creerServeurApplicationsExpress, ServeurApplications } from "../../bibliotheque/communication/serveurApplications";
 
@@ -30,16 +30,15 @@ serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETO
 * Définition du réseau en étoile.
 */
 
-const reseau: ReseauMutable<FormatSommetTchat, ConnexionLongue<express.Request, express.Response>> = creerGenerateurReseauEtoile<ConnexionLongue<express.Request, express.Response>>(CODE, 3, ["coco", "lulu", "zaza"]).engendrer();
+const reseau: ReseauMutable<FormatSommetTchat, ConnexionLongueExpress> = creerGenerateurReseauEtoile<ConnexionLongueExpress>(CODE, 3, ["coco", "lulu", "zaza"]).engendrer();
 
 /*
 * Service de réception d'un message (POST).
 */
 
-function traitementPOST(
-    msg: FormatMessageEnvoiTchat)
+function traitementPOST(msg: FormatMessageEnvoiTchat)
     : [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>] {
-    const idsDest: Tableau<Identifiant<'sommet'>> = tableau(msg.corps.ID_destinataires.tableau);
+    const idsDest = tableau(msg.corps.ID_destinataires.tableau);
     const ar = traductionEnvoiEnAR(msg, generateurIdentifiantsMessages.produire('message'));
     const msgsTransit =
         idsDest
@@ -47,14 +46,16 @@ function traitementPOST(
             .application((id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id));
     return [ar, msgsTransit];
 }
-function traductionEntreePost(canal : Connexion<express.Request, express.Response>): Option<FormatMessageEnvoiTchat> {
-    const msg : FormatMessageEnvoiTchat = canal.lire();
+
+function traductionEntreePost(canal: ConnexionExpress): Option<FormatMessageEnvoiTchat> {
+    const msg: FormatMessageEnvoiTchat = canal.lire();
     if (("type" in msg) && msg.type === "envoi") {
         return option(msg);
     }
+    canal.envoyerJSON({ erreur: "TODO mauvais format" });
     return rienOption<FormatMessageEnvoiTchat>();
 }
-function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canal : Connexion<express.Request, express.Response>): void {
+function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canal: ConnexionExpress): void {
     canal.envoyerJSON(msgs[0]);
     msgs[1].iterer((i, msg) => {
         const canalDest = reseau.connexion(msg.corps.ID_destinataire);
@@ -62,15 +63,23 @@ function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTr
     });
 }
 
-serveurApplications.specifierTraitementRequetePOST<FormatMessageEnvoiTchat, [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>]>(PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, ENVOI), traitementPOST, traductionEntreePost, traduireSortiePOST);
+serveurApplications.specifierTraitementRequetePOST<
+    FormatMessageEnvoiTchat,
+    [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>]
+>(
+    PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, ENVOI),
+    traitementPOST, traductionEntreePost, traduireSortiePOST
+);
 
 /*
-* Service de connexion persistance pour permettre une communication du serveur vers chaque client connecté.
+* Service de connexion persistante pour permettre une communication du serveur vers chaque client connecté.
 */
 
-export function traiterGETpersistant(canal : ConnexionLongue<express.Request, express.Response>): void {
+export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
     if (!reseau.aUnSommetInactif()) {
-        // TODO message d'erreur : réseau complet
+        canal.envoyerJSON(
+            'config',
+            { erreur: "TODO réseau complet" });
         return;
     }
     // Envoi de la configuration initiale 
@@ -81,15 +90,17 @@ export function traiterGETpersistant(canal : ConnexionLongue<express.Request, ex
     canal.enregistrerTraitementDeconnexion(() => {
         reseau.inactiverSommet(ID_sommet);
         reseau.itererVoisins(ID_sommet, (i, id) => {
-            if(reseau.sommet(id).actif){
+            if (reseau.sommet(id).actif) {
                 const canal = reseau.connexion(id);
                 canal.envoyerJSON('config', reseau.noeud(id));
             }
         });
     });
-
 }
 
-serveurApplications.specifierTraitementRequeteGETLongue(PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, RECEPTION), traiterGETpersistant);
+serveurApplications
+    .specifierTraitementRequeteGETLongue(
+        PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, RECEPTION), traiterGETpersistant
+    );
 
 

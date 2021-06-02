@@ -1,4 +1,3 @@
-import { dateEnveloppe, DateFr, FormatDateFr } from "../types/date";
 import { Enveloppe, TypeEnveloppe } from "../types/enveloppe";
 import { FormatIdentifiable, Identifiant } from "../types/identifiant";
 import { FormatTableIdentification, TableIdentification, tableIdentification } from "../types/tableIdentification";
