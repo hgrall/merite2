@@ -214,7 +214,7 @@ class ReseauMutableParEnveloppe<
     }
 
     aUnSommetInactif(): boolean {
-        return this.etat().sommets.selectionCleSuivantCritere((s) => s.actif).estPresent();
+        return this.etat().sommets.selectionCleSuivantCritere((s) => !(s.actif)).estPresent();
     }
 
     activerSommet(connexion: C): Identifiant<"sommet"> {

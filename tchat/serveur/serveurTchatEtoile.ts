@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { ReseauMutable } from '../../bibliotheque/applications/reseau';
-import { Connexion, ConnexionExpress, ConnexionLongue, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
+import { ConnexionExpress, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
 
 import { chemin, creerServeurApplicationsExpress, ServeurApplications } from "../../bibliotheque/communication/serveurApplications";
 
