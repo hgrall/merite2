@@ -1,4 +1,5 @@
 import * as express from 'express';
+import { logger } from '../administration/log';
 
 export interface Connexion<EConcret, SConcret> {
     canalEntree(): EConcret;
@@ -48,9 +49,11 @@ class ConnexionLongueExpress implements ConnexionLongue<express.Request, express
         const msg = JSON.stringify(x);
         this.reponse.write('event: ' + etiquette + '\n');
         this.reponse.write(`data: ${msg}\n\n`);
+        logger.http("GET " + this.requete.url + " - Envoi d'un événement " + etiquette + ".");
     }
     enregistrerTraitementDeconnexion(traiter: () => void): void {
-        this.requete.on('close', traiter);
+        logger.info("Le serveur enregistre le traitement lors d'une déconnexion pour une requête GET persistante en " + this.requete.url + ".");
+        this.requete.on('close', traiter); 
     }
 
 }

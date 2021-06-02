@@ -8,6 +8,8 @@ import {
 } from "../types/date";
 import { Option } from '../types/option';
 import { Connexion, connexionExpress, ConnexionLongue, connexionLongueExpress } from './connexion';
+import { intercepteurHttp } from '../administration/logHttp';
+import { logger } from '../administration/log';
 
 const SEPARATEUR: string = "/";
 
@@ -264,9 +266,9 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
     constructor(private port: number) {
         this.appli = express();
         this.appli.use(bodyParser.json());
+        this.appli.use(intercepteurHttp);
         this.repertoire = shell.pwd();
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur a pour répertoire de travail " + this.repertoire + ".");
+        logger.info("Le serveur a pour répertoire de travail " + this.repertoire + ".");
     }
 
     /**
@@ -277,13 +279,12 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * lors d'une installation distante chez un hébergeur (comme
      * Heroku). 
      * 
-     * Effet dans la console : "Le serveur écoute le port ...".
+     * Log : "Le serveur écoute le port ...".
      */
     demarrer(): void {
         this.serveur =
             this.appli.listen(this.port, () => {
-                console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur écoute le port " + this.port + " de l'hôte (local ou heroku).");
+                logger.info("Le serveur écoute le port " + this.port + " de l'hôte (local ou heroku).");
             });
     }
     /**
@@ -293,8 +294,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * @param rep chemin relatif vers le répertoire des scripts embarqués.
      */
     specifierRepertoireScriptsEmbarques(rep: string): void {
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur utilise le répertoire suivant de scripts : " + rep + ".");
+        logger.info("Le serveur utilise le répertoire suivant de scripts : " + rep + ".");
         this.appli.use(express.static(rep)); // répertoire local visible
     }
 
@@ -304,7 +304,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * - méthode http : GET
      * - url : prefixe?code=xxx TODO à intégrer directement dans l'implémentation
      * 
-     * Effet dans la console : "Le serveur enregistre le traitement d'une requête d'authentification.".
+     * Log : "Le serveur enregistre le traitement d'une requête d'authentification.".
      * 
      * @param E format JSON pour les entrées (venant du client, entrant dans le serveur)
      * @param S format JSON pour les sorties (allant au client, sortant du serveur)
@@ -319,9 +319,9 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
         traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
-        const churl = cheminURL(prefixe);
+        const chUrl = cheminURL(prefixe);
         this.appli.get(
-            churl,
+            chUrl,
             (requete: express.Request,
                 reponse: express.Response) => {
                 const canal = connexionExpress(requete, reponse);
@@ -332,8 +332,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                 }
             }
         );
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur enregistre le traitement d'une requête d'authentification en " + churl + ".");
+        logger.info("Le serveur enregistre le traitement d'une requête d'authentification en " + chUrl + ".");
     }
     /**
      * Spécifie l'application à servir étant donné un code 
@@ -350,16 +349,17 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
      * @param application nom du fichier de l'application à servir
      */
     specifierApplicationAServir(prefixe: string, code: string, suffixe: string, cheminAppli: string, application: string): void {
-        const churl = cheminURL(prefixe, code, suffixe);
+        const chUrl = cheminURL(prefixe, code, suffixe);
+        const nomCompletAppli = chemin(cheminAppli, application);
+        logger.info("Le serveur enregistre le service de l'application " + nomCompletAppli + " à l'adresse " + chUrl + ".");
         this.appli.get(
-            churl,
+            chUrl,
             (requete: express.Request, response: express.Response) => {
                 let options = {
                     root: chemin(this.repertoire, cheminAppli),
                 };
                 response.sendFile(application, options);
-                console.log("* " + dateMaintenant().representationLog()
-                    + " - Le serveur envoie l'application " + chemin(options.root, application) + " après une requête en " + churl + ".");
+                logger.info("Le serveur envoie l'application " + chemin(options.root, application) + " après une requête en " + chUrl + ".");
             }
         );
     }
@@ -393,10 +393,10 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
         traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
-        const churl = cheminURL(prefixe, code, suffixe);
+        const chUrl = cheminURL(prefixe, code, suffixe);
         
         this.appli.get(
-            churl,
+            chUrl,
             (requete: express.Request, reponse: express.Response) => {
                 const canal = connexionExpress(requete, reponse);
                 const optionEntree = traductionEntree(canal);
@@ -406,8 +406,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                 }
             }
         );
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur enregistre le traitement d'une requête GET en " + churl + ".");
+        logger.info("Le serveur enregistre le traitement d'une requête GET en " + chUrl + ".");
     }
 
     /**
@@ -439,9 +438,9 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
         traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
-        const churl = cheminURL(prefixe, code, suffixe);
+        const chUrl = cheminURL(prefixe, code, suffixe);
         this.appli.post(
-            churl,
+            chUrl,
             (requete: express.Request, reponse: express.Response) => {
                 const canal = connexionExpress(requete, reponse);
                 const optionEntree = traductionEntree(canal);
@@ -451,8 +450,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                 }
             }
         );
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur enregistre le traitement d'une requête POST en " + churl + ".");
+        logger.info("Le serveur enregistre le traitement d'une requête POST en " + chUrl + ".");
     }
     /**
      * Spécifie le traitement d'une requête PUT.
@@ -483,9 +481,9 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         traductionEntree: (canal : Connexion<express.Request, express.Response>) => Option<E>,
         traduireSortie: (s: S, canal : Connexion<express.Request, express.Response>) => void,
     ): void {
-        const churl = cheminURL(prefixe, code, suffixe);
+        const chUrl = cheminURL(prefixe, code, suffixe);
         this.appli.put(
-            churl,
+            chUrl,
             (requete: express.Request, reponse: express.Response) => {
                 const canal = connexionExpress(requete, reponse);                
                 const optionEntree = traductionEntree(canal);
@@ -495,8 +493,7 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                 }
             }
         );
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur enregistre le traitement d'une requête PUT en " + churl + ".");
+        logger.info("Le serveur enregistre le traitement d'une requête PUT en " + chUrl + ".");
     }
     /**
      * Spécifie le traitement d'une requête GET persistante.
@@ -520,20 +517,20 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         traitementConnexion: (canal : ConnexionLongue<express.Request, express.Response>) => void):
         void {
 
-        const churl = cheminURL(prefixe, code, suffixe);
+        const chUrl = cheminURL(prefixe, code, suffixe);
         this.appli.get(
-            churl,
+            chUrl,
             (requete: express.Request, reponse: express.Response) => {
                 reponse.writeHead(200, {
                     "Content-Type": "text/event-stream", // Guillemets nécessaires à cause du tiret
                     Connection: "keep-alive",
                     "Cache-Control": "no-cache, no-store",
                 });
+                logger.http("GET " + requete.url + " - Connection persistante établie.");
                 traitementConnexion(connexionLongueExpress(requete, reponse));
             }
         );
-        console.log("* " + dateMaintenant().representationLog()
-            + " - Le serveur enregistre le traitement d'une requête GET persistante en " + churl + ".");
+        logger.info("Le serveur enregistre le traitement d'une requête GET persistante en " + chUrl + ".");
     }
 }
 

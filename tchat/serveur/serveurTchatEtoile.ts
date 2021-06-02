@@ -4,9 +4,9 @@ import { Connexion, ConnexionLongue } from '../../bibliotheque/communication/con
 
 import { chemin, creerServeurApplicationsExpress, ServeurApplications } from "../../bibliotheque/communication/serveurApplications";
 
-import { creerGenerateurIdentifiantParCompteur, FormatIdentifiable, GenerateurIdentifiants, identifiant, Identifiant } from "../../bibliotheque/types/identifiant";
+import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
-import { creerTableauMutableParEnveloppe, tableau, Tableau, TableauMutable } from '../../bibliotheque/types/tableau';
+import { tableau, Tableau } from '../../bibliotheque/types/tableau';
 import { FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat, FormatSommetTchat } from '../commun/echangesTchat';
 import { PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, ENVOI, RECEPTION } from '../commun/routes';
 import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
@@ -57,8 +57,8 @@ function traductionEntreePost(canal : Connexion<express.Request, express.Respons
 function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canal : Connexion<express.Request, express.Response>): void {
     canal.envoyerJSON(msgs[0]);
     msgs[1].iterer((i, msg) => {
-        const canal = reseau.connexion(msg.corps.ID_destinataire);
-        canal.envoyerJSON('transit', msg);
+        const canalDest = reseau.connexion(msg.corps.ID_destinataire);
+        canalDest.envoyerJSON('transit', msg);
     });
 }
 

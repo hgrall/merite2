@@ -31,9 +31,9 @@ const niveaux = {
 * @returns 'debug' en développement, 'avertissement' en production.
 */
 const niveauMaximal = () => {
-    const env = process.env.PRODUCTION || 'développement'
-    const estEnDev = env === 'développement'
-    return estEnDev ? 'debug' : 'avertissement'
+    const env = process.env.PRODUCTION || 'développement';
+    const estEnDev = (env === 'développement');
+    return (estEnDev ? 'debug' : 'warn');
 }
 
 /** 
@@ -47,12 +47,12 @@ const couleurs = {
     verbose: 'cyan',
     debug: 'blue',
     silly: 'black'
-}
+};
 
 /*
 * Associe les couleurs définies ci-dessus aux niveaux de gravité.
 */
-winston.addColors(couleurs)
+winston.addColors(couleurs);
 
 /*
  * Format des entrées dans les logs.
@@ -66,7 +66,7 @@ const format = winston.format.combine(
     winston.format.printf(
         (info) => `${info.timestamp} ${info.level}: ${info.message}`,
     ),
-)
+);
 
 /** 
  * Destination des entrées de log : console ou fichier

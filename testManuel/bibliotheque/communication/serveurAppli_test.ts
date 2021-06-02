@@ -26,7 +26,7 @@ serveurApplications.demarrer();
 
 serveurApplications.specifierRepertoireScriptsEmbarques("scripts");
 
-serveurApplications.specifierApplicationAServir("a", "b", "c", "html", "appliTest.html");
+serveurApplications.specifierApplicationAServir("a", "b", "c", "testManuel/bibliotheque/communication/html", "appliTest.html");
 
 
 interface TypeEntree extends FormatIdentifiable<"sommet"> {
@@ -49,10 +49,10 @@ function traductionEntreeConstante(cste : string, canal : Connexion<express.Requ
 function traductionEntreeCorps(canal : Connexion<express.Request, express.Response>): Option<TypeEntree> {
     const msg : TypeEntree = canal.lire();
     if("messageEntree" in msg){
-        logger.info('* Requête POST - Message en entrée : ' + msg.messageEntree);
+        logger.info('Requête POST - Message en entrée : ' + msg.messageEntree);
         return option(msg);
     }
-    logger.info('* Requête POST - Message en entrée incorrect.');
+    logger.info('Requête POST - Message en entrée incorrect.');
     return rienOption();
 }
 
@@ -77,7 +77,7 @@ let canalSortie : ConnexionLongue<express.Request, express.Response>;
 serveurApplications.specifierTraitementRequeteGETLongue("x", "y", "z", (c) => {
     c.envoyerJSON('essai', "connexion longue etablie");
     canalSortie = c;
-    c.enregistrerTraitementDeconnexion(() => {console.log("* déconnexion du client ! ");})
+    c.enregistrerTraitementDeconnexion(() => {logger.info("Déconnexion du client ! ");})
 });
 
 let compteur = 0;
