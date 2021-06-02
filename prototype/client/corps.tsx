@@ -26,7 +26,7 @@ import styled from "styled-components";
 import {creerTableauMutableParCopie, creerTableauMutableVide, tableau} from "../../bibliotheque/types/tableau";
 import { Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
-    FormatARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat,
+    FormatARTchat, FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat,
     FormatSommetTchat
 } from "../../tchat/commun/echangesTchat";
 
@@ -48,7 +48,9 @@ interface Etat {
     afficherAlerte: boolean;
     messageAlerte: string;
     code: string;
-    config: unknown
+    config: unknown;
+    voisins: TableIdentificationMutable<"sommet", Individu>;
+    nombreTotalConnexions: number;
 }
 
 export class Corps extends React.Component<{}, Etat> {
@@ -57,7 +59,6 @@ export class Corps extends React.Component<{}, Etat> {
 
     private messageErreur: string;
 
-    private voisins: TableIdentificationMutable<'sommet', Individu>;
     private individuSujet: Individu;
     private toutIndividu: Individu;
     private individuInconnu: Individu;
@@ -73,7 +74,6 @@ export class Corps extends React.Component<{}, Etat> {
         const code = "A1"
         this.generateurIDMessage = creerGenerateurIdentifiantParCompteur("prototype");
 
-        this.voisins = creerTableIdentificationMutableVide("sommet");
 
         this.sse = new EventSource(`http://localhost:8080/tchat/code/etoile/reception`,
             {withCredentials: false});
@@ -102,12 +102,15 @@ export class Corps extends React.Component<{}, Etat> {
             afficherAlerte: false,
             messageAlerte: "",
             code: "",
-            config: {}
+            config: {},
+            voisins: creerTableIdentificationMutableVide<"sommet", Individu>("sommet"),
+            nombreTotalConnexions: 0
         }
 
         this.envoyerMessage = this.envoyerMessage.bind(this);
         this.modifierSelection = this.modifierSelection.bind(this);
         this.masquerAlerte = this.masquerAlerte.bind(this);
+        this.remplirVoisins = this.remplirVoisins.bind(this);
     }
 
     masquerAlerte() {
@@ -125,16 +128,21 @@ export class Corps extends React.Component<{}, Etat> {
     }
 
 
-    mettreAJourAccuses(m: FormatARTchat) {
-        console.log(m);
+    mettreAJourAccuses(m: FormatMessageARTchat) {
         const messageAMettreAJour = this.state.messages.find((message: Message) => {
-            return message.ID.val == m.ID_envoi.val
+            return message.ID.val == m.corps.ID_envoi.val
         });
         if (messageAMettreAJour != undefined) {
             const nouveauAccuses: Couleur[] = [];
-            messageAMettreAJour.destinataires.forEach(destinataire => {
-                nouveauAccuses.push(destinataire.encre);
-            })
+            if( messageAMettreAJour.destinataires[0].ID.val == ID_TOUS){
+                this.state.voisins.iterer((_, voisin) => {
+                    nouveauAccuses.push(voisin.fond)
+                })
+            } else {
+                messageAMettreAJour.destinataires.forEach(destinataire => {
+                    nouveauAccuses.push(destinataire.fond);
+                })
+            }
             this.setState((etatAvant: Etat) => ({
                 messages: etatAvant.messages.map((v, i, tab) => {
                     if (v.ID.val === messageAMettreAJour.ID.val) {
@@ -155,79 +163,42 @@ export class Corps extends React.Component<{}, Etat> {
     }
 
 
-    envoyerMessage(m: Message, d: DateFr) {
-        //TODO: Paramétrer config
-        //TODO: Factoriser le code
-        if (this.state.nombreConnexions < 3) {
+    envoyerMessage(m: Message) {
+        if (this.state.nombreConnexions < this.state.nombreTotalConnexions) {
             this.setState({
                 afficherAlerte: true,
                 messageAlerte: "Le nombre de connexions est insuffisant, il faut que la salle soit complète pour pouvoir envoyer le message."
             })
         } else {
-            this.ajouterMessage(m);
+
+            let destinataires = creerTableauMutableVide<Identifiant<"sommet">>();
             if (m.destinataires.length == 1 && m.destinataires[0].ID.val === ID_TOUS) {
-                console.log("* Diffusion du message")
-                const destinataires = creerTableauMutableVide<Identifiant<"sommet">>();
-                this.voisins.iterer((ID_sorte) => {
+                // Rempli un tableu de destinataires avec tous les voisins du sommet
+                this.state.voisins.iterer((ID_sorte) => {
                     destinataires.ajouterEnFin(ID_sorte);
                 })
-                //TODO: utiliser le bon format
-                let msg: FormatMessageEnvoiTchat = {
-                    ID: m.ID,
-                    type: 'envoi',
-                    date: dateMaintenant().toJSON(),
-                    corps: {ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON()}
-                };
-                //console.log("- brut : " + msg.brut());
-                //console.log("- net : " + msg.representation());
-                envoyerMessageEnvoi(msg).then(response => {
-                    const msg: FormatARTchat = response.data.corps;
-                    this.mettreAJourAccuses(msg);
-                }).catch(reason => {
-                    // TODO: AFFICHER ALERTE
-                });
-                return;
             } else {
+                // Rempli un tableau avec les destinataires du map, normalement il n'y a qu'un destinataire
                 const idDestinataires = m.destinataires.map((individu) => {
                     return individu.ID
                 })
-                const destinataires = creerTableauMutableParCopie(idDestinataires);
-                let msg: FormatMessageEnvoiTchat = {
-                    ID: m.ID,
-                    type: 'envoi',
-                    date: dateMaintenant().toJSON(),
-                    corps: {
-                        ID_emetteur: m.emetteur.ID,
-                        contenu: m.contenu,
-                        ID_destinataires: destinataires.toJSON()
-                    }
-                };
-                //console.log("- brut : " + msg.brut());
-                //console.log("- net : " + msg.representation());
-                envoyerMessageEnvoi(msg).then(response => {
-                    console.log(response);
-                    const msg: FormatARTchat = response.data;
-                    msg.ID_destinataires.tableau.forEach(idDestinataire => {
-                        if (!this.voisins.contient(idDestinataire)) {
-                            console.log("- message incohérent");
-                            return;
-                        }
-                    })
-                    this.mettreAJourAccuses(msg);
-                }).catch(reason => {
-                    // TODO: AFFICHER ALERTE
-                });
-                const indivudusDestinataires: Individu[] = [];
-                tableau(msg.corps.ID_destinataires.tableau).iterer((index, val) => {
-                    const destinataire = this.voisins.valeur(val);
-                    indivudusDestinataires.push({
-                        ID: destinataire.ID,
-                        nom: destinataire.nom,
-                        fond: destinataire.fond,
-                        encre: destinataire.encre
-                    })
-                })
+                destinataires = creerTableauMutableParCopie(idDestinataires);
             }
+            let msg: FormatMessageEnvoiTchat = {
+                ID: m.ID,
+                type: 'envoi',
+                date: dateMaintenant().toJSON(),
+                corps: {ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON()}
+            };
+            //console.log("- brut : " + msg.brut());
+            //console.log("- net : " + msg.representation());
+            envoyerMessageEnvoi(msg).then(response => {
+                const msg: FormatMessageARTchat = response.data;
+                this.mettreAJourAccuses(msg);
+            }).catch(reason => {
+                // TODO: AFFICHER ALERTE
+            });
+            this.ajouterMessage(m);
         }
     }
 
@@ -242,16 +213,15 @@ export class Corps extends React.Component<{}, Etat> {
 
     remplirVoisins(voisinsSujet: FormatTableIdentification<"sommet", FormatSommetTchat>) {
         const voisins = tableIdentification<"sommet", FormatSommetTchat>("sommet", voisinsSujet);
-
+        const nouveauxVoisins = creerTableIdentificationMutableVide<"sommet", Individu>("sommet");
         const suite = new SuiteCouplesFondEncre();
         voisins.iterer((ID_sorte, voisin) => {
             if(voisin.actif){
                 const c = suite.courant();
-                this.voisins.ajouter(ID_sorte, {ID: ID_sorte, nom: voisin.pseudo, encre: c.encre, fond: c.fond})
-            } else {
-                this.voisins.retirer(ID_sorte);
+                nouveauxVoisins.ajouter(ID_sorte, {ID: ID_sorte, nom: voisin.pseudo, encre: c.encre, fond: c.fond})
             }
         })
+        this.setState({voisins: nouveauxVoisins})
     }
 
     componentDidMount(): void {
@@ -264,16 +234,13 @@ export class Corps extends React.Component<{}, Etat> {
         // - afficher ces messages
         const self = this;
         this.sse.addEventListener('config', (e: MessageEvent) => {
-            console.log(JSON.parse(e.data));
             const noeudSujet = noeud<FormatSommetTchat>(JSON.parse(e.data));
             this.remplirIndividuSujet(noeudSujet);
             this.remplirVoisins(noeudSujet.etat().voisins.etat());
 
             self.setState({nombreConnexions: noeudSujet.nombreConnexionsActives()+1});
-            self.setState({
-                etatInterface: EtatInterfaceTchat.NORMAL
-            });
-            return;
+            self.setState({ etatInterface: EtatInterfaceTchat.NORMAL});
+            self.setState({nombreTotalConnexions: noeudSujet.etat().voisins.taille()+1})
         }, false);
 
         this.sse.addEventListener('erreur', (e: MessageEvent) => {
@@ -308,12 +275,11 @@ export class Corps extends React.Component<{}, Etat> {
             let msg: FormatMessageTransitTchat = JSON.parse(e.data);
             console.log(msg);
             console.log("* Réception");
-            console.log(this.voisins.representation());
             // console.log("- du message brut : " + msg.brut());
             // console.log("- du message net : " + msg.representation());
             /* Message en transit */
 
-            if (!this.voisins.contient(msg.corps.ID_emetteur)) {
+            if (!this.state.voisins.contient(msg.corps.ID_emetteur)) {
                 console.log("- message incohérent");
                 return;
             }
@@ -321,13 +287,7 @@ export class Corps extends React.Component<{}, Etat> {
                 console.log("- message incohérent");
                 return;
             }
-            //const tableauDestinataires = tableau(msg.corps.ID_destinataires.tableau);
-            // tableauDestinataires.iterer((_, val) => {
-            //     let destinataire = this.voisins.valeur(val);
-            //     this.mettreAJourMessageEnvoye(msg.ID, destinataire);
-            //     return;
-            // });
-            const emetteur: Individu = this.voisins.valeur(msg.corps.ID_emetteur);
+            const emetteur: Individu = this.state.voisins.valeur(msg.corps.ID_emetteur);
             const destinataires: Individu[] = [this.individuSujet];
             this.ajouterMessage({
                 ID: msg.ID,
@@ -337,7 +297,6 @@ export class Corps extends React.Component<{}, Etat> {
                 contenu: msg.corps.contenu,
                 accuses: []
             });
-            return;
         });
 
         console.log("Le composant est monté.");
@@ -355,11 +314,12 @@ export class Corps extends React.Component<{}, Etat> {
                         <Row>
                             <StyledCol sm={12} md={3}>
                                 <PanneauAdmin sujet={this.individuSujet}
-                                              objets={this.voisins.image()}
+                                              objets={this.state.voisins.image()}
                                               tous={this.toutIndividu}
                                               selection={this.state.selection}
                                               modifSelection={this.modifierSelection}
                                               nombreConnexions={this.state.nombreConnexions}
+                                              nombreTotalConnexions={this.state.nombreTotalConnexions}
                                 />
                             </StyledCol>
                             <StyledCol sm={12} md={9}>

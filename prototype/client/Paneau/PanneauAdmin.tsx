@@ -6,6 +6,7 @@ import {PastilleAdmin} from "../../../shared/Pastilles";
 import {Pseudo} from "../Label/Pseudo";
 import {ButtonDestinataire} from "../Button/ButtonDestinataire";
 import {TexteInformation} from "../../../shared/texte"
+import {TableIdentificationMutable} from "../../../bibliotheque/types/tableIdentification";
 
 
 interface ProprietesAdmin {
@@ -16,7 +17,8 @@ interface ProprietesAdmin {
     tous: Individu;
     selection: Individu;
     modifSelection: (i: Individu) => void;
-    nombreConnexions: number
+    nombreConnexions: number;
+    nombreTotalConnexions:number;
 }
 export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
     render() {
@@ -41,7 +43,7 @@ export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
                                     fond={this.props.tous.fond}
                                     nom={this.props.tous.nom}
                 />
-                <TexteInformation> Nombre de connexions: {this.props.nombreConnexions}/5 </TexteInformation>
+                <TexteInformation> Nombre de connexions: {this.props.nombreConnexions}/{this.props.nombreTotalConnexions} </TexteInformation>
             </PanneauAdminDiv>
         );
     }

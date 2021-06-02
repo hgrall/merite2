@@ -23,9 +23,11 @@ serveurApplications.demarrer();
 /*
 * Service de l'application.
 */
-serveurApplications.specifierRepertoireScriptsEmbarques("scripts");
+const repertoireHtml: string = "build";
+serveurApplications.specifierRepertoireScriptsEmbarques(repertoireHtml);
 
-serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, "html", "appliTchatEtoile.html");
+serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, repertoireHtml, "interfaceTchat.html");
+
 
 /*
 * Définition du réseau en étoile.
