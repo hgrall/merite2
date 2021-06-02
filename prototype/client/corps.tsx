@@ -134,22 +134,20 @@ export class Corps extends React.Component<{}, Etat> {
         });
         if (messageAMettreAJour != undefined) {
             const nouveauAccuses: Couleur[] = [];
-            if( messageAMettreAJour.destinataires[0].ID.val == ID_TOUS){
+            if( messageAMettreAJour.destinataire.ID.val == ID_TOUS){
                 this.state.voisins.iterer((_, voisin) => {
                     nouveauAccuses.push(voisin.fond)
                 })
             } else {
-                messageAMettreAJour.destinataires.forEach(destinataire => {
-                    nouveauAccuses.push(destinataire.fond);
-                })
+                nouveauAccuses.push(messageAMettreAJour.destinataire.fond);
             }
             this.setState((etatAvant: Etat) => ({
-                messages: etatAvant.messages.map((v, i, tab) => {
+                messages: etatAvant.messages.map((v) => {
                     if (v.ID.val === messageAMettreAJour.ID.val) {
                         return {
                             ID: v.ID,
                             emetteur: v.emetteur,
-                            destinataires: messageAMettreAJour.destinataires,
+                            destinataire: messageAMettreAJour.destinataire,
                             contenu: v.contenu,
                             cachet: v.cachet,
                             accuses: nouveauAccuses
@@ -172,17 +170,13 @@ export class Corps extends React.Component<{}, Etat> {
         } else {
 
             let destinataires = creerTableauMutableVide<Identifiant<"sommet">>();
-            if (m.destinataires.length == 1 && m.destinataires[0].ID.val === ID_TOUS) {
+            if ( m.destinataire.ID.val === ID_TOUS) {
                 // Rempli un tableu de destinataires avec tous les voisins du sommet
                 this.state.voisins.iterer((ID_sorte) => {
                     destinataires.ajouterEnFin(ID_sorte);
                 })
             } else {
-                // Rempli un tableau avec les destinataires du map, normalement il n'y a qu'un destinataire
-                const idDestinataires = m.destinataires.map((individu) => {
-                    return individu.ID
-                })
-                destinataires = creerTableauMutableParCopie(idDestinataires);
+                destinataires = creerTableauMutableParCopie([m.destinataire.ID]);
             }
             let msg: FormatMessageEnvoiTchat = {
                 ID: m.ID,
@@ -288,11 +282,10 @@ export class Corps extends React.Component<{}, Etat> {
                 return;
             }
             const emetteur: Individu = this.state.voisins.valeur(msg.corps.ID_emetteur);
-            const destinataires: Individu[] = [this.individuSujet];
             this.ajouterMessage({
                 ID: msg.ID,
                 emetteur: emetteur,
-                destinataires: destinataires,
+                destinataire: this.individuSujet,
                 cachet: dateEnveloppe(msg.date).representation(),
                 contenu: msg.corps.contenu,
                 accuses: []

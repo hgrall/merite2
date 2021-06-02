@@ -2,13 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bibliotheque/administration/log.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/administration/log.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bibliotheque/administration/logHttp.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/administration/logHttp.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Paneau/PanneauAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/Paneau/PanneauAdmin.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prototype/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/Helpers/typesInterface.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prototype/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/client/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts" beforeDir="false" afterPath="$PROJECT_DIR$/serveurTchatEtoile.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,8 +53,8 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/tchat/serveur" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/tchat/serveur" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -87,22 +83,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts</url>
-          <line>24</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts</url>
-          <line>24</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

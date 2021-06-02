@@ -69,7 +69,7 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
                                    this.props.envoiMessage({
                                        ID: this.generateur.produire("message"),
                                        emetteur: this.props.sujet,
-                                       destinataires: [this.props.destinataire],
+                                       destinataire: this.props.destinataire,
                                        cachet: d.representation(),
                                        contenu: this.state.texte,
                                        accuses: []
