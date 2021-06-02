@@ -71,6 +71,7 @@ serveurApplications.specifierTraitementRequetePOST<FormatMessageEnvoiTchat, [For
 export function traiterGETpersistant(canal : ConnexionLongue<express.Request, express.Response>): void {
     if (!reseau.aUnSommetInactif()) {
         // TODO message d'erreur : réseau complet
+        return;
     }
     // Envoi de la configuration initiale 
     const ID_sommet = reseau.activerSommet(canal);

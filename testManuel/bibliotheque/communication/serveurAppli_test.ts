@@ -1,4 +1,5 @@
 import * as express from 'express';
+import { logger } from '../../../bibliotheque/administration/log';
 import { Connexion, ConnexionLongue } from '../../../bibliotheque/communication/connexion';
 
 /*
@@ -48,10 +49,10 @@ function traductionEntreeConstante(cste : string, canal : Connexion<express.Requ
 function traductionEntreeCorps(canal : Connexion<express.Request, express.Response>): Option<TypeEntree> {
     const msg : TypeEntree = canal.lire();
     if("messageEntree" in msg){
-        console.log('* Requête POST - Message en entrée : ' + msg.messageEntree);
+        logger.info('* Requête POST - Message en entrée : ' + msg.messageEntree);
         return option(msg);
     }
-    console.log('* Requête POST - Message en entrée incorrect.');
+    logger.info('* Requête POST - Message en entrée incorrect.');
     return rienOption();
 }
 
@@ -63,7 +64,7 @@ function traitement(e : TypeEntree) : TypeSortie {
 }
 
 function traduireSortie(s : TypeSortie, canal: Connexion<express.Request, express.Response>) : void {
-    console.log("méthode json utilisée");
+    logger.info("méthode json utilisée");
     canal.envoyerJSON(s);
 }
 

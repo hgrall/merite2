@@ -62,3 +62,5 @@
 - Vérification du type lors de la désérialisation. Voir [io-ts](https://gcanti.github.io/io-ts/) 
   - https://dev.to/ruizb/using-fp-ts-and-io-ts-types-and-implementation-1k6a
   - https://medium.com/swlh/typescript-runtime-validation-with-io-ts-456f095b7f86
+
+- Logs avec winston et morgan (/http) : https://dev.to/vassalloandrea/better-logs-for-expressjs-using-winston-and-morgan-with-typescript-516n
