@@ -86,6 +86,13 @@ export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
     const ID_sommet = reseau.activerSommet(canal);
     const noeud = reseau.noeud(ID_sommet);
     canal.envoyerJSON('config', noeud);
+    // Envoi de la nouvelle configuration aux voisins actifs
+    reseau.itererVoisins(ID_sommet, (i, id) => {
+        if (reseau.sommet(id).actif) {
+            const canalVoisin = reseau.connexion(id);
+            canalVoisin.envoyerJSON('config', reseau.noeud(id));
+        }
+    });
     // Traitement de la fermeture de la déconnexion
     canal.enregistrerTraitementDeconnexion(() => {
         reseau.inactiverSommet(ID_sommet);
