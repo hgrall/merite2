@@ -1,20 +1,19 @@
 import axios from 'axios';
 import {FormatMessageEnvoiTchat} from "../../tchat/commun/echangesTchat";
+import stringify = Mocha.utils.stringify;
 
 export const envoyerMessageEnvoi = async (
-    message: FormatMessageEnvoiTchat,
-    code: string,
-    // jeu: string
+    data: FormatMessageEnvoiTchat
 ) => {
-    const url = `http://localhost:8080/envoyer/A1`;
+    //TODO: Set url by using constants
+    const url = `http://localhost:8080/tchat/code/etoile/envoi`;
     console.log(url);
-    console.log(message);
+    console.log(data);
     return axios
-        .post(url, {
-            message
-        })
-        .then((response) => {
-            console.log(response);
-        })
-        .catch((error) => {});
+        .post(url, data, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
 };

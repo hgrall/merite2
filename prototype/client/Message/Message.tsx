@@ -66,9 +66,9 @@ class ContainerMessageBrut extends React.Component<ProprietesMessage, {}> {
                         </MessageFixe>
                     </Col>
                     <Col md={3} sm={12}>
-                        <InterlocuteurMessage fond={this.props.message.destinataire.fond}
-                                              encre={this.props.message.destinataire.encre}
-                                              nom={this.props.message.destinataire.nom}
+                        <InterlocuteurMessage fond={this.props.message.destinataires[0].fond}
+                                              encre={this.props.message.destinataires[0].encre}
+                                              nom={this.props.message.destinataires[0].nom}
                                               role={Role.Recepteur}/>
                     </Col>
                 </Row>

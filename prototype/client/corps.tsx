@@ -1,10 +1,8 @@
 import * as React from "react";
 import {Individu, Message} from "./Helpers/typesInterface";
 import {
-    creerTableIdentificationMutableParCopie, creerTableIdentificationMutableParEnveloppe,
-    creerTableIdentificationMutableVide, FormatTableIdentification, FormatTableIdentificationMutable,
-    tableIdentification,
-    TableIdentification, TableIdentificationMutable
+    creerTableIdentificationMutableVide, FormatTableIdentification,
+    tableIdentification,TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
     Couleur,
@@ -26,20 +24,12 @@ import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
 import {creerTableauMutableParCopie, creerTableauMutableVide, tableau} from "../../bibliotheque/types/tableau";
-import {table} from "../../bibliotheque/types/table";
-import {FormatNoeud, Noeud, noeud} from "../../bibliotheque/applications/noeud";
+import { Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
-    FormatARTchat,
-    FormatEnvoiTchat, FormatMessageEnvoiTchat,
-    FormatNoeudTchat,
+    FormatARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat,
     FormatSommetTchat
 } from "../../tchat/commun/echangesTchat";
 
-
-interface ProprietesCorps {
-    // see https://github.com/Microsoft/TypeScript/issues/8588
-    className?: string;
-}
 
 enum EtatInterfaceTchat {
     INITIAL,
@@ -85,7 +75,7 @@ export class Corps extends React.Component<{}, Etat> {
 
         this.voisins = creerTableIdentificationMutableVide("sommet");
 
-        this.sse = new EventSource(`http://localhost:8080/listen/${code}`,
+        this.sse = new EventSource(`http://localhost:8080/tchat/code/etoile/reception`,
             {withCredentials: false});
 
         this.messageErreur = "Aucune erreur";
@@ -135,9 +125,10 @@ export class Corps extends React.Component<{}, Etat> {
     }
 
 
-    mettreAJourMessageEnvoye(id: Identifiant<'message'>) {
+    mettreAJourAccuses(m: FormatARTchat) {
+        console.log(m);
         const messageAMettreAJour = this.state.messages.find((message: Message) => {
-            return message.ID.val == id.val
+            return message.ID.val == m.ID_envoi.val
         });
         if (messageAMettreAJour != undefined) {
             const nouveauAccuses: Couleur[] = [];
@@ -165,8 +156,9 @@ export class Corps extends React.Component<{}, Etat> {
 
 
     envoyerMessage(m: Message, d: DateFr) {
-        //TODO : Parametrer config
-        if (this.state.nombreConnexions < 5) {
+        //TODO: Paramétrer config
+        //TODO: Factoriser le code
+        if (this.state.nombreConnexions < 3) {
             this.setState({
                 afficherAlerte: true,
                 messageAlerte: "Le nombre de connexions est insuffisant, il faut que la salle soit complète pour pouvoir envoyer le message."
@@ -188,7 +180,10 @@ export class Corps extends React.Component<{}, Etat> {
                 };
                 //console.log("- brut : " + msg.brut());
                 //console.log("- net : " + msg.representation());
-                envoyerMessageEnvoi(msg, this.state.code).catch(reason => {
+                envoyerMessageEnvoi(msg).then(response => {
+                    const msg: FormatARTchat = response.data.corps;
+                    this.mettreAJourAccuses(msg);
+                }).catch(reason => {
                     // TODO: AFFICHER ALERTE
                 });
                 return;
@@ -209,7 +204,17 @@ export class Corps extends React.Component<{}, Etat> {
                 };
                 //console.log("- brut : " + msg.brut());
                 //console.log("- net : " + msg.representation());
-                envoyerMessageEnvoi(msg, this.state.code).catch(reason => {
+                envoyerMessageEnvoi(msg).then(response => {
+                    console.log(response);
+                    const msg: FormatARTchat = response.data;
+                    msg.ID_destinataires.tableau.forEach(idDestinataire => {
+                        if (!this.voisins.contient(idDestinataire)) {
+                            console.log("- message incohérent");
+                            return;
+                        }
+                    })
+                    this.mettreAJourAccuses(msg);
+                }).catch(reason => {
                     // TODO: AFFICHER ALERTE
                 });
                 const indivudusDestinataires: Individu[] = [];
@@ -221,14 +226,6 @@ export class Corps extends React.Component<{}, Etat> {
                         fond: destinataire.fond,
                         encre: destinataire.encre
                     })
-                })
-                this.ajouterMessage({
-                    ID: msg.ID,
-                    emetteur: this.individuSujet,
-                    destinataires: indivudusDestinataires,
-                    cachet: dateEnveloppe(msg.date).representation(),
-                    contenu: msg.corps.contenu,
-                    accuses: []
                 })
             }
         }
@@ -247,9 +244,13 @@ export class Corps extends React.Component<{}, Etat> {
         const voisins = tableIdentification<"sommet", FormatSommetTchat>("sommet", voisinsSujet);
 
         const suite = new SuiteCouplesFondEncre();
-        voisins.iterer((ID_sorte, val) => {
-            const c = suite.courant();
-            this.voisins.ajouter(ID_sorte, {ID: ID_sorte, nom: val.pseudo, encre: c.encre, fond: c.fond})
+        voisins.iterer((ID_sorte, voisin) => {
+            if(voisin.actif){
+                const c = suite.courant();
+                this.voisins.ajouter(ID_sorte, {ID: ID_sorte, nom: voisin.pseudo, encre: c.encre, fond: c.fond})
+            } else {
+                this.voisins.retirer(ID_sorte);
+            }
         })
     }
 
@@ -263,16 +264,17 @@ export class Corps extends React.Component<{}, Etat> {
         // - afficher ces messages
         const self = this;
         this.sse.addEventListener('config', (e: MessageEvent) => {
-            const noeudSujet = noeud<FormatSommetTchat>(JSON.parse(e.data).corps);
+            console.log(JSON.parse(e.data));
+            const noeudSujet = noeud<FormatSommetTchat>(JSON.parse(e.data));
             this.remplirIndividuSujet(noeudSujet);
             this.remplirVoisins(noeudSujet.etat().voisins.etat());
 
-            self.setState({nombreConnexions: noeudSujet.nombreConnexionsActives()});
+            self.setState({nombreConnexions: noeudSujet.nombreConnexionsActives()+1});
             self.setState({
                 etatInterface: EtatInterfaceTchat.NORMAL
             });
             return;
-        });
+        }, false);
 
         this.sse.addEventListener('erreur', (e: MessageEvent) => {
             //TODO: HANDLE ERRORS IN CORRECT FORMAT
@@ -299,14 +301,14 @@ export class Corps extends React.Component<{}, Etat> {
             //         etatInterface: EtatInterfaceTchat.ERRONE,
             //     });
             // }
-        });
+        }, false);
 
         this.sse.addEventListener('transit', (e: MessageEvent) => {
-            console.log("transit")
-            console.log(e.data);
-            //TODO: Handle messages using FormatMessageTransitTchat
-            let msg: FormatMessageEnvoiTchat = e.data;
+            //TODO: implementer message par enveloppe
+            let msg: FormatMessageTransitTchat = JSON.parse(e.data);
+            console.log(msg);
             console.log("* Réception");
+            console.log(this.voisins.representation());
             // console.log("- du message brut : " + msg.brut());
             // console.log("- du message net : " + msg.representation());
             /* Message en transit */
@@ -315,9 +317,7 @@ export class Corps extends React.Component<{}, Etat> {
                 console.log("- message incohérent");
                 return;
             }
-            // TODO: Voir destinataire transit
-            const IDDestinataire = msg.corps.ID_destinataires.tableau[0];
-            if (IDDestinataire.val !== this.individuSujet.ID.val) {
+            if (msg.corps.ID_destinataire.val !== this.individuSujet.ID.val) {
                 console.log("- message incohérent");
                 return;
             }
@@ -339,61 +339,9 @@ export class Corps extends React.Component<{}, Etat> {
             });
             return;
         });
-        this.sse.addEventListener('AR', (e: MessageEvent) => {
-            let msg: FormatARTchat = e.data;
-            if (!this.voisins.contient(msg.ID_emetteur)) {
-                console.log("- message incohéent");
-                return;
-            }
-            this.mettreAJourMessageEnvoye(msg.ID_envoi)
-        });
-
 
         console.log("Le composant est monté.");
     }
-
-    //
-    // /* Message accusant réception */
-    // if (msg.val().type === TypeMessageTchat.AR) {
-    //     if (!this.individusObjets.contient(msg.val().ID_emetteur)) {
-    //         console.log("- message incohéent");
-    //         return;
-    //     }
-    //     if (msg.val().ID_emetteur.val !== this.individuSujet.ID.val) {
-    //         console.log("- message incohéent");
-    //         return;
-    //     }
-    //     msg.val().ID_destinataires.iterer((_, val) => {
-    //         let destinataire = this.individusObjets.valeur(val);
-    //         this.mettreAJourMessageEnvoye(msg.val().ID, destinataire);
-    //         return;
-    //     });
-    // }
-    //
-    //
-    // // TODO: REEMPLACER PAR MESSAGE D'INFORMATION
-    // if (msg.val().type === TypeMessageTchat.INFO) {
-    //     this.setState({nombreConnexions: msg.val().contenu})
-    //     return;
-    // }
-    //
-    // this.ajouterMessage({
-    //     ID: this.generateur.produire("message"),
-    //     emetteur: this.individu(msg.val().ID_emetteur),
-    //     destinataire: this.individu(msg.val().ID_destinataire),
-    //     cachet: dateEnveloppe(msg.val().date).representation(),
-    //     contenu: contenu,
-    //     accuses: []
-    // });
-
-    // this.sse.onerror = e => {
-    //     // error log here
-    //     console.log(e);
-    //     this.sse.close();
-    // }
-
-    // });
-
 
     componentWillUnmount() {
         this.sse.close()

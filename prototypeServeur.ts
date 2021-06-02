@@ -52,10 +52,10 @@ const traitementConnexion = (request: express.Request, response: express.Respons
     connexions.ajouter(nouvelleConnexion.valeur().ID,response);
 
     const formatNoeud: FormatNoeudTchat = {centre: sommetTchat(nouvelleConnexion.valeur().ID,nouvelleConnexion.valeur().priorite, nouvelleConnexion.valeur().actif, nouvelleConnexion.valeur().pseudo), voisins: sommets.toJSON()}
-    const config: FormatConfigurationTchat = {ID:generateurIdentifiantsMessages.produire("message"),corps:formatNoeud,date: dateMaintenant().etat(),type:'noeud'}
-
-    response.write('event: config\n');
-    response.write(`data: ${JSON.stringify(config)}\n\n`);
+    // const config: FormatConfigurationTchat = {ID:generateurIdentifiantsMessages.produire("message"),corps:formatNoeud,date: dateMaintenant().etat(),type:'noeud'}
+    //
+    // response.write('event: config\n');
+    // response.write(`data: ${JSON.stringify(config)}\n\n`);
 
 
     if (nouvelleConnexion != undefined){
@@ -66,13 +66,13 @@ const traitementConnexion = (request: express.Request, response: express.Respons
     }
 }
 
-serveurApplications.specifierTraitementRequeteGETLongue(
-    "listen",
-    "A1",
-    "",
-    traitementConnexion
-);
-
+// serveurApplications.specifierTraitementRequeteGETLongue(
+//     "listen",
+//     "A1",
+//     "",
+//     traitementConnexion
+// );
+//
 
 
 const traducctionSortiePost = ( sortie: DataType, canalSortie: express.Response) =>{
@@ -96,14 +96,14 @@ const traitementPOST= (message: DataType): DataType =>  {
     return message;
 };
 
-serveurApplications.specifierTraitementRequetePOST<unknown,unknown>(
-    "envoyer",
-    "A1",
-    "",
-    traitementPOST,
-    traducctionEntree,
-    traducctionSortiePost
-)
+// serveurApplications.specifierTraitementRequetePOST<unknown,unknown>(
+//     "envoyer",
+//     "A1",
+//     "",
+//     traitementPOST,
+//     traducctionEntree,
+//     traducctionSortiePost
+// )
 
 const repertoireHtml: string = "build";
 
