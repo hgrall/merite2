@@ -1,12 +1,27 @@
 import { ReseauMutable } from "../../bibliotheque/applications/reseau";
+import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { FormatSommetTchat } from "../../tchat/commun/echangesTchat";
 import { creerGenerateurReseauAnneau, creerGenerateurReseauEtoile } from "../../tchat/serveur/reseauTchat";
 import { testUnitaireJsonJson, testUnitaireStringString } from "../utilitaires";
 
+class ConnexionFictive implements CanalPersistantEcritureJSON {
+    constructor(public val : number){}
+    envoyerJSON<T>(etiquette: string, x: T): void {
+        console.log(etiquette + " : " + JSON.stringify(x));
+    }
+    toJSON() : number {
+        return this.val;
+    }
+}
+
+function cf(n : number) : ConnexionFictive {
+    return new ConnexionFictive(n);
+}
+
 describe('Réseau tchat étoile', () => {
-    let genR = creerGenerateurReseauEtoile<number>("code", 2, ["coco", "lulu", "zaza"]);
-    let r: ReseauMutable<FormatSommetTchat, number> = genR.engendrer();
-    const id1 = r.activerSommet(17);
+    let genR = creerGenerateurReseauEtoile<ConnexionFictive>("code", 2, ["coco", "lulu", "zaza"]);
+    let r: ReseauMutable<FormatSommetTchat, ConnexionFictive> = genR.engendrer();
+    const id1 = r.activerSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -29,7 +44,7 @@ describe('Réseau tchat étoile', () => {
         0,
         r.sommet(id1).priorite
     );
-    const id2 = r.activerSommet(19);
+    const id2 = r.activerSommet(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -42,7 +57,7 @@ describe('Réseau tchat étoile', () => {
         true,
         r.sontVoisins(id1, id2)
     );
-    const id3 = r.activerSommet(22);
+    const id3 = r.activerSommet(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
@@ -55,7 +70,7 @@ describe('Réseau tchat étoile', () => {
         true,
         r.sontVoisins(id1, id3)
     );    
-    const id4 = r.activerSommet(24);
+    const id4 = r.activerSommet(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -82,10 +97,10 @@ describe('Réseau tchat étoile', () => {
 });
 
 describe('Réseau tchat anneau', () => {
-    let genR = creerGenerateurReseauAnneau<number>("code", 2, ["coco", "lulu", "momo", "zaza"]);
-    let r: ReseauMutable<FormatSommetTchat, number> = genR.engendrer();
+    let genR = creerGenerateurReseauAnneau<ConnexionFictive>("code", 2, ["coco", "lulu", "momo", "zaza"]);
+    let r: ReseauMutable<FormatSommetTchat, ConnexionFictive> = genR.engendrer();
     
-    const id1 = r.activerSommet(17);
+    const id1 = r.activerSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -108,7 +123,7 @@ describe('Réseau tchat anneau', () => {
         0,
         r.sommet(id1).priorite
     );
-    const id2 = r.activerSommet(19);
+    const id2 = r.activerSommet(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -120,7 +135,7 @@ describe('Réseau tchat anneau', () => {
         true,
         r.sontVoisins(id1, id2)
     );
-    const id3 = r.activerSommet(22);
+    const id3 = r.activerSommet(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -132,7 +147,7 @@ describe('Réseau tchat anneau', () => {
         false,
         r.sontVoisins(id1, id3)
     );    
-    const id4 = r.activerSommet(24);
+    const id4 = r.activerSommet(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",

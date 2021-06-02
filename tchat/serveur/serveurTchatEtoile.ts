@@ -1,4 +1,5 @@
 import * as express from 'express';
+import { logger } from '../../bibliotheque/administration/log';
 import { ReseauMutable } from '../../bibliotheque/applications/reseau';
 import { ConnexionExpress, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
 
@@ -9,7 +10,7 @@ import { option, Option, rienOption } from '../../bibliotheque/types/option';
 import { tableau, Tableau } from '../../bibliotheque/types/tableau';
 import { FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat, FormatSommetTchat } from '../commun/echangesTchat';
 import { PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, ENVOI, RECEPTION } from '../commun/routes';
-import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
+import { avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseauEtoile } from './reseauTchat';
 
 const generateurIdentifiantsMessages:
@@ -36,13 +37,26 @@ const reseau: ReseauMutable<FormatSommetTchat, ConnexionLongueExpress> = creerGe
 * Service de réception d'un message (POST).
 */
 
+function estAccessible(ID_emetteur: Identifiant<'sommet'>, ID_destinataire: Identifiant<'sommet'>) {
+    if (!reseau.sontVoisins(ID_emetteur, ID_destinataire)) {
+        logger.error("Le message du client est incohérent : le destinataire n'est pas un voisin.")
+        return false;
+    }
+    if (!reseau.sommet(ID_destinataire).actif) {
+        logger.warn(`Le destinataire ${ID_destinataire.val} n'est plus connecté.`);
+        return false;
+    }
+    return true;
+}
+
 function traitementPOST(msg: FormatMessageEnvoiTchat)
     : [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>] {
-    const idsDest = tableau(msg.corps.ID_destinataires.tableau);
-    const ar = traductionEnvoiEnAR(msg, generateurIdentifiantsMessages.produire('message'));
+    const idsDestinatairesEffectifs =
+        tableau(msg.corps.ID_destinataires.tableau)
+            .filtre((id) => estAccessible(msg.corps.ID_emetteur, id));
+    const ar = traductionEnvoiEnAR(msg, idsDestinatairesEffectifs, generateurIdentifiantsMessages.produire('message'));
     const msgsTransit =
-        idsDest
-            .filtre((id) => reseau.sommet(id).actif)
+        idsDestinatairesEffectifs
             .application((id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id));
     return [ar, msgsTransit];
 }
@@ -50,11 +64,16 @@ function traitementPOST(msg: FormatMessageEnvoiTchat)
 function traductionEntreePost(canal: ConnexionExpress): Option<FormatMessageEnvoiTchat> {
     const msg: FormatMessageEnvoiTchat = canal.lire();
     if (("type" in msg) && msg.type === "envoi") {
+        // Le message reçu est supposé correct,
+        // en première approximation.
         return option(msg);
     }
-    canal.envoyerJSON({ erreur: "TODO mauvais format" });
+    const desc = "Le format JSON du message reçu n'est pas correct. Le type du message est 'envoi'.";
+    canal.envoyerJSON(erreurTchat(generateurIdentifiantsMessages.produire('message'), desc));
+    logger.error(desc);
     return rienOption<FormatMessageEnvoiTchat>();
 }
+
 function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canal: ConnexionExpress): void {
     canal.envoyerJSON(msgs[0]);
     msgs[1].iterer((i, msg) => {
@@ -77,9 +96,11 @@ serveurApplications.specifierTraitementRequetePOST<
 
 export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
     if (!reseau.aUnSommetInactif()) {
+        const desc = "Le connexion est impossible : tous les sommets sont actifs."
+        logger.warn(desc);
         canal.envoyerJSON(
-            'config',
-            { erreur: "TODO réseau complet" });
+            'avertissement',
+            avertissement(generateurIdentifiantsMessages.produire('message'), desc));
         return;
     }
     // Envoi de la configuration initiale 
@@ -87,21 +108,11 @@ export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
     const noeud = reseau.noeud(ID_sommet);
     canal.envoyerJSON('config', noeud);
     // Envoi de la nouvelle configuration aux voisins actifs
-    reseau.itererVoisins(ID_sommet, (i, id) => {
-        if (reseau.sommet(id).actif) {
-            const canalVoisin = reseau.connexion(id);
-            canalVoisin.envoyerJSON('config', reseau.noeud(id));
-        }
-    });
+    reseau.diffuserConfigurationAuxVoisins(ID_sommet);
     // Traitement de la fermeture de la déconnexion
     canal.enregistrerTraitementDeconnexion(() => {
         reseau.inactiverSommet(ID_sommet);
-        reseau.itererVoisins(ID_sommet, (i, id) => {
-            if (reseau.sommet(id).actif) {
-                const canal = reseau.connexion(id);
-                canal.envoyerJSON('config', reseau.noeud(id));
-            }
-        });
+        reseau.diffuserConfigurationAuxVoisins(ID_sommet);
     });
 }
 

@@ -1,19 +1,30 @@
 import * as express from 'express';
 import { logger } from '../administration/log';
 
-export interface Connexion<EConcret, SConcret> {
-    canalEntree(): EConcret;
-    canalSortie(): SConcret;
+export interface CanalLecture {
     lire<T>(): T;
+}
+
+export interface CanalEcritureJSON {
     envoyerJSON<T>(x: T): void;
 }
 
-export interface ConnexionLongue<EConcret, SConcret> {
-    canalEntree(): EConcret;
-    canalSortie(): SConcret;
-    envoyerJSON<T>(etiquette: string, x: T): void;
+export interface CanalPersistantEcritureJSON {
+    envoyerJSON<T>(etiquette : string, x: T): void;
+}
+
+export interface Deconnectable {
     enregistrerTraitementDeconnexion(traiter: () => void): void;
 }
+
+export interface ConnexionConcrete<EConcret, SConcret> {
+    canalEntree(): EConcret;
+    canalSortie(): SConcret;
+}
+
+export interface Connexion<EConcret, SConcret> extends ConnexionConcrete<EConcret, SConcret>, CanalLecture, CanalEcritureJSON {}
+
+export interface ConnexionLongue<EConcret, SConcret> extends ConnexionConcrete<EConcret, SConcret>, CanalPersistantEcritureJSON, Deconnectable {}
 
 export type ConnexionExpress = Connexion<express.Request, express.Response>;
 
@@ -57,15 +68,15 @@ class ConnexionLongueParExpress implements ConnexionLongueExpress {
     }
     enregistrerTraitementDeconnexion(traiter: () => void): void {
         logger.info("Le serveur enregistre le traitement lors d'une déconnexion pour une requête GET persistante en " + this.requete.url + ".");
-        this.requete.on('close', traiter); 
+        this.requete.on('close', traiter);
     }
 
 }
 
-export function connexionExpress(requete: express.Request, reponse: express.Response) : ConnexionExpress {
+export function connexionExpress(requete: express.Request, reponse: express.Response): ConnexionExpress {
     return new ConnexionParExpress(requete, reponse);
 }
 
-export function connexionLongueExpress(requete: express.Request, reponse: express.Response) : ConnexionLongueExpress {
+export function connexionLongueExpress(requete: express.Request, reponse: express.Response): ConnexionLongueExpress {
     return new ConnexionLongueParExpress(requete, reponse);
 }

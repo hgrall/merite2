@@ -117,3 +117,40 @@ export interface FormatTransitTchat {
  * - date : la date lors de l'émission.
 */
 export type FormatMessageTransitTchat = FormatMessage<'transit', FormatTransitTchat>;
+
+/**
+ * Corps d'un message d'erreur pour le tchat. L'erreur a pour origine
+ * le client. 
+ * Structure :
+ * - erreur : la description de l'erreur.
+ */
+export interface FormatErreurTchat {
+    readonly erreur: string;
+}
+
+/** 
+ * Message au format JSON contenant une erreur.
+ * - ID : identifiant
+ * - type : 'erreur',
+ * - corps : l'erreur,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageErreurTchat = FormatMessage<'erreur', FormatErreurTchat>;
+
+/**
+ * Corps d'un message d'avertissement pour le tchat. Un avertissement * impose un comportement au client.
+ * Structure :
+ * - avertissement : la description de l'avertissement.
+ */
+export interface FormatAvertissementTchat {
+    readonly avertissement : string;
+}
+
+/** 
+ * Message au format JSON contenant un avertissement pour le client.
+ * - ID : identifiant
+ * - type : 'avertissement',
+ * - corps : l'avertissement,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageAvertissementTchat = FormatMessage<'avertissement', FormatAvertissementTchat>;

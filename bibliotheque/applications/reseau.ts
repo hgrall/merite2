@@ -11,6 +11,7 @@ import { dateMaintenant } from "../types/date";
 import { FileMutableAPriorite, FormatFileAPriorite } from "../types/fileAPriorite";
 import { Activable, jamais, Prioritarisable } from "../types/typesAtomiques";
 import { noeud, Noeud } from "./noeud";
+import { CanalPersistantEcritureJSON } from "../communication/connexion";
 
 /**
  * Etat d'un réseau composé
@@ -23,7 +24,7 @@ import { noeud, Noeud } from "./noeud";
  */
 export interface EtatReseau<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
-    C> {
+    C extends CanalPersistantEcritureJSON> {
     readonly sommets: TableIdentificationMutable<'sommet', FS>;
     readonly fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>;
     readonly adjacence: TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>;
@@ -42,8 +43,7 @@ export interface EtatReseau<
  * @param FS format JSON des sommets
  */
 export interface FormatReseau<
-    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
-    C> {
+    FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable> {
     readonly sommets: FormatTableIdentification<'sommet', FS>;
     readonly fileInactifs: FormatFileAPriorite<Identifiant<'sommet'>>;
     readonly adjacence: FormatTableIdentification<'sommet', FormatTableau<Identifiant<'sommet'>>>;
@@ -65,8 +65,8 @@ export type EtiquetteReseau = 'sommets' | 'fileInactifs' | 'voisins';
  */
 export interface ReseauMutable<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
-    C> extends TypeEnveloppe<EtatReseau<FS, C>,
-    FormatReseau<FS, C>, EtiquetteReseau> {
+    C extends CanalPersistantEcritureJSON> extends TypeEnveloppe<EtatReseau<FS, C>,
+    FormatReseau<FS>, EtiquetteReseau> {
     /**
      * Détermine si le  réseau possède le sommet identifié par l'argument.
      * @param ID_sommet identité du sommet.
@@ -148,7 +148,13 @@ export interface ReseauMutable<
      * @returns noeud de centre le sommet identifié
      */
     noeud(ID_sommet: Identifiant<'sommet'>) : Noeud<FS>;
-    
+    /**
+     * Diffuse la configuration formée de la représentation JSON 
+     * du noeud. 
+     * @param ID_sommet sommet au centre du noeud 
+     */
+    diffuserConfigurationAuxVoisins(ID_sommet : Identifiant<'sommet'>) : void; 
+
     /**
      * Itère sur tous les sommets actifs en leur appliquant une fonction.
      * @param f function a appliquer a chaque association (identifant, sommet actif).
@@ -164,9 +170,9 @@ export interface ReseauMutable<
 
 class ReseauMutableParEnveloppe<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
-    C>
+    C extends CanalPersistantEcritureJSON>
     extends Enveloppe<EtatReseau<FS, C>,
-    FormatReseau<FS, C>, EtiquetteReseau>
+    FormatReseau<FS>, EtiquetteReseau>
     implements ReseauMutable<FS, C>
 {
 
@@ -185,7 +191,7 @@ class ReseauMutableParEnveloppe<
         });
     }
 
-    toJSON(): FormatReseau<FS, C> {
+    toJSON(): FormatReseau<FS> {
         return {
             sommets: this.etat().sommets.toJSON(),
             fileInactifs: this.etat().fileInactifs.toJSON(),
@@ -269,6 +275,15 @@ class ReseauMutableParEnveloppe<
         );
     }
 
+    diffuserConfigurationAuxVoisins(ID_sommet : Identifiant<'sommet'>) : void {
+        this.itererVoisins(ID_sommet, (i, id) => {
+            if (this.sommet(id).actif) {
+                const canalVoisin = this.connexion(id);
+                canalVoisin.envoyerJSON('config', this.noeud(id));
+            }
+        });
+    }
+
     itererSommets(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void {
         this.etat().sommets.iterer(f);
     }
@@ -296,7 +311,7 @@ class ReseauMutableParEnveloppe<
 
 export function creerReseauMutable<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
-    C>
+    C extends CanalPersistantEcritureJSON>
     (
         sommets: TableIdentificationMutable<'sommet', FS>,
         fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
@@ -312,6 +327,6 @@ export function creerReseauMutable<
  */
 export interface GenerateurReseau<
     FS extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable,
-    C> {
+    C extends CanalPersistantEcritureJSON> {
     engendrer(): ReseauMutable<FS, C>;
 }

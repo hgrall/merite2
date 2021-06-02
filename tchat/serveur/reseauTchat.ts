@@ -1,4 +1,5 @@
 import { creerReseauMutable, ReseauMutable, GenerateurReseau } from "../../bibliotheque/applications/reseau";
+import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { creerFileAPriorite, FileMutableAPriorite } from "../../bibliotheque/types/fileAPriorite";
 import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
 import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/types/tableau";
@@ -8,7 +9,7 @@ import { modificationActivite } from "./echangesServeurTchat";
 
 
 
-class GenerateurReseauAnneau<C> implements GenerateurReseau<FormatSommetTchat, C>{
+class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatSommetTchat, C>{
 
     private generateurIdentifiants: GenerateurIdentifiants<'sommet'>;
 
@@ -46,8 +47,8 @@ class GenerateurReseauAnneau<C> implements GenerateurReseau<FormatSommetTchat, C
             // adjacence
             for (let j = 0; j < tailleTchat; j++) {
                 const voisins: TableauMutable<Identifiant<'sommet'>> = creerTableauMutableVide();
-                voisins.ajouterEnFin(sommetsTchat.valeur(( j + tailleTchat - 1)%tailleTchat));
-                voisins.ajouterEnFin(sommetsTchat.valeur(( j + 1)%tailleTchat));
+                voisins.ajouterEnFin(sommetsTchat.valeur((j + tailleTchat - 1) % tailleTchat));
+                voisins.ajouterEnFin(sommetsTchat.valeur((j + 1) % tailleTchat));
                 adjacence.ajouter(sommetsTchat.valeur(j), voisins);
             }
 
@@ -57,14 +58,14 @@ class GenerateurReseauAnneau<C> implements GenerateurReseau<FormatSommetTchat, C
     }
 }
 
-export function creerGenerateurReseauAnneau<C>(
+export function creerGenerateurReseauAnneau<C extends CanalPersistantEcritureJSON>(
     code: string,
     nombreTchats: number,
     noms: ReadonlyArray<string>): GenerateurReseau<FormatSommetTchat, C> {
     return new GenerateurReseauAnneau<C>(code, nombreTchats, noms);
 }
 
-class GenerateurReseauEtoile<C> implements GenerateurReseau<FormatSommetTchat, C>{
+class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatSommetTchat, C>{
 
     private generateurIdentifiants: GenerateurIdentifiants<'sommet'>;
 
@@ -116,7 +117,7 @@ class GenerateurReseauEtoile<C> implements GenerateurReseau<FormatSommetTchat, C
     }
 }
 
-export function creerGenerateurReseauEtoile<C>(
+export function creerGenerateurReseauEtoile<C extends CanalPersistantEcritureJSON>(
     code: string,
     nombreTchats: number,
     noms: ReadonlyArray<string>): GenerateurReseau<FormatSommetTchat, C> {
