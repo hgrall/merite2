@@ -97,15 +97,16 @@ class ModuleTableauEnJSON {
      * 
      * @param tab tableau
      * @param propriete prédicat 
-     * @returns renvoie true si le tableau contient un élément vérifiant la propriété, false sinon 
+     * @returns une option contenant l'indice et l'élément vérifiant la propriété, rien sinon.
      */
-    contient<T>(tab : FormatTableau<T>, propriete : (e : T) => boolean) : boolean {
+    selection<T>(tab : FormatTableau<T>, propriete : (e : T) => boolean) : Option<[number, T]> {
         for(let i = 0; i < tab.taille; i++){
-            if(propriete(tab.tableau[i])){
-                return true;
+            const r = tab.tableau[i];
+            if(propriete(r)){
+                return option([i, r ]);
             }
         }
-        return false;
+        return rienOption();
     }
     /**
      * Itère sur les associations du tableau.
@@ -330,10 +331,21 @@ export interface Tableau<T> extends
      */
     estVide(): boolean;
     /**
-     * Teste si la valeur appartient au tableau.
-     * @param valeur valeur à rechercher dans le tableau
+     * Teste si la valeur appartient au tableau. Cette méthode
+     * utilise une comparaison fondée sur l'égalité ===. 
+     * Pour des objets, les références doivent être égales.
+     * @param valeur valeur à rechercher dans le tableau.
+     * @returns true s'il existe un élément e tel que e === val, false sinon.
      */
     contient(val: T): boolean;
+    /**
+     * Sélectionne un élément du tableau vérifiant une propriété,
+     * s'il en existe.
+     * @param prop prédicat.
+     * @returns une option contenant l'indice et l'élément vérifiant la propriété, vide sinon.
+     */
+    selection(prop : (x : T) => boolean): Option<[number, T]>;
+
 }
 
 /**
@@ -448,11 +460,23 @@ class TableauParEnveloppe<T>
         return this.taille() === 0;
     }
     /**
-     * Teste si la valeur appartient au tableau.
+     * Teste si la valeur appartient au tableau. Cette méthode
+     * utilise une comparaison fondée sur l'égalité ===. 
+     * Pour des objets, les références doivent être égales.
      * @param valeur valeur à rechercher dans le tableau
      */
     contient(val: T): boolean{
-        return MODULE_TABLEAU_JSON.contient(this.etat(), (x: T) => x === val);
+        return MODULE_TABLEAU_JSON.selection(this.etat(), (x: T) => x === val).estPresent();
+    }
+
+    /**
+     * Sélectionne un élément du tableau vérifiant une propriété,
+     * s'il en existe.
+     * @param prop prédicat.
+     * @returns une option contenant l'indice et l'élément vérifiant la propriété, vide sinon.
+     */
+    selection(prop : (x : T) => boolean): Option<[number, T]> {
+        return MODULE_TABLEAU_JSON.selection(this.etat(), prop);
     }
 }
 
@@ -594,13 +618,26 @@ class TableauMutableParEnveloppe<T>
     estVide(): boolean {
         return this.taille() === 0;
     }
-    /**
-     * Teste si la valeur appartient au tableau.
+/**
+     * Teste si la valeur appartient au tableau. Cette méthode
+     * utilise une comparaison fondée sur l'égalité ===. 
+     * Pour des objets, les références doivent être égales.
      * @param valeur valeur à rechercher dans le tableau
      */
     contient(val: T): boolean{
-        return MODULE_TABLEAU_JSON.contient(this.etat(), (x: T) => x === val);
+        return MODULE_TABLEAU_JSON.selection(this.etat(), (x: T) => x === val).estPresent();
     }
+
+    /**
+     * Sélectionne un élément du tableau vérifiant une propriété,
+     * s'il en existe.
+     * @param prop prédicat.
+     * @returns une option contenant l'indice et l'élément vérifiant la propriété, vide sinon.
+     */
+    selection(prop : (x : T) => boolean): Option<[number, T]> {
+        return MODULE_TABLEAU_JSON.selection(this.etat(), prop);
+    }
+
     /**
      * Délègue à la méthode ajouterEnFin du module.
      */

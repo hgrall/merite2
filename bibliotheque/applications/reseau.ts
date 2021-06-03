@@ -1,5 +1,5 @@
 import { Enveloppe, TypeEnveloppe } from "../types/enveloppe";
-import { FormatIdentifiable, Identifiant } from "../types/identifiant";
+import { FormatIdentifiable, Identifiant, sontIdentifiantsEgaux } from "../types/identifiant";
 import { FormatTableau, Tableau } from "../types/tableau";
 import {
     creerTableIdentificationMutableVide,
@@ -196,7 +196,7 @@ class ReseauMutableParEnveloppe<
     }
 
     sontVoisins(ID_sommet1: Identifiant<"sommet">, ID_sommet2: Identifiant<"sommet">): boolean {
-        return this.etat().adjacence.valeur(ID_sommet1).contient(ID_sommet2);
+        return this.etat().adjacence.valeur(ID_sommet1).selection((id) => sontIdentifiantsEgaux(id, ID_sommet2)).estPresent();
     }
 
     sommet(ID_sommet: Identifiant<"sommet">): FS {
