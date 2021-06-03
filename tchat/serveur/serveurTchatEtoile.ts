@@ -96,7 +96,7 @@ serveurApplications.specifierTraitementRequetePOST<
 
 export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
     if (!reseau.aUnSommetInactif()) {
-        const desc = "Le connexion est impossible : tous les sommets sont actifs."
+        const desc = "La connexion est impossible : tous les sommets sont actifs."
         logger.warn(desc);
         canal.envoyerJSON(
             'avertissement',
@@ -109,7 +109,7 @@ export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
     canal.envoyerJSON('config', noeud);
     // Envoi de la nouvelle configuration aux voisins actifs
     reseau.diffuserConfigurationAuxVoisins(ID_sommet);
-    // Traitement de la fermeture de la déconnexion
+    // Enregistrement du traitement lors de la déconnexion
     canal.enregistrerTraitementDeconnexion(() => {
         reseau.inactiverSommet(ID_sommet);
         reseau.diffuserConfigurationAuxVoisins(ID_sommet);

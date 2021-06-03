@@ -7,7 +7,6 @@ import {
     TableIdentification,
     TableIdentificationMutable
 } from "../types/tableIdentification";
-import { dateMaintenant } from "../types/date";
 import { FileMutableAPriorite, FormatFileAPriorite } from "../types/fileAPriorite";
 import { Activable, jamais, Prioritarisable } from "../types/typesAtomiques";
 import { noeud, Noeud } from "./noeud";
@@ -136,13 +135,6 @@ export interface ReseauMutable<
     nombreActifs(): number;
 
     /**
-     * Itère sur les voisins du sommet identifié par l'argument en leur appliquant une fonction.
-     * @param ID_sommet identifiant du sommet s
-     * @param f function à appliquer a chaque association (indice, sommet voisin).
-     */
-    itererVoisins(ID_sommet: Identifiant<'sommet'>, f: (i: number, ID_sommet: Identifiant<'sommet'>) => void): void;
-
-    /**
      * Noeud de cente le sommet identifié par l'argument.
      * @param identifant du sommet
      * @returns noeud de centre le sommet identifié
@@ -255,11 +247,6 @@ class ReseauMutableParEnveloppe<
         return this.etat().sommets.taille() - this.nombreInactifs();
     }
 
-    itererVoisins(ID_sommet: Identifiant<"sommet">, f: (i: number, ID_sommet: Identifiant<"sommet">) => void): void {
-        this.etat().adjacence.valeur(ID_sommet).iterer(f);
-
-    }
-
     /**
      * Noeud de cente le sommet identifié par l'argument.
      * @param identifant du sommet
@@ -267,7 +254,7 @@ class ReseauMutableParEnveloppe<
      */
     noeud(ID_sommet: Identifiant<'sommet'>) : Noeud<FS> {
         const tableVoisins : TableIdentificationMutable<'sommet', FS> = creerTableIdentificationMutableVide('sommet');
-        this.itererVoisins(ID_sommet, (i, id) => tableVoisins.ajouter(id, this.etat().sommets.valeur(id)));
+        this.voisins(ID_sommet).iterer((i, id) => tableVoisins.ajouter(id, this.etat().sommets.valeur(id)));
         return noeud({
             centre : this.etat().sommets.valeur(ID_sommet),
             voisins : tableVoisins.toJSON()
@@ -276,7 +263,7 @@ class ReseauMutableParEnveloppe<
     }
 
     diffuserConfigurationAuxVoisins(ID_sommet : Identifiant<'sommet'>) : void {
-        this.itererVoisins(ID_sommet, (i, id) => {
+        this.voisins(ID_sommet).iterer((i, id) => {
             if (this.sommet(id).actif) {
                 const canalVoisin = this.connexion(id);
                 canalVoisin.envoyerJSON('config', this.noeud(id));
