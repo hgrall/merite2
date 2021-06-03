@@ -1,5 +1,6 @@
 import { ReseauMutable } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
+import { identifiant } from "../../bibliotheque/types/identifiant";
 import { FormatSommetTchat } from "../../tchat/commun/echangesTchat";
 import { creerGenerateurReseauAnneau, creerGenerateurReseauEtoile } from "../../tchat/serveur/reseauTchat";
 import { testUnitaireJsonJson, testUnitaireStringString } from "../utilitaires";
@@ -55,7 +56,7 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "voisinage",
         true,
-        r.sontVoisins(id1, id2)
+        r.sontVoisins(id1, identifiant("sommet", id2.val))
     );
     const id3 = r.activerSommet(cf(22));
     n = r.noeud(id3);
@@ -68,7 +69,7 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "voisinage",
         true,
-        r.sontVoisins(id1, id3)
+        r.sontVoisins(id1, identifiant("sommet", id3.val))
     );    
     const id4 = r.activerSommet(cf(24));
     n = r.noeud(id4);
@@ -80,7 +81,7 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "voisinage",
         false,
-        r.sontVoisins(id1, id4)
+        r.sontVoisins(id1, identifiant("sommet", id4.val))
     );    
     testUnitaireJsonJson(
         "connexion",
@@ -133,7 +134,7 @@ describe('Réseau tchat anneau', () => {
     testUnitaireJsonJson(
         "voisinage",
         true,
-        r.sontVoisins(id1, id2)
+        r.sontVoisins(id1, identifiant("sommet", id2.val))
     );
     const id3 = r.activerSommet(cf(22));
     n = r.noeud(id3);
@@ -145,7 +146,7 @@ describe('Réseau tchat anneau', () => {
     testUnitaireJsonJson(
         "voisinage",
         false,
-        r.sontVoisins(id1, id3)
+        r.sontVoisins(id1, identifiant("sommet", id3.val))
     );    
     const id4 = r.activerSommet(cf(24));
     n = r.noeud(id4);
@@ -157,7 +158,7 @@ describe('Réseau tchat anneau', () => {
     testUnitaireJsonJson(
         "voisinage",
         true,
-        r.sontVoisins(id1, id4)
+        r.sontVoisins(id1, identifiant("sommet", id4.val))
     );    
     testUnitaireJsonJson(
         "connexion",
