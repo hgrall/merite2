@@ -4,12 +4,15 @@
 - Application à servir : `html/appliTchatEtoile.html` à l'adresse `localhost:8080/tchat/code/etoile`
 - Réseau de 3 tchats avec coco, lulu et zaza.
 - POST en `/tchat/code/etoile/envoi`.
-    - erreur notifiée au client si le format JSON du message reçu n'est pas correct.
-    - erreur si un des destinataires n'est pas un voisin.
+    - erreur 400 notifiée au client si le format JSON du message reçu n'est pas correct.
+    - erreur 400 notifiée au client si un des destinataires n'est pas un voisin.
     - avertissement si un des destinataires n'est plus connecté.
-    - filtrage des destinataires, des voisins actifs.
+    - filtrage des destinataires, qui doivent être des voisins actifs.
     - transformation du message envoyé par le client en un accusé de réception et un tableau de messages en transit.
     - envoi de l'accusé de réception et des messages en transit.
+    - Côté client :
+      - lorsqu'il reçoit un accusé de réception, il peut comparer la liste originale des destinataires à celle contenue dans l'accusé,
+      - lorsqu'il reçoit un message en transit, il l'affiche.
 - GET persistant en `/tchat/code/etoile/reception`
     - avertissement notifié au client lorsque la connexion est impossible, tous les sommets étant actifs.
     - activation d'un sommet et envoi de la configuration initiale.

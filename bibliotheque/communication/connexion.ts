@@ -6,6 +6,7 @@ export interface CanalLecture {
 }
 
 export interface CanalEcritureJSON {
+    envoyerJSONCodeErreur<T>(codeErreur : number, x: T): void;
     envoyerJSON<T>(x: T): void;
 }
 
@@ -33,6 +34,7 @@ class ConnexionParExpress implements ConnexionExpress {
         private requete: express.Request,
         private reponse: express.Response
     ) { }
+    
     canalEntree(): express.Request {
         return this.requete;
     }
@@ -41,6 +43,9 @@ class ConnexionParExpress implements ConnexionExpress {
     }
     lire<T>(): T {
         return <T>this.requete.body;
+    }
+    envoyerJSONCodeErreur<T>(codeErreur: number, x: T): void {
+        this.reponse.status(codeErreur).json(x);
     }
     envoyerJSON<T>(x: T): void {
         this.reponse.json(x);

@@ -37,28 +37,29 @@ const reseau: ReseauMutable<FormatSommetTchat, ConnexionLongueExpress> = creerGe
 * Service de réception d'un message (POST).
 */
 
-function estAccessible(ID_emetteur: Identifiant<'sommet'>, ID_destinataire: Identifiant<'sommet'>) {
-    if (!reseau.sontVoisins(ID_emetteur, ID_destinataire)) {
-        logger.error("Le message du client est incohérent : le destinataire n'est pas un voisin.")
-        return false;
-    }
-    if (!reseau.sommet(ID_destinataire).actif) {
-        logger.warn(`Le destinataire ${ID_destinataire.val} n'est plus connecté.`);
-        return false;
-    }
-    return true;
+interface ReponseEnvoi {
+    accuseReception: FormatMessageARTchat;
+    messagesEnTransit: Tableau<FormatMessageTransitTchat>;
+    destinationsIncoherentes: number;
+    destinationsDeconnectees: number;
 }
 
 function traitementPOST(msg: FormatMessageEnvoiTchat)
-    : [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>] {
+    : ReponseEnvoi {
+    const idsDestinataires = tableau(msg.corps.ID_destinataires.tableau);
+    const idsDestinatairesVoisins =
+        idsDestinataires
+            .filtre((id) => reseau.sontVoisins(msg.corps.ID_emetteur, id));
     const idsDestinatairesEffectifs =
-        tableau(msg.corps.ID_destinataires.tableau)
-            .filtre((id) => estAccessible(msg.corps.ID_emetteur, id));
-    const ar = traductionEnvoiEnAR(msg, idsDestinatairesEffectifs, generateurIdentifiantsMessages.produire('message'));
-    const msgsTransit =
-        idsDestinatairesEffectifs
-            .application((id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id));
-    return [ar, msgsTransit];
+        idsDestinatairesVoisins
+            .filtre((id) => reseau.sommet(id).actif);
+    return {
+        accuseReception: traductionEnvoiEnAR(msg,       idsDestinatairesEffectifs, generateurIdentifiantsMessages.produire('message')),
+        messagesEnTransit: idsDestinatairesEffectifs
+            .application((id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id)),
+        destinationsIncoherentes: idsDestinataires.taille() - idsDestinatairesVoisins.taille(),
+        destinationsDeconnectees: idsDestinatairesVoisins.taille() - idsDestinatairesEffectifs.taille()
+    };
 }
 
 function traductionEntreePost(canal: ConnexionExpress): Option<FormatMessageEnvoiTchat> {
@@ -68,15 +69,24 @@ function traductionEntreePost(canal: ConnexionExpress): Option<FormatMessageEnvo
         // en première approximation.
         return option(msg);
     }
-    const desc = "Le format JSON du message reçu n'est pas correct. Le type du message est 'envoi'.";
-    canal.envoyerJSON(erreurTchat(generateurIdentifiantsMessages.produire('message'), desc));
+    const desc = "Le format JSON du message reçu n'est pas correct. Le type du message doit être 'envoi'. Erreur HTTP 400 : Bad Request.";
+    canal.envoyerJSONCodeErreur(400, erreurTchat(generateurIdentifiantsMessages.produire('message'), desc));
     logger.error(desc);
     return rienOption<FormatMessageEnvoiTchat>();
 }
 
-function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>], canal: ConnexionExpress): void {
-    canal.envoyerJSON(msgs[0]);
-    msgs[1].iterer((i, msg) => {
+function traduireSortiePOST(reponseEnvoi: ReponseEnvoi, canal: ConnexionExpress): void {
+    if(reponseEnvoi.destinationsIncoherentes > 0){
+        const desc = `Le message ${reponseEnvoi.accuseReception.corps.ID_envoi} du client est incohérent : des destinataires (${reponseEnvoi.destinationsIncoherentes}) ne sont pas voisins. Erreur HTTP 400 : Bad Request.`;
+        logger.error(desc);
+        canal.envoyerJSONCodeErreur(400, erreurTchat(generateurIdentifiantsMessages.produire('message'), desc) );
+        return;
+    }
+    if(reponseEnvoi.destinationsDeconnectees > 0){
+        logger.warn(`Le message ${reponseEnvoi.accuseReception.corps.ID_envoi} du client est adressé à des destinataires actuellement déconnectés. Total de déconnectés : ${reponseEnvoi.destinationsDeconnectees}.`);
+    }
+    canal.envoyerJSON(reponseEnvoi.accuseReception);
+    reponseEnvoi.messagesEnTransit.iterer((i, msg) => {
         const canalDest = reseau.connexion(msg.corps.ID_destinataire);
         canalDest.envoyerJSON('transit', msg);
     });
@@ -84,7 +94,7 @@ function traduireSortiePOST(msgs: [FormatMessageARTchat, Tableau<FormatMessageTr
 
 serveurApplications.specifierTraitementRequetePOST<
     FormatMessageEnvoiTchat,
-    [FormatMessageARTchat, Tableau<FormatMessageTransitTchat>]
+    ReponseEnvoi
 >(
     PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, ENVOI),
     traitementPOST, traductionEntreePost, traduireSortiePOST
