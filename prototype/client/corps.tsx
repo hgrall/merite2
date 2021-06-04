@@ -1,8 +1,8 @@
 import * as React from "react";
-import {Individu, Message} from "./Helpers/typesInterface";
+import {Individu, Message, ToutIndividu} from "./Helpers/typesInterface";
 import {
     creerTableIdentificationMutableVide, FormatTableIdentification,
-    tableIdentification,TableIdentificationMutable
+    tableIdentification, TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
     Couleur,
@@ -16,17 +16,22 @@ import {
     Identifiant
 } from "../../bibliotheque/types/identifiant";
 import {dateEnveloppe, dateMaintenant} from "../../bibliotheque/types/date";
-import {envoyerMessageEnvoi} from "../communication/communicationServeur";
+import {creerFluxDeEvenements, requetePost} from "../communication/communicationServeur";
 import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
-import {creerTableauMutableParCopie, creerTableauMutableVide} from "../../bibliotheque/types/tableau";
-import { Noeud, noeud} from "../../bibliotheque/applications/noeud";
+import {tableau} from "../../bibliotheque/types/tableau";
+import {Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
-    FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat,
+    FormatMessageARTchat,
+    FormatMessageAvertissementTchat,
+    FormatMessageEnvoiTchat,
+    FormatMessageErreurTchat,
+    FormatMessageTransitTchat,
     FormatSommetTchat
 } from "../../tchat/commun/echangesTchat";
+import {AxiosError, AxiosResponse} from "axios";
 
 
 enum EtatInterfaceTchat {
@@ -35,20 +40,18 @@ enum EtatInterfaceTchat {
     ERRONE
 }
 
-const ID_TOUS: string = "TOUS";
 const ID_INCONNU: string = "?";
 
 interface Etat {
-    selection: Individu;
+    selection: Individu | ToutIndividu
     messages: Message[];
     etatInterface: EtatInterfaceTchat;
     nombreConnexions: number;
     afficherAlerte: boolean;
     messageAlerte: string;
-    code: string;
-    config: unknown;
     voisins: TableIdentificationMutable<"sommet", Individu>;
     nombreTotalConnexions: number;
+    toutIndividu: ToutIndividu;
 }
 
 export class Corps extends React.Component<{}, Etat> {
@@ -56,50 +59,43 @@ export class Corps extends React.Component<{}, Etat> {
     private messageErreur: string;
 
     private individuSujet: Individu;
-    private toutIndividu: Individu;
     private individuInconnu: Individu;
 
-    private sse: EventSource;
+    private fluxDeEvenements: EventSource;
 
     constructor(props: {}) {
         super(props);
-
-        this.sse = new EventSource(`http://localhost:8080/tchat/code/etoile/reception`,
-            {withCredentials: false});
-
-        this.messageErreur = "Aucune erreur";
-
-        this.toutIndividu = {
-            ID: identifiant('sommet', ID_TOUS),
-            nom: "tous",
-            fond: COUPLE_FOND_ENCRE_TOUS.fond,
-            encre: COUPLE_FOND_ENCRE_TOUS.encre
-        };
-
+        this.fluxDeEvenements = creerFluxDeEvenements(`http://localhost:8080/tchat/code/etoile/reception`);
         this.individuInconnu = {
             ID: identifiant('sommet', ID_INCONNU),
             nom: "inconnu",
             fond: COUPLE_FOND_ENCRE_INCONNU.fond,
-            encre: COUPLE_FOND_ENCRE_INCONNU.encre
+            encre: COUPLE_FOND_ENCRE_INCONNU.encre,
+            inactif: false
         };
 
         this.state = {
-            selection: this.toutIndividu,
+            toutIndividu: {
+                IDVoisins: tableau([]),
+                nom: "tous",
+                fond: COUPLE_FOND_ENCRE_TOUS.fond,
+                encre: COUPLE_FOND_ENCRE_TOUS.encre,
+                inactif: false
+            },
+            selection: this.individuInconnu,
             messages: [],
             etatInterface: EtatInterfaceTchat.INITIAL,
             nombreConnexions: 0,
             afficherAlerte: false,
-            messageAlerte: "",
-            code: "",
-            config: {},
+            messageAlerte: "Connexion au serveur pour l'initialisation",
             voisins: creerTableIdentificationMutableVide<"sommet", Individu>("sommet"),
-            nombreTotalConnexions: 0
+            nombreTotalConnexions: 0,
         }
-
         this.envoyerMessage = this.envoyerMessage.bind(this);
         this.modifierSelection = this.modifierSelection.bind(this);
         this.masquerAlerte = this.masquerAlerte.bind(this);
         this.remplirVoisins = this.remplirVoisins.bind(this);
+        this.mettreAJourAccuses = this.mettreAJourAccuses.bind(this);
     }
 
     masquerAlerte() {
@@ -123,10 +119,10 @@ export class Corps extends React.Component<{}, Etat> {
         });
         if (messageAMettreAJour != undefined) {
             const nouveauAccuses: Couleur[] = [];
-            if( messageAMettreAJour.destinataire.ID.val == ID_TOUS){
-                this.state.voisins.iterer((_, voisin) => {
-                    nouveauAccuses.push(voisin.fond)
-                })
+            if ("IDVoisins" in messageAMettreAJour.destinataire) {
+                messageAMettreAJour.destinataire.IDVoisins.iterer((_, idSommet) => {
+                    nouveauAccuses.push(this.state.voisins.valeur(idSommet).fond);
+                });
             } else {
                 nouveauAccuses.push(messageAMettreAJour.destinataire.fond);
             }
@@ -151,36 +147,33 @@ export class Corps extends React.Component<{}, Etat> {
 
 
     envoyerMessage(m: Message) {
-        // if (this.state.nombreConnexions < this.state.nombreTotalConnexions) {
-        //     this.setState({
-        //         afficherAlerte: true,
-        //         messageAlerte: "Le nombre de connexions est insuffisant, il faut que la salle soit complète pour pouvoir envoyer le message."
-        //     })
-        // } else {
-
-            let destinataires = creerTableauMutableVide<Identifiant<"sommet">>();
-            if ( m.destinataire.ID.val === ID_TOUS) {
-                // Rempli un tableau de destinataires avec tous les voisins du sommet
-                this.state.voisins.iterer((ID_sorte) => {
-                    destinataires.ajouterEnFin(ID_sorte);
-                })
-            } else {
-                destinataires = creerTableauMutableParCopie([m.destinataire.ID]);
+        let destinataires = tableau<Identifiant<"sommet">>([]);
+        if ("ID" in m.destinataire) {
+            destinataires = tableau([m.destinataire.ID]);
+        } else if ("IDVoisins" in m.destinataire) {
+            destinataires = m.destinataire.IDVoisins;
+        }
+        let msg: FormatMessageEnvoiTchat = {
+            ID: m.ID,
+            type: 'envoi',
+            date: dateMaintenant().toJSON(),
+            corps: {ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON()}
+        };
+        this.ajouterMessage(m);
+        const traitementEnvoiMessage = (reponse: AxiosResponse) => {
+            const msgAR: FormatMessageARTchat = reponse.data;
+            this.mettreAJourAccuses(msgAR);
+        };
+        const traitementErreur = (raison: AxiosError) => {
+            if (raison.response?.status == 400) {
+                const erreur: FormatMessageErreurTchat = raison.response.data;
+                console.log(`Erreur: ${erreur.corps.erreur}`);
+            } else if (raison.response?.status == 500) {
+                this.messageErreur = raison.response?.data
+                this.setState({etatInterface: EtatInterfaceTchat.ERRONE});
             }
-            let msg: FormatMessageEnvoiTchat = {
-                ID: m.ID,
-                type: 'envoi',
-                date: dateMaintenant().toJSON(),
-                corps: {ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON()}
-            };
-            envoyerMessageEnvoi(msg).then(response => {
-                const msg: FormatMessageARTchat = response.data;
-                this.mettreAJourAccuses(msg);
-            }).catch(reason => {
-                // TODO: AFFICHER ALERTE
-            });
-            this.ajouterMessage(m);
-       // }
+        }
+        requetePost<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
     remplirIndividuSujet(noeudSujet: Noeud<FormatSommetTchat>) {
@@ -188,7 +181,8 @@ export class Corps extends React.Component<{}, Etat> {
             ID: noeudSujet.etat().centre.ID,
             nom: noeudSujet.etat().centre.pseudo,
             fond: COUPLE_FOND_ENCRE_SUJET.fond,
-            encre: COUPLE_FOND_ENCRE_SUJET.encre
+            encre: COUPLE_FOND_ENCRE_SUJET.encre,
+            inactif: true
         };
     }
 
@@ -196,13 +190,31 @@ export class Corps extends React.Component<{}, Etat> {
         const voisins = tableIdentification<"sommet", FormatSommetTchat>("sommet", voisinsSujet);
         const nouveauxVoisins = creerTableIdentificationMutableVide<"sommet", Individu>("sommet");
         const suite = new SuiteCouplesFondEncre();
+        const identifiantsVoisins: Identifiant<"sommet">[] = [];
         voisins.iterer((ID_sorte, voisin) => {
+            const c = suite.courant();
+            nouveauxVoisins.ajouter(ID_sorte, {
+                ID: ID_sorte,
+                nom: voisin.pseudo,
+                encre: c.encre,
+                fond: c.fond,
+                inactif: !voisin.actif
+            })
             if(voisin.actif){
-                const c = suite.courant();
-                nouveauxVoisins.ajouter(ID_sorte, {ID: ID_sorte, nom: voisin.pseudo, encre: c.encre, fond: c.fond})
+                identifiantsVoisins.push(ID_sorte);
             }
-        })
-        this.setState({voisins: nouveauxVoisins})
+        });
+        this.setState({
+            voisins: nouveauxVoisins,
+            toutIndividu: {
+                IDVoisins: tableau(identifiantsVoisins),
+                nom: "tous",
+                fond: COUPLE_FOND_ENCRE_TOUS.fond,
+                encre: COUPLE_FOND_ENCRE_TOUS.encre,
+                inactif: identifiantsVoisins.length < 1
+            },
+            selection: this.state.toutIndividu
+        });
     }
 
     componentDidMount(): void {
@@ -210,49 +222,29 @@ export class Corps extends React.Component<{}, Etat> {
             etatInterface: EtatInterfaceTchat.INITIAL
         });
         const self = this;
-        this.sse.addEventListener('config', (e: MessageEvent) => {
+        this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
             const noeudSujet = noeud<FormatSommetTchat>(JSON.parse(e.data));
             this.remplirIndividuSujet(noeudSujet);
             this.remplirVoisins(noeudSujet.etat().voisins.etat());
 
-            self.setState({nombreConnexions: noeudSujet.nombreConnexionsActives()+1});
-            self.setState({ etatInterface: EtatInterfaceTchat.NORMAL});
-            self.setState({nombreTotalConnexions: noeudSujet.etat().voisins.taille()+1})
-        }, false);
+            self.setState({
+                nombreConnexions: noeudSujet.nombreConnexionsActives() + 1,
+                etatInterface: EtatInterfaceTchat.NORMAL,
+                nombreTotalConnexions: noeudSujet.etat().voisins.taille() + 1
+            });
+        });
 
-        this.sse.addEventListener('erreur', (e: MessageEvent) => {
-            //TODO: HANDLE ERRORS IN CORRECT FORMAT
-            // this.messageErreur = erreur.representation();
-            // // TODO: VERIFIER TYPE ERREUR
-            // let codeErreur = erreur.val().erreurRedhibitoire;
-            // if (codeErreur == 0) {
-            //     let typeReseau = "anneau";
-            //     if ((document.URL).includes("etoile")) {
-            //         typeReseau = "etoile";
-            //     }
-            //     const nombreReseauIndex = (document.URL).indexOf(typeReseau) + 6
-            //     const nombreNouvelReseau = (Number(document.URL[nombreReseauIndex]) + 1)
-            //     if (nombreNouvelReseau < 5) {
-            //         const url = document.URL.replace(typeReseau + document.URL[nombreReseauIndex], typeReseau + nombreNouvelReseau)
-            //         window.location.href = url
-            //     } else {
-            //         this.setState({
-            //             etatInterface: EtatInterfaceTchat.ERRONE,
-            //         });
-            //     }
-            // } else {
-            //     this.setState({
-            //         etatInterface: EtatInterfaceTchat.ERRONE,
-            //     });
-            // }
-        }, false);
+        this.fluxDeEvenements.addEventListener('avertissement', (e: MessageEvent) => {
+            const avertissement: FormatMessageAvertissementTchat = JSON.parse(e.data);
+            console.log(`Avertissement: ${avertissement.corps.avertissement}`)
+            this.setState({
+                messageAlerte: avertissement.corps.avertissement,
+                afficherAlerte: true
+            })
+        });
 
-        this.sse.addEventListener('transit', (e: MessageEvent) => {
-            //TODO: implementer message par enveloppe
+        this.fluxDeEvenements.addEventListener('transit', (e: MessageEvent) => {
             let msg: FormatMessageTransitTchat = JSON.parse(e.data);
-            console.log(msg);
-            console.log("* Réception");
-
             if (!this.state.voisins.contient(msg.corps.ID_emetteur)) {
                 console.log("- message incohérent");
                 return;
@@ -276,7 +268,7 @@ export class Corps extends React.Component<{}, Etat> {
     }
 
     componentWillUnmount() {
-        this.sse.close()
+        this.fluxDeEvenements.close()
     }
 
     render() {
@@ -288,7 +280,7 @@ export class Corps extends React.Component<{}, Etat> {
                             <StyledCol sm={12} md={3}>
                                 <PanneauAdmin sujet={this.individuSujet}
                                               objets={this.state.voisins.image()}
-                                              tous={this.toutIndividu}
+                                              tous={this.state.toutIndividu}
                                               selection={this.state.selection}
                                               modifSelection={this.modifierSelection}
                                               nombreConnexions={this.state.nombreConnexions}
@@ -307,7 +299,7 @@ export class Corps extends React.Component<{}, Etat> {
                 );
             case EtatInterfaceTchat.INITIAL:
                 return (
-                    <h1>Connexion au serveur pour l'initialisation</h1>
+                    <h1>{this.state.messageAlerte}</h1>
                 );
             case EtatInterfaceTchat.ERRONE:
                 return (

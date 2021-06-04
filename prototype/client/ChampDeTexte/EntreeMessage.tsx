@@ -7,7 +7,7 @@ import {
 import {Role} from "../../../shared/InterlocuteurMessage";
 import {DateFr, dateMaintenant} from "../../../bibliotheque/types/date";
 import styled from "styled-components";
-import {Individu, Message} from "../Helpers/typesInterface";
+import {Individu, Message, ToutIndividu} from "../Helpers/typesInterface";
 import { ButtonEnvoi } from "../../../shared/ButtonEnvoi"
 import FormControl from "react-bootstrap/FormControl"
 import  InputGroup from "react-bootstrap/InputGroup";
@@ -20,7 +20,7 @@ interface ProprietesEntreeMessage {
     // see https://github.com/Microsoft/TypeScript/issues/8588
     className?: string;
     sujet: Individu;
-    destinataire: Individu;
+    destinataire: Individu|ToutIndividu;
     envoiMessage: (m: Message, d: DateFr) => void;
 }
 
@@ -76,6 +76,7 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
                                    }, d);
                                    this.reinitialiserEntree();
                                }}
+                               inactif={this.props.destinataire.inactif}
                            />
                         </InputGroup.Append>
                 </StyledInputGroup>

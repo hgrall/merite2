@@ -1,19 +1,21 @@
-import axios from 'axios';
-import {FormatMessageEnvoiTchat} from "../../tchat/commun/echangesTchat";
-import stringify = Mocha.utils.stringify;
+import axios, {AxiosResponse} from 'axios';
 
-export const envoyerMessageEnvoi = async (
-    data: FormatMessageEnvoiTchat
+export const requetePost = <S> (
+    data: S,
+    traitement: (response: AxiosResponse) => void,
+    traitementErreur: (raison: unknown) => void,
+    url: string
 ) => {
-    //TODO: Set url by using constants
-    const url = `http://localhost:8080/tchat/code/etoile/envoi`;
-    console.log(url);
-    console.log(data);
-    return axios
-        .post(url, data, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        )
+    axios
+        .post(url, data)
+        .then(response => {
+            traitement(response)
+        })
+        .catch(raison => {
+            traitementErreur(raison)
+        })
 };
+
+export function creerFluxDeEvenements(url: string): EventSource {
+    return new EventSource(url, {withCredentials: false});
+}

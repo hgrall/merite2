@@ -12,11 +12,14 @@ export const TexteInformation = styled.p`
 
 export const TexteXLarge = styled.div`
     flex: initial;
-    background: ${CADRE};
-    color: ${TEXTE_INV};
+    color: ${CADRE};
     text-align: center;
-    padding: 1ex;
-    font-size: x-large;
+    padding-top:20vh;
+    padding-right: 1ex;
+    padding-left: 1ex;
+    font-size: xx-large;
+    height: 100vh;
+    horiz-align: center;
 `;
 
 export const TexteNormal = styled.div`

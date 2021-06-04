@@ -11,13 +11,17 @@ interface ProprietesEnvoi {
     encre: Couleur;
     nom: string;
     onClick: () => void;
+    inactif: boolean;
 }
 
 class ButtonEnvoiBrut extends React.Component<ProprietesEnvoi> {
     render() {
         return (
             <Button className={this.props.className}
-                    onClick={this.props.onClick}>
+                    onClick={this.props.onClick}
+                    disabled={this.props.inactif}
+
+            >
                 {"A : " + this.props.nom}
             </Button>
         );
@@ -44,5 +48,10 @@ export const ButtonEnvoi = styled(ButtonEnvoiBrut)`
   :focus {
     background-color: ${(props: ProprietesInterlocuteur) => props.fond};
     border-color:${(props: ProprietesInterlocuteur) => props.fond};
+  }
+  
+  :disabled {
+    border: 1px solid #999999;
+    background-color: #cccccc;
   }
 `;

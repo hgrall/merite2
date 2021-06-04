@@ -1,6 +1,6 @@
 import * as React from "react";
 import {DateFr} from "../../../bibliotheque/types/date"
-import {Individu, Message} from "../Helpers/typesInterface";
+import {Individu, Message, ToutIndividu} from "../Helpers/typesInterface";
 import {ContainerMessageEmis, ContainerMessageReçu} from "../Message/Message";
 import {EntreeMessage} from '../ChampDeTexte/EntreeMessage'
 import Alert from "react-bootstrap/Alert";
@@ -12,7 +12,7 @@ interface ProprietesPanneauMessages {
     className?: string;
     sujet: Individu;
     messages: Message[];
-    selection: Individu;
+    selection: Individu|ToutIndividu;
     envoiMessage: (m: Message, d: DateFr) => void;
     afficherAlerte: boolean;
     messageAlerte: string
