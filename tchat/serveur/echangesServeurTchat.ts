@@ -1,6 +1,6 @@
 import { dateMaintenant } from "../../bibliotheque/types/date";
 import { Identifiant } from "../../bibliotheque/types/identifiant";
-import { Tableau, tableau } from "../../bibliotheque/types/tableau";
+import { Tableau } from "../../bibliotheque/types/tableau";
 import { FormatMessageARTchat, FormatMessageAvertissementTchat, FormatMessageEnvoiTchat, FormatMessageErreurTchat, FormatMessageTransitTchat, FormatSommetTchat } from "../commun/echangesTchat";
 
 export function traductionEnvoiEnAR(e : FormatMessageEnvoiTchat, 

@@ -7,6 +7,7 @@ console.log("* Début des tests");
 import "./bibliotheque/binaire_test";
 import "./bibliotheque/date_test";
 import "./bibliotheque/enveloppe_test";
+import "./bibliotheque/ensembleIdentifiants_test";
 import "./bibliotheque/identification_test";
 import "./bibliotheque/liste_test";
 import "./bibliotheque/file_test";

@@ -1,4 +1,4 @@
-import { TableauMutable, creerTableauMutableVide, tableau, Tableau } from "../../bibliotheque/types/tableau";
+import { TableauMutable, creerTableauMutableVide, tableauDeNatif, Tableau } from "../../bibliotheque/types/tableau";
 import { testUnitaireJsonJson } from '../utilitaires';
 import { creerTypeNonSerialisable, TypeNonSerialisable, TypeSerialisable } from './exemplesTypes';
 
@@ -180,13 +180,13 @@ describe('TableauMutable avec type non sérialisable', () => {
 
 describe('Tableau de Tableau', () => {
     let tab1: Tableau<number> 
-    = tableau([1, 2, 3]);
+    = tableauDeNatif([1, 2, 3]);
     let tab2: Tableau<number> 
-    = tableau([4, 5, 6, 7]);
+    = tableauDeNatif([4, 5, 6, 7]);
     let tab3: Tableau<number> 
-    = tableau([8, 9]);
+    = tableauDeNatif([8, 9]);
     let tab: Tableau<Tableau<number>> =
-    tableau([tab1, tab2, tab3]);
+    tableauDeNatif([tab1, tab2, tab3]);
     testUnitaireJsonJson(
         "taille 3",
         3,
@@ -212,11 +212,11 @@ describe('Tableau de Tableau', () => {
 
 describe('Tableau de nombres', () => {
     let tab: Tableau<number> 
-    = tableau([1, 2, 3, 4, 5, 6]);
+    = tableauDeNatif([1, 2, 3, 4, 5, 6]);
     testUnitaireJsonJson(
         "filtre parité",
-        [2, 4, 6],
-        tab.filtre((x) => (x%2 === 0)).toJSON().tableau
+        {taille : 3, tableau : [2, 4, 6]},
+        tab.crible((i, x) => (x%2 === 0)).toJSON()
     );
     testUnitaireJsonJson(
         "réduction",
@@ -226,6 +226,6 @@ describe('Tableau de nombres', () => {
     testUnitaireJsonJson(
         "application",
         [2, 3, 4, 5, 6, 7],
-        tab.application((x) => x + 1).toJSON().tableau
+        tab.application((i, x) => x + 1).toJSON().tableau
     );
 });

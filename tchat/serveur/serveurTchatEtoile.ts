@@ -46,17 +46,17 @@ interface ReponseEnvoi {
 
 function traitementPOST(msg: FormatMessageEnvoiTchat)
     : ReponseEnvoi {
-    const idsDestinataires = tableau(msg.corps.ID_destinataires.tableau);
+    const idsDestinataires = tableau(msg.corps.ID_destinataires);
     const idsDestinatairesVoisins =
         idsDestinataires
-            .filtre((id) => reseau.sontVoisins(msg.corps.ID_emetteur, id));
+            .crible((i, id) => reseau.sontVoisins(msg.corps.ID_emetteur, id));
     const idsDestinatairesEffectifs =
         idsDestinatairesVoisins
-            .filtre((id) => reseau.sommet(id).actif);
+            .crible((i, id) => reseau.sommet(id).actif);
     return {
         accuseReception: traductionEnvoiEnAR(msg,       idsDestinatairesEffectifs, generateurIdentifiantsMessages.produire('message')),
         messagesEnTransit: idsDestinatairesEffectifs
-            .application((id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id)),
+            .application((i, id) => traductionEnvoiEnTransit(msg, generateurIdentifiantsMessages.produire('message'), id)),
         destinationsIncoherentes: idsDestinataires.taille() - idsDestinatairesVoisins.taille(),
         destinationsDeconnectees: idsDestinatairesVoisins.taille() - idsDestinatairesEffectifs.taille()
     };

@@ -1,5 +1,6 @@
 import { creerReseauMutable, ReseauMutable, GenerateurReseau } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
+import { creerEnsembleMutableIdentifiantsVide, EnsembleIdentifiants, EnsembleMutableIdentifiants } from "../../bibliotheque/types/ensembleIdentifiants";
 import { creerFileAPriorite, FileMutableAPriorite } from "../../bibliotheque/types/fileAPriorite";
 import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
 import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/types/tableau";
@@ -26,7 +27,7 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
         const fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>> = creerFileAPriorite();
 
         const adjacence:
-            TableIdentificationMutable<'sommet', TableauMutable<Identifiant<'sommet'>>> = creerTableIdentificationMutableVide('sommet');
+            TableIdentificationMutable<'sommet', EnsembleIdentifiants<'sommet'>> = creerTableIdentificationMutableVide('sommet');
 
         for (let i = 0; i < this.nombreTchats; i++) {
             // Un tchat (une composante connexe du graphe)
@@ -46,9 +47,9 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
             }
             // adjacence
             for (let j = 0; j < tailleTchat; j++) {
-                const voisins: TableauMutable<Identifiant<'sommet'>> = creerTableauMutableVide();
-                voisins.ajouterEnFin(sommetsTchat.valeur((j + tailleTchat - 1) % tailleTchat));
-                voisins.ajouterEnFin(sommetsTchat.valeur((j + 1) % tailleTchat));
+                const voisins: EnsembleMutableIdentifiants<'sommet'> = creerEnsembleMutableIdentifiantsVide('sommet');
+                voisins.ajouter(sommetsTchat.valeur((j + tailleTchat - 1) % tailleTchat));
+                voisins.ajouter(sommetsTchat.valeur((j + 1) % tailleTchat));
                 adjacence.ajouter(sommetsTchat.valeur(j), voisins);
             }
 
@@ -82,7 +83,8 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
         const fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>> = creerFileAPriorite();
 
         const adjacence:
-            TableIdentificationMutable<'sommet', TableauMutable<Identifiant<'sommet'>>> = creerTableIdentificationMutableVide('sommet');
+            TableIdentificationMutable<'sommet', 
+            EnsembleMutableIdentifiants<'sommet'>> =  creerTableIdentificationMutableVide('sommet');
 
         for (let i = 0; i < this.nombreTchats; i++) {
             // Un tchat (une composante connexe du graphe)
@@ -102,10 +104,10 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
             }
             // adjacence
             for (let j = 0; j < tailleTchat; j++) {
-                const voisins: TableauMutable<Identifiant<'sommet'>> = creerTableauMutableVide();
+                const voisins: EnsembleMutableIdentifiants<'sommet'> = creerEnsembleMutableIdentifiantsVide('sommet');
                 for (let k = 0; k < tailleTchat; k++) {
                     if (j !== k) {
-                        voisins.ajouterEnFin(sommetsTchat.valeur(k));
+                        voisins.ajouter(sommetsTchat.valeur(k));
                     }
                 }
                 adjacence.ajouter(sommetsTchat.valeur(j), voisins);

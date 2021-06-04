@@ -2,7 +2,7 @@
 - mots binaires formés de ZERO (valant 0) et UN (valant 1).
 */
 
-import { Tableau, FormatTableau, EtiquetteTableau, tableau } from './tableau';
+import { Tableau, FormatTableau, EtiquetteTableau, tableauDeNatif } from './tableau';
 import { Deux } from './typesAtomiques';
 import { entierAleatoire } from './nombres';
 import { Enveloppe, TypeEnveloppe } from './enveloppe';
@@ -54,12 +54,7 @@ export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteTableau>
  * - Tableau de {ZERO, UN}.
  */
 class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> implements Mot {
-  net(etiquette: EtiquetteTableau): string {
-    throw new Error('Method not implemented.');
-  }
-  toJSON(): FormatMot {
-    return this.etat().toJSON();
-  }
+  
   /**
    * Constructeur à partir d'un état.
    *
@@ -68,6 +63,14 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
   constructor(etat: EtatMot) {
     super(etat);
   }
+
+  net(etiquette: EtiquetteTableau): string {
+      return this.etat().net(etiquette);
+  }
+  toJSON(): FormatMot {
+    return this.etat().toJSON();
+  }
+  
   taille(): number {
     return this.etat().taille();
   }
@@ -87,7 +90,7 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
    * et un point pour séparateur.
    */
   base2Litteral(): string {
-    return this.etat().application(v => Deux[v])
+    return this.etat().application((i, v) => Deux[v])
       .reduction('', (x, y) => x + '.' + y)
       .slice(1);
   }
@@ -96,7 +99,7 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
    * @return la représentation binaire utilisant 0 et 1, sans séparateur.
    */
   base2(): string {
-    return this.etat().application(v => v.toString())
+    return this.etat().application((i, v) => v.toString())
       .reduction('', (x, y) => x + y);
   }
   /**
@@ -128,7 +131,7 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
  * @returns un mot binaire formé à partir du tableau mot.
  */
 export function mot(tab2: ReadonlyArray<Deux>): Mot {
-  return new MotParTableau(tableau(tab2));
+  return new MotParTableau(tableauDeNatif(tab2));
 }
 
 /**

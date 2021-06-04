@@ -11,6 +11,7 @@ import { FileMutableAPriorite, FormatFileAPriorite } from "../types/fileAPriorit
 import { Activable, jamais, Prioritarisable } from "../types/typesAtomiques";
 import { noeud, Noeud } from "./noeud";
 import { CanalPersistantEcritureJSON } from "../communication/connexion";
+import { EnsembleIdentifiants } from "../types/ensembleIdentifiants";
 
 /**
  * Etat d'un réseau composé
@@ -26,7 +27,7 @@ export interface EtatReseau<
     C extends CanalPersistantEcritureJSON> {
     readonly sommets: TableIdentificationMutable<'sommet', FS>;
     readonly fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>;
-    readonly adjacence: TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>;
+    readonly adjacence: TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>;
     readonly connexions: TableIdentificationMutable<'sommet', C>;
 }
 
@@ -149,14 +150,14 @@ export interface ReseauMutable<
 
     /**
      * Itère sur tous les sommets actifs en leur appliquant une fonction.
-     * @param f function a appliquer a chaque association (identifant, sommet actif).
+     * @param f procédure à appliquer a chaque association (identifant, sommet actif).
      */
     itererSommets(f: (ID_sommet: Identifiant<"sommet">, s: FS) => void): void;
 
     /**
      * Voisins du sommet identifié par l'argument.
      */
-    voisins(ID_sommet: Identifiant<'sommet'>): Tableau<Identifiant<'sommet'>>;
+    voisins(ID_sommet: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'>;
 
 }
 
@@ -172,7 +173,7 @@ class ReseauMutableParEnveloppe<
         sommets: TableIdentificationMutable<'sommet', FS>,
         fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
         adjacence:
-            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>,
+            TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>,
         private modificationActivite : (s : FS) => FS
     ) {
         super({
@@ -187,7 +188,8 @@ class ReseauMutableParEnveloppe<
         return {
             sommets: this.etat().sommets.toJSON(),
             fileInactifs: this.etat().fileInactifs.toJSON(),
-            adjacence: this.etat().adjacence.application((x) => x.toJSON()).toJSON()
+            adjacence: this.etat()
+            .adjacence.application((id, x) => x.toJSON()).toJSON()
         };
     }
 
@@ -196,7 +198,7 @@ class ReseauMutableParEnveloppe<
     }
 
     sontVoisins(ID_sommet1: Identifiant<"sommet">, ID_sommet2: Identifiant<"sommet">): boolean {
-        return this.etat().adjacence.valeur(ID_sommet1).selection((id) => sontIdentifiantsEgaux(id, ID_sommet2)).estPresent();
+        return this.etat().adjacence.valeur(ID_sommet1).contient(ID_sommet2);
     }
 
     sommet(ID_sommet: Identifiant<"sommet">): FS {
@@ -208,11 +210,11 @@ class ReseauMutableParEnveloppe<
     }
 
     aUnSommetActif(): boolean {
-        return this.etat().sommets.selectionCleSuivantCritere((s) => s.actif).estPresent();
+        return this.etat().sommets.selectionAssociationSuivantCritere((id, s) => s.actif).estPresent();
     }
 
     aUnSommetInactif(): boolean {
-        return this.etat().sommets.selectionCleSuivantCritere((s) => !(s.actif)).estPresent();
+        return this.etat().sommets.selectionAssociationSuivantCritere((id, s) => !(s.actif)).estPresent();
     }
 
     activerSommet(connexion: C): Identifiant<"sommet"> {
@@ -254,7 +256,7 @@ class ReseauMutableParEnveloppe<
      */
     noeud(ID_sommet: Identifiant<'sommet'>) : Noeud<FS> {
         const tableVoisins : TableIdentificationMutable<'sommet', FS> = creerTableIdentificationMutableVide('sommet');
-        this.voisins(ID_sommet).iterer((i, id) => tableVoisins.ajouter(id, this.etat().sommets.valeur(id)));
+        this.voisins(ID_sommet).iterer((id) => tableVoisins.ajouter(id, this.etat().sommets.valeur(id)));
         return noeud({
             centre : this.etat().sommets.valeur(ID_sommet),
             voisins : tableVoisins.toJSON()
@@ -263,7 +265,7 @@ class ReseauMutableParEnveloppe<
     }
 
     diffuserConfigurationAuxVoisins(ID_sommet : Identifiant<'sommet'>) : void {
-        this.voisins(ID_sommet).iterer((i, id) => {
+        this.voisins(ID_sommet).iterer((id) => {
             if (this.sommet(id).actif) {
                 const canalVoisin = this.connexion(id);
                 canalVoisin.envoyerJSON('config', this.noeud(id));
@@ -275,7 +277,7 @@ class ReseauMutableParEnveloppe<
         this.etat().sommets.iterer(f);
     }
 
-    voisins(ID_sommet: Identifiant<"sommet">): Tableau<Identifiant<"sommet">> {
+    voisins(ID_sommet: Identifiant<"sommet">): EnsembleIdentifiants<'sommet'> {
         return this.etat().adjacence.valeur(ID_sommet);
     }
 
@@ -303,7 +305,7 @@ export function creerReseauMutable<
         sommets: TableIdentificationMutable<'sommet', FS>,
         fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>>,
         adjacence:
-            TableIdentification<'sommet', Tableau<Identifiant<'sommet'>>>,
+            TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>,
         modificationActivite : (s : FS) => FS
     ): ReseauMutable<FS, C> {
     return new ReseauMutableParEnveloppe(sommets, fileInactifs, adjacence, modificationActivite);

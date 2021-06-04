@@ -31,7 +31,7 @@ export interface EtatNoeud<S extends FormatIdentifiable<'sommet'> & Prioritarisa
 function etatNoeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>(n: FormatNoeud<S>): EtatNoeud<S> {
     return {
         centre: n.centre,
-        voisins: tableIdentification<'sommet', S>('sommet', n.voisins)
+        voisins: tableIdentification<'sommet', S>(n.voisins)
     };
 }
 
