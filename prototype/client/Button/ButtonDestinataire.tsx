@@ -11,12 +11,12 @@ interface ProprietesObjetAdmin {
     onClick: () => void;
     fond: Couleur;
     nom: string;
-    active: boolean;
+    inactif: boolean;
 }
 
 class ButtonDestinataireBrut extends React.Component<ProprietesObjetAdmin, {}> {
     render() {
-        return <button className={this.props.className} onClick={this.props.onClick} disabled={this.props.active}>
+        return <button className={this.props.className} onClick={this.props.onClick} disabled={this.props.inactif}>
             <PastilleAdmin fond={this.props.fond}/>
             <Pseudo>{this.props.nom}</Pseudo>
         </button>;

@@ -80,7 +80,7 @@ export class Corps extends React.Component<{}, Etat> {
                 nom: "tous",
                 fond: COUPLE_FOND_ENCRE_TOUS.fond,
                 encre: COUPLE_FOND_ENCRE_TOUS.encre,
-                inactif: false
+                inactif: true
             },
             selection: this.individuInconnu,
             messages: [],
@@ -204,16 +204,17 @@ export class Corps extends React.Component<{}, Etat> {
                 identifiantsVoisins.push(ID_sorte);
             }
         });
+        const nouveauToutIndividu = {
+            IDVoisins: tableau(identifiantsVoisins),
+            nom: "tous",
+            fond: COUPLE_FOND_ENCRE_TOUS.fond,
+            encre: COUPLE_FOND_ENCRE_TOUS.encre,
+            inactif: identifiantsVoisins.length < 1
+        }
         this.setState({
             voisins: nouveauxVoisins,
-            toutIndividu: {
-                IDVoisins: tableau(identifiantsVoisins),
-                nom: "tous",
-                fond: COUPLE_FOND_ENCRE_TOUS.fond,
-                encre: COUPLE_FOND_ENCRE_TOUS.encre,
-                inactif: identifiantsVoisins.length < 1
-            },
-            selection: this.state.toutIndividu
+            toutIndividu: nouveauToutIndividu,
+            selection: nouveauToutIndividu
         });
     }
 

@@ -51,7 +51,7 @@ export const ButtonEnvoi = styled(ButtonEnvoiBrut)`
   }
   
   :disabled {
-    border: 1px solid #999999;
+    border: 3px solid #999999;
     background-color: #cccccc;
   }
 `;

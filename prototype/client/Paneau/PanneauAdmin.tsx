@@ -23,7 +23,6 @@ interface ProprietesAdmin {
 
 export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
     render() {
-        console.log(this.props.objets)
         return (
             <PanneauAdminDiv>
                 <SujetAdminContainer>
@@ -38,7 +37,7 @@ export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
                                         onClick={() => this.props.modifSelection(i)}
                                         fond={i.fond}
                                         nom={i.nom}
-                                        active={i.inactif}
+                                        inactif={i.inactif}
                     />
                 )}
                 <TexteInformation> Ou tous les destinataires :</TexteInformation>
@@ -46,7 +45,7 @@ export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
                                     onClick={() => this.props.modifSelection(this.props.tous)}
                                     fond={this.props.tous.fond}
                                     nom={this.props.tous.nom}
-                                    active={this.props.tous.inactif}
+                                    inactif={this.props.tous.inactif}
                 />
                 <TexteInformation> Nombre de
                     connexions: {this.props.nombreConnexions}/{this.props.nombreTotalConnexions} </TexteInformation>
