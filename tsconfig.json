@@ -18,6 +18,9 @@
         "jsx": "react"
     },
     "exclude": [
-        "./node_modules", "prototype", "brouillon"
+        "./node_modules",
+        "prototype",
+        "brouillon",
+        "obsolete"
     ]
 }

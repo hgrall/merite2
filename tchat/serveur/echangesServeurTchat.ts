@@ -1,10 +1,10 @@
 import { dateMaintenant } from "../../bibliotheque/types/date";
 import { Identifiant } from "../../bibliotheque/types/identifiant";
 import { Tableau } from "../../bibliotheque/types/tableau";
-import { FormatMessageARTchat, FormatMessageAvertissementTchat, FormatMessageEnvoiTchat, FormatMessageErreurTchat, FormatMessageTransitTchat, FormatSommetTchat } from "../commun/echangesTchat";
+import { FormatMessageARTchat, FormatMessageAvertissementTchat, FormatMessageEnvoiTchat, FormatMessageErreurTchat, FormatMessageTransitTchat, FormatUtilisateurTchat } from "../commun/echangesTchat";
 
 export function traductionEnvoiEnAR(e : FormatMessageEnvoiTchat, 
-    idsDestinatairesEffectifs : Tableau<Identifiant<"sommet">>, ID_msg : Identifiant<'message'>) : FormatMessageARTchat {
+    idsDestinatairesEffectifs : Tableau<Identifiant<'sommet'>>, ID_msg : Identifiant<'message'>) : FormatMessageARTchat {
     return {
         ID: ID_msg,
         type: 'AR',
@@ -16,10 +16,9 @@ export function traductionEnvoiEnAR(e : FormatMessageEnvoiTchat,
     };
 }
 
-export function modificationActivite(s: FormatSommetTchat): FormatSommetTchat {
+export function modificationActivite(s: FormatUtilisateurTchat): FormatUtilisateurTchat {
     return {
         ID: s.ID,
-        priorite: s.priorite,
         actif: !(s.actif),
         pseudo: s.pseudo
     };

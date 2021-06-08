@@ -1,125 +1,64 @@
+import { Map, Set, Record } from 'immutable';
 import { Enveloppe, TypeEnveloppe } from './enveloppe';
-import { FormatTableMutable, FormatTable, MODULE_TABLE, EtiquetteTable } from './table';
-import { EnsembleSortes, Identifiant, identifiant } from './identifiant';
+import { fabriqueIdentifiant, Identifiant, identifiant } from './identifiant';
 import { jamais } from './typesAtomiques';
 import { option, Option, rienOption } from './option';
-import { FormatTableau } from './tableau';
+import { SorteIdentifiant } from '../applications/sortes';
 
 /**
- * Format pour les tables d'identification mutables. 
+ * Format pour les tables d'identification. 
  * Structure :
- * - identification
- *   - taille : taille de la table
- *   - table : type indexé associant à la valeur d'un identifiant
- * (une chaîne) une valeur dans T
- * - sorte : sorte des identifiants (une chaîne)
- * @param Sorte type singleton représentant la sorte des identifiants 
- * @param T le type contenu dans la table
+ * - sorte commune des identifiants
+ * - identification : une table associant à la valeur 
+ *    d'un identifiant un élément de T.
+ * @param Sorte type singleton définissant la sorte.
+ * @param T le type contenu dans la table.
 */
-export interface FormatTableIdentificationMutable<Sorte extends EnsembleSortes, T> {
-    identification: FormatTableMutable<T>,
-    readonly sorte: Sorte
+export interface FormatTableIdentification<Sorte extends SorteIdentifiant, T> {
+    readonly sorte: Sorte;
+    readonly identification: { [cle: string]: T };
 }
+
 /**
- * Fabrique une table d'identification au bon format à partir des données.
-* Précondition : les clés de la table doivent être des valeurs d'identifiants de la sorte passée en argument.
- * @param Sorte type singleton représentant la sorte des identifiants 
- * @param T le type contenu dans la table
- * @param t une table mutable de T au format
- * @param s la sorte des identifiants
+ * Etiquettes utilisées pour la représentation des tables
+ *  d'identification.
  */
-/* TODO
-export function creerTableIdentificationMutableAuFormat<Sorte extends EnsembleSortes, T>(
-    t: FormatTableMutable<T>, s: Sorte):
-    FormatTableIdentificationMutable<Sorte, T> {
-    return {
-        "identification": t,
-        "sorte": s
-    };
-}*//*
+export type EtiquetteTableIdentification = 'sorte' | 'taille' | 'graphe' | 'domaine' | 'image';
 
 /**
- * Format pour les tables d'identifications immutables. 
- * Structure :
- * - identification
- *   - taille : taille de la table
- *   - table : type indexé associant à la valeur d'un identifiant
- * (une chaîne) une valeur dans T
- * - sorte : sorte des identifiants (une chaîne)
- * @param Sorte type singleton représentant la sorte des identifiants 
- * @param T le type contenu dans la table
-*/
-
-export interface FormatTableIdentification<Sorte extends EnsembleSortes, T> {
-    readonly identification: FormatTable<T>,
-    readonly sorte: Sorte
-}
-
-
-/**
- * Fabrique d'une table d'identification au bon format à partir d'une table en JSON.
- * Précondition : les clés de la table doivent être des valeurs d'identifiants de la sorte passée en argument.
- * @param Sorte type singleton représentant la sorte des identifiants 
- * @param T le type contenu dans la table
- * @param t une table mutable de T au format
- * @param s la sorte des identifiants
- */
-/*TODO
-export function tableIdentificationAuFormat<
-    Sorte extends EnsembleSortes, T>(
-    t: FormatTable<T>, s: Sorte):
-    FormatTableIdentification<Sorte, T> {
-    return {
-        "identification": t,
-        "sorte": s
-    };
-}
-*/
-
-/**
- * Conversion fonctorielle d'une table d'identification mutable
- * en une table d'identification.
- * @param Sorte type singleton représentant la sorte des identifiants 
- * @param S le type contenu dans la table de départ
- * @param T le type contenu dans la table d'arrivée
- * @param conv fonction de conversion des éléments de S vers T.
- * @returns fonction de conversion transformant une table d'identification mutable en une nouvelle table d'identification après composition avec conv.
- */
-export function conversionFormatTableIdentification<
-    Sorte extends EnsembleSortes, S, T
->(conv: (x: S) => T, s: Sorte)
-    : (t: FormatTableIdentification<Sorte, S>)
-        => FormatTableIdentification<Sorte, T> {
-    return (
-        (t: FormatTableIdentificationMutable<Sorte, S>) => {
-            return {
-                identification:
-                    MODULE_TABLE.applicationFonctorielle(t.identification, (id, v) => conv(v)),
-                sorte: s
-            };
-        });
-}
-
-/**
- * Table d'identification générique immutable dérivée 
- * de TypeEnveloppe, utilisant le format FormatTableIdentification. 
- * Le type de l'état est générique, permettant une factorisation.
- * Voir TableIdentification<T>.
+ * Table d'identifiaction immutable étendant le type des enveloppes 
+ * par des méthodes permettant :
+ * - l'itération,
+ * - l'application fonctorielle,
+ * - l'observation complète de la table.
+ * Une table d'identification associe à un identifiant
+ * une valeur dans T. 
  * @param Sorte sorte des identifiants (un singleton).
  * @param T type des valeurs de la table.
- * @param E type de l'état, sous-type de FormatTableIdentification.
  */
-interface TableGeneriqueIdentification<Sorte extends EnsembleSortes, T, E extends FormatTableIdentification<Sorte, T>>
+export interface TableIdentification<
+    Sorte extends SorteIdentifiant,
+    T>
     extends TypeEnveloppe<
-    E,
+    Map<Record<Identifiant<Sorte>>, T>,
     FormatTableIdentification<Sorte, T>,
-    EtiquetteTable> {
+    EtiquetteTableIdentification> {
+    /**
+     * Nombre d'associations dans la table.
+     * @returns un entier naturel égal au nombre d'associations.
+    */
+    taille(): number;
+    /**
+     * Teste si la table est vide ou non.
+     * @retuns true si la table est vide, false sinon.
+     */
+    estVide(): boolean;
     /**
      * Itère une procédure sur chaque association de la table.
-     * @param f procédure appelée à chaque itération.
+     * @param proc procédure appelée à chaque itération.
      */
     iterer(
-        f: (ID_sorte: Identifiant<Sorte>, val: T) => void
+        proc: (ID_sorte: Identifiant<Sorte>, val: T) => void
     ): void;
     /**
      * Application fonctorielle de f à la table.
@@ -143,12 +82,12 @@ interface TableGeneriqueIdentification<Sorte extends EnsembleSortes, T, E extend
      * Liste des valeurs de la table.
      * @returns un tableau listant les valeurs.
      */
-    image(): FormatTableau<T>;
+    image(): ReadonlyArray<T>;
     /**
      * Liste des identifiants de la table.
      * @returns un tableau listant les identifiants servant de clé.
      */
-    domaine(): FormatTableau<Identifiant<Sorte>>;
+    domaine(): ReadonlyArray<Identifiant<Sorte>>;
     /**
      * Sélection d'une association (identifiant, valeur) de la table.
      * @returns une option contenant une association 
@@ -164,52 +103,49 @@ interface TableGeneriqueIdentification<Sorte extends EnsembleSortes, T, E extend
      * une satisfaisante, vide sinon.
      */
     selectionAssociationSuivantCritere(prop: (ID_sorte: Identifiant<Sorte>, x: T) => boolean): Option<[Identifiant<Sorte>, T]>;
-    /**
-     * Nombre d'associations dans la table.
-     * @returns un entier naturel égal au nombre d'associations.
-     */
-    taille(): number;
-    /**
-     * Teste si la table est vide ou non.
-     * @retuns true si la table est vide, false sinon.
-     */
-    estVide(): boolean;
-}
-/**
- * Table d'identifiaction immutable étendant le type des enveloppes 
- * par des méthodes permettant :
- * - l'itération,
- * - l'application fonctorielle,
- * - l'observation complète de la table.
- * Une table d'identification associe à un identifiant
- * une valeur dans T. 
- * @param Sorte sorte des identifiants (un singleton).
- * @param T type des valeurs de la table.
- */
-export type TableIdentification<Sorte extends EnsembleSortes, T> = TableGeneriqueIdentification<Sorte, T, FormatTableIdentification<Sorte, T>>;
 
-class TableIdentificationGeneriqueParEnveloppe<Sorte extends EnsembleSortes, T, E extends FormatTableIdentification<Sorte, T>>
+    /**
+     * Crible des associations (identifiant, élément) de la table
+     *  vérifiant le prédicat.
+     * @param prop prédicat utilisé pour cribler.
+     * @returns une table contenant les associations (identifiant, val) telles que prop(identifiant, val).
+     */
+    crible(prop: (ID_sorte: Identifiant<Sorte>, x: T) => boolean): TableIdentification<Sorte, T>;
+
+}
+
+class TableIdentificationParEnveloppe<Sorte extends SorteIdentifiant, T>
     extends Enveloppe<
-    E,
+    Map<Record<Identifiant<Sorte>>, T>,
     FormatTableIdentification<Sorte, T>,
-    EtiquetteTable>
-    implements TableGeneriqueIdentification<Sorte, T, E> {
+    EtiquetteTableIdentification>
+    implements TableIdentification<Sorte, T> {
+
+    protected fabriqueID: Record.Factory<Identifiant<Sorte>>;
 
     constructor(
-        etat: E) {
+        sorte: Sorte, 
+        etat: Map<Record<Identifiant<Sorte>>, T>) {
         super(etat);
+        this.fabriqueID = fabriqueIdentifiant<Sorte>(sorte, "defaut");
     }
 
     toJSON(): FormatTableIdentification<Sorte, T> {
-        return this.etat();
+        let tab = this.etat()
+            .mapEntries(([id, v]) => [id.toJSON().val, v]).toJSON();
+        return {
+            sorte: this.fabriqueID().sorte,
+            identification: tab
+        };
     }
 
-    net(e: EtiquetteTable): string {
+    net(e: EtiquetteTableIdentification): string {
         switch (e) {
+            case 'sorte' : return this.fabriqueID().sorte;
             case 'taille': return JSON.stringify(this.taille());
             case 'domaine': return JSON.stringify(this.domaine());
             case 'image': return JSON.stringify(this.image());
-            case 'graphe': return JSON.stringify(this.etat().identification.table);
+            case 'graphe': return JSON.stringify(this.toJSON().identification);
         }
         return jamais(e);
     }
@@ -218,85 +154,94 @@ class TableIdentificationGeneriqueParEnveloppe<Sorte extends EnsembleSortes, T, 
     }
 
     iterer(
-        f: (ID_sorte: Identifiant<Sorte>, val: T, tab?: { [cle: string]: T }, taille?: number) => void
+        proc: (ID_sorte: Identifiant<Sorte>, val: T) => void
     ): void {
-        MODULE_TABLE.iterer(
-            (id, v) => f(identifiant(this.etat().sorte, id), v),
-            this.etat().identification);
+        const tab = this.etat();
+        tab.forEach((v, id) => proc(id.toJSON(), v));
     }
 
     /**
-         * Application fonctorielle de f à la table.
-         * @param f fonction à appliquer à chaque valeur de la table.
-         * @returns une nouvelle table égale à la composition f o this.
-         */
+     * Application fonctorielle de f à la table.
+     * @param f fonction à appliquer à chaque association de la table.
+     * @returns une nouvelle table égale à la composition f o this.
+     */
     application<S>(f: (ID_sorte: Identifiant<Sorte>, x: T) => S): TableIdentification<Sorte, S> {
-        const s = this.etat().sorte;
-        return new TableIdentificationGeneriqueParEnveloppe(
-            {
-                identification: MODULE_TABLE.applicationFonctorielle(
-                    this.etat().identification,
-                    (c, v) => f(identifiant(s, c), v)
-                ),
-                sorte: s
-            }
+        const tab = this.etat();
+        const r = tab.map((v, id) => f(id.toJSON(), v));
+        return new TableIdentificationParEnveloppe(
+            this.fabriqueID().sorte, r
         );
     }
 
     valeur(ID_sorte: Identifiant<Sorte>): T {
-        return MODULE_TABLE.valeur(this.etat().identification, ID_sorte.val);
+        return this.etat().get(this.fabriqueID(ID_sorte)) as T;
     }
 
     contient(ID_sorte: Identifiant<Sorte>): boolean {
-        return MODULE_TABLE.contient(this.etat().identification, ID_sorte.val);
+        return this.etat().has(this.fabriqueID(ID_sorte));
     }
-    image(): FormatTableau<T> {
-        return MODULE_TABLE.image(this.etat().identification);
+    image(): ReadonlyArray<T> {
+        return this.etat().toIndexedSeq().toArray();
     }
-    domaine(): FormatTableau<Identifiant<Sorte>> {
-        return MODULE_TABLE
-            .transformationFonctorielleEnTableau(
-                this.etat().identification,
-                (c, v) => identifiant(this.etat().sorte, c)
-            );
+    domaine(): ReadonlyArray<Identifiant<Sorte>> {
+        return this.etat().keySeq().map((id) => id.toJSON()).toArray();
     }
     selectionAssociation(): Option<[Identifiant<Sorte>, T]> {
-        return MODULE_TABLE
-            .selectionAssociation(this.etat().identification)
-            .filtrage(
-                ([id, e]) =>
-                    option([identifiant(this.etat().sorte, id), e]),
-                () => rienOption()
-            );
+        let r : Option<[Identifiant<Sorte>, T]> = rienOption();
+        this.etat().forEach((v, id) => {
+            r = option([id.toJSON(), v]);
+        });
+        return r;
     }
     selectionAssociationSuivantCritere(prop: (ID_sorte: Identifiant<Sorte>, x: T) => boolean): Option<[Identifiant<Sorte>, T]> {
-        return MODULE_TABLE
-            .selectionAssociationSuivantCritere(
-                this.etat().identification,
-                (id, v) => prop(identifiant(this.etat().sorte, id), v))
-            .filtrage(
-                ([id, e]) =>
-                    option([identifiant(this.etat().sorte, id), e]),
-                () => rienOption()
-            );
+        let r : Option<[Identifiant<Sorte>, T]> = rienOption();
+        this.etat().forEach((v, id) => {
+            const ID = id.toJSON();
+            if(prop(ID, v)){
+                r = option([ID, v]);
+            }
+            
+        });
+        return r;
     }
 
     taille(): number {
-        return this.etat().identification.taille;
+        return this.etat().size;
     }
     estVide(): boolean {
-        return this.taille() === 0;
+        return this.etat().isEmpty();
+    }
+    /**
+     * Crible des associations (identifiant, élément) de la table
+     *  vérifiant le prédicat.
+     * @param prop prédicat utilisé pour cribler.
+     * @returns une table contenant les associations (identifiant, val) telles que prop(identifiant, val).
+     */
+    crible(prop: (ID_sorte: Identifiant<Sorte>, x: T) => boolean): TableIdentification<Sorte, T> {
+        const tab = this.etat();
+        const r = tab.filter((v, id) => prop(id.toJSON(), v));
+        return new TableIdentificationParEnveloppe(
+            this.fabriqueID().sorte, r
+        );
     }
 }
 
-export function tableIdentification<Sorte extends EnsembleSortes, T>(
-    tableId: FormatTableIdentification<Sorte, T>)
+export function fabriqueTableIdentification<Sorte extends SorteIdentifiant, T>(
+    sorte : Sorte, table : Map<Record<Identifiant<Sorte>>, T>)
     : TableIdentification<Sorte, T> {
-    return new TableIdentificationGeneriqueParEnveloppe<
-        Sorte, T,
-        FormatTableIdentification<Sorte, T>>(
-            tableId
-        );
+    return new TableIdentificationParEnveloppe(
+        sorte, table
+    );
+}
+
+export function tableIdentification<Sorte extends SorteIdentifiant, T>(
+    sorte : Sorte, table : Map<Identifiant<Sorte>, T>)
+    : TableIdentification<Sorte, T> {
+    const tab = table.mapEntries(([ID,v]) => 
+        [fabriqueIdentifiant(sorte, "defaut")(ID),v]);
+    return new TableIdentificationParEnveloppe(
+        sorte, tab
+    );
 }
 
 /**
@@ -306,7 +251,7 @@ export function tableIdentification<Sorte extends EnsembleSortes, T>(
  * @param Sorte sorte des identifiants (un singleton).
  * @param T type des valeurs de la table.
  */
-export interface TableIdentificationMutable<Sorte extends EnsembleSortes, T>
+export interface TableIdentificationMutable<Sorte extends SorteIdentifiant, T>
     extends TableIdentification<Sorte, T> {
     /**
      * Appliquer fonctoriellement f à la table.
@@ -315,41 +260,59 @@ export interface TableIdentificationMutable<Sorte extends EnsembleSortes, T>
      */
     appliquer<S>(f: (ID_sorte: Identifiant<Sorte>, x: T) => S): TableIdentificationMutable<Sorte, S>;
     /**
-     * Ajoute l'association (cle, x) à la table mutable si la 
-     * clé n'est pas présente.
+     * Ajoute l'association (identifiant, valeur) à la table mutable
+     * si l'identifiant n'est pas présent.
      * @param ID_sorte identifiant servant de clé.
      * @param x valeur.
-     * @returns true si la clé est ajoutée, false sinon.
+     * @returns true si l'association est ajoutée, false sinon.
      */
     ajouter(ID_sorte: Identifiant<Sorte>, x: T): boolean;
     /**
-     * Modifie ou ajoute l'association (cle, x) à la table mutable.
+     * Modifie ou ajoute l'association (identifiant, valeur)
+     *  à la table mutable.
      * @param ID_sorte identifiant servant de clé.
      * @param x valeur.
      * @returns une option contenant l'ancienne valeur en cas de modification, vide sinon.
      */
     modifier(ID_sorte: Identifiant<Sorte>, x: T): Option<T>;
     /**
-     * Retire l'association (cle, ?) de la table mutable.
+     * Retire l'association (identifiant, ?) de la table mutable.
      * @param ID_sorte identifiant servant de clé.
      * @returns une option contenant la valeur retirée, vide sinon.
      */
     retirer(ID_sorte: Identifiant<Sorte>): Option<T>;
+    /**
+     * Crible les associations (identifiant, élément) de la table
+     *  vérifiant le prédicat. La modification se fait en place.
+     * @param prop prédicat utilisé pour cribler.
+     * @returns rien avec l'effet de retirer les associations (ID, val) telles que !prop(ID, val).
+     */
+    cribler(prop: (ID_sorte: Identifiant<Sorte>, x: T) => boolean): void;
+}
+
+/**
+ * Etat pour les tables mutables d'identification. 
+ * Structure :
+ * - identification : une table de T,
+ * - sortes : une table de Sorte.
+ * @param Sorte type représentant la sorte des identifiants 
+ * @param T le type contenu dans la table
+*/
+export interface EtatTableMutableIdentification<Sorte extends SorteIdentifiant, T> {
+    identification: Map<Record<Identifiant<Sorte>>, T>;
 }
 
 /**
  * Table d'identification mutable utilisant la valeur d'identificateurs
  * comme clé.
  */
-class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>
-    extends TableIdentificationGeneriqueParEnveloppe<
-    Sorte, T,
-    FormatTableIdentificationMutable<Sorte, T>>
+class TableIdentificationMutableParEnveloppe<Sorte extends SorteIdentifiant, T>
+    extends TableIdentificationParEnveloppe<Sorte, T>
     implements TableIdentificationMutable<Sorte, T> {
 
-    constructor(
-        etat: FormatTableIdentificationMutable<Sorte, T>) {
-        super(etat);
+    constructor(sorte : Sorte,
+        etat: Map<Record<Identifiant<Sorte>>, T>) {
+        super(sorte, etat);
     }
     /**
      * Appliquer fonctoriellement f à la table.
@@ -357,45 +320,79 @@ class TableIdentificationMutableParEnveloppe<Sorte extends EnsembleSortes, T>
      * @returns une nouvelle table formée d'associations (clé, f(clé, t[clé]).
      */
     appliquer<S>(f: (ID_sorte: Identifiant<Sorte>, x: T) => S): TableIdentificationMutable<Sorte, S> {
-        const s = this.etat().sorte;
+        const tab = this.etat();
+        const r = tab.map((v, id) => f(id.toJSON(), v));
         return new TableIdentificationMutableParEnveloppe(
-            {
-                identification: MODULE_TABLE.appliquerFonctoriellement(
-                    this.etat().identification,
-                    (c, v) => f(identifiant(s, c), v)
-                ),
-                sorte: s
-            }
+            this.fabriqueID().sorte, r
         );
     }
     ajouter(ID_sorte: Identifiant<Sorte>, x: T): boolean {
-        return MODULE_TABLE.ajouter(
-            this.etat().identification, ID_sorte.val, x);
+        const tab = this.etat();
+        const id = this.fabriqueID(ID_sorte);
+        if(tab.has(id)){
+            return false;
+        }
+        this._etat = tab.set(id, x);
+        return true;        
     }
     modifier(ID_sorte: Identifiant<Sorte>, x: T): Option<T> {
-        return MODULE_TABLE.modifier(
-            this.etat().identification, ID_sorte.val, x);
+        const tab = this.etat();
+        const id = this.fabriqueID(ID_sorte);
+        if(tab.has(id)){
+            const r = tab.get(id) as T;
+            this._etat = tab.set(id, x);
+            return option(r);
+        }else {
+            this._etat = tab.set(id, x);
+            return rienOption();
+        }
     }
     retirer(ID_sorte: Identifiant<Sorte>): Option<T> {
-        return MODULE_TABLE.retirer(
-            this.etat().identification, ID_sorte.val);
+        const tab = this.etat();
+        const id = this.fabriqueID(ID_sorte);
+        if(tab.has(id)){
+            const r = tab.get(id) as T;
+            this._etat = tab.delete(id);
+            return option(r);
+        }else {
+            return rienOption();
+        }
+    }
+    /**
+     * Crible les associations (identifiant, élément) de la table
+     *  vérifiant le prédicat. La modification se fait en place.
+     * @param prop prédicat utilisé pour cribler.
+     * @returns rien avec l'effet de retirer les associations (ID, val) telles que !prop(ID, val).
+     */
+    cribler(prop: (ID_sorte: Identifiant<Sorte>, x: T) => boolean): void {
+        const tab = this.etat();
+        this._etat = tab.filter((v, id) => 
+            prop(id.toJSON(), v));
     }
 }
 
-export function creerTableIdentificationMutableVide<Sorte extends EnsembleSortes, T>(
-    sorte: Sorte
-): TableIdentificationMutable<Sorte, T> {
-    return new TableIdentificationMutableParEnveloppe<Sorte, T>(
-        {
-            identification: { taille: 0, table: {} },
-            sorte: sorte
-        });
+export function creerTableIdentificationMutable<Sorte extends SorteIdentifiant, T>(
+    sorte : Sorte, table : Map<Identifiant<Sorte>, T>)
+    : TableIdentificationMutable<Sorte, T> {
+    const tab = table.mapEntries(([ID,v]) => 
+        [fabriqueIdentifiant(sorte, "defaut")(ID),v]);
+    return new TableIdentificationMutableParEnveloppe(
+        sorte, tab
+    );
 }
 
-export function creerTableIdentificationMutable<Sorte extends EnsembleSortes, T>(
-    tableId : FormatTableIdentificationMutable<Sorte, T>
-    ): TableIdentificationMutable<Sorte, T> {
-    return new TableIdentificationMutableParEnveloppe<Sorte, T>(
-        tableId);
+export function fabriquerTableIdentificationMutable<Sorte extends SorteIdentifiant, T>(
+    sorte : Sorte, table : Map<Record<Identifiant<Sorte>>, T>)
+    : TableIdentificationMutable<Sorte, T> {
+    return new TableIdentificationMutableParEnveloppe(
+        sorte, table
+    );
+}
+
+
+export function creerTableIdentificationMutableVide<Sorte extends SorteIdentifiant, T>(
+    sorte: Sorte
+): TableIdentificationMutable<Sorte, T> {
+    return creerTableIdentificationMutable(sorte, Map());
 }
 

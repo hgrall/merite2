@@ -8,7 +8,7 @@ import { chemin, creerServeurApplicationsExpress, ServeurApplications } from "..
 import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
 import { tableau, Tableau } from '../../bibliotheque/types/tableau';
-import { FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat, FormatSommetTchat } from '../commun/echangesTchat';
+import { FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat, FormatUtilisateurTchat } from '../commun/echangesTchat';
 import { PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, ENVOI, RECEPTION } from '../commun/routes';
 import { avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseauEtoile } from './reseauTchat';
@@ -31,7 +31,7 @@ serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETO
 * Définition du réseau en étoile.
 */
 
-const reseau: ReseauMutable<FormatSommetTchat, ConnexionLongueExpress> = creerGenerateurReseauEtoile<ConnexionLongueExpress>(CODE, 3, ["coco", "lulu", "zaza"]).engendrer();
+const reseau: ReseauMutable<FormatUtilisateurTchat, ConnexionLongueExpress> = creerGenerateurReseauEtoile<ConnexionLongueExpress>(CODE, 3, ["coco", "lulu", "zaza"]).engendrer();
 
 /*
 * Service de réception d'un message (POST).
@@ -52,7 +52,7 @@ function traitementPOST(msg: FormatMessageEnvoiTchat)
             .crible((i, id) => reseau.sontVoisins(msg.corps.ID_emetteur, id));
     const idsDestinatairesEffectifs =
         idsDestinatairesVoisins
-            .crible((i, id) => reseau.sommet(id).actif);
+            .crible((i, id) => reseau.utilisateur(id).actif);
     return {
         accuseReception: traductionEnvoiEnAR(msg,       idsDestinatairesEffectifs, generateurIdentifiantsMessages.produire('message')),
         messagesEnTransit: idsDestinatairesEffectifs
@@ -105,8 +105,8 @@ serveurApplications.specifierTraitementRequetePOST<
 */
 
 export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
-    if (!reseau.aUnSommetInactif()) {
-        const desc = "La connexion est impossible : tous les sommets sont actifs."
+    if (!reseau.aUnutilisateurInactif()) {
+        const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
         logger.warn(desc);
         canal.envoyerJSON(
             'avertissement',
@@ -114,15 +114,15 @@ export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
         return;
     }
     // Envoi de la configuration initiale 
-    const ID_sommet = reseau.activerSommet(canal);
-    const noeud = reseau.noeud(ID_sommet);
+    const ID_util = reseau.activerutilisateur(canal);
+    const noeud = reseau.noeud(ID_util);
     canal.envoyerJSON('config', noeud);
     // Envoi de la nouvelle configuration aux voisins actifs
-    reseau.diffuserConfigurationAuxVoisins(ID_sommet);
+    reseau.diffuserConfigurationAuxVoisins(ID_util);
     // Enregistrement du traitement lors de la déconnexion
     canal.enregistrerTraitementDeconnexion(() => {
-        reseau.inactiverSommet(ID_sommet);
-        reseau.diffuserConfigurationAuxVoisins(ID_sommet);
+        reseau.inactiverutilisateur(ID_util);
+        reseau.diffuserConfigurationAuxVoisins(ID_util);
     });
 }
 

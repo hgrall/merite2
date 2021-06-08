@@ -1,16 +1,71 @@
-import { creerReseauMutable, ReseauMutable, GenerateurReseau } from "../../bibliotheque/applications/reseau";
+import { GenerateurReseau, ReseauMutableParEnveloppe } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { creerEnsembleMutableIdentifiantsVide, EnsembleIdentifiants, EnsembleMutableIdentifiants } from "../../bibliotheque/types/ensembleIdentifiants";
-import { creerFileAPriorite, FileMutableAPriorite } from "../../bibliotheque/types/fileAPriorite";
+import { creerFileMutableVideIdentifiantsPrioritaires, FileMutableIdentifiantsPrioritaires } from "../../bibliotheque/types/fileIdentifiantsPrioritaires";
 import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
-import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/types/tableau";
-import { creerTableIdentificationMutableVide, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
-import { FormatSommetTchat } from "../commun/echangesTchat";
+import { creerTableauMutableVide } from "../../bibliotheque/types/tableau";
+
+import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
+import { FormatUtilisateurTchat } from "../commun/echangesTchat";
 import { modificationActivite } from "./echangesServeurTchat";
 
+export class ReseauMutableTchat<
+    C extends CanalPersistantEcritureJSON>
+    extends ReseauMutableParEnveloppe<FormatUtilisateurTchat, C> {
+
+    constructor(
+        utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat>,
+        adjacence:
+            TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>
+    ) {
+        super(utilisateurs, adjacence, modificationActivite);
+    }
+
+    /**
+     * Initie la file des inactifs. La priorité est égale au nombre de voisins inactifs.
+     */
+    initierFileDesInactifs(): void {
+        // Tous les utilisateurs sont initialement inactifs.
+        this.itererutilisateurs((id, s) => {
+            const p = this.voisinsInactifs(id).taille();
+            this.etat().fileInactifs.ajouter(id, p);
+        });
+    }
+
+    retirerutilisateurDeFile(): Identifiant<'sommet'> {
+        const ID = this.etat().fileInactifs.retirer();
+        this.voisinsInactifs(ID).iterer((id) => {
+            const p = this.voisinsInactifs(id).taille();
+            this.etat().fileInactifs.modifier(id, p, p - 1);
+        });
+        return ID;
+    }
+    ajouterutilisateurAFile(ID_util: Identifiant<'sommet'>): void {
+        const voisinsInactifs = this.voisinsInactifs(ID_util);
+        const pID = voisinsInactifs.taille();
+        this.etat().fileInactifs.ajouter(ID_util, pID);
+        this.voisinsInactifs(ID_util).iterer((id) => {
+            const p = voisinsInactifs.taille();
+            this.etat().fileInactifs.modifier(id, p, p + 1);
+        });
+    }
+
+}
+
+export function creerReseauMutableTchat<
+    C extends CanalPersistantEcritureJSON>
+    (
+        utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat>,
+        fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'>,
+        adjacence:
+            TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>,
+): ReseauMutableTchat<C> {
+    return new ReseauMutableTchat(utilisateurs, adjacence);
+}
 
 
-class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatSommetTchat, C>{
+
+class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>>{
 
     private generateurIdentifiants: GenerateurIdentifiants<'sommet'>;
 
@@ -21,10 +76,10 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
         this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur(code + "-" + "anneau-");
     }
 
-    engendrer(): ReseauMutable<FormatSommetTchat, C> {
+    engendrer(): ReseauMutableTchat<C> {
         const tailleTchat = this.noms.length;
-        const sommets: TableIdentificationMutable<'sommet', FormatSommetTchat> = creerTableIdentificationMutableVide('sommet');
-        const fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>> = creerFileAPriorite();
+        const utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat> = creerTableIdentificationMutableVide('sommet');
+        const fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'> = creerFileMutableVideIdentifiantsPrioritaires('sommet');
 
         const adjacence:
             TableIdentificationMutable<'sommet', EnsembleIdentifiants<'sommet'>> = creerTableIdentificationMutableVide('sommet');
@@ -32,41 +87,39 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
         for (let i = 0; i < this.nombreTchats; i++) {
             // Un tchat (une composante connexe du graphe)
 
-            const sommetsTchat = creerTableauMutableVide<Identifiant<'sommet'>>();
+            const utilisateursTchat = creerTableauMutableVide<Identifiant<'sommet'>>();
             for (let j = 0; j < tailleTchat; j++) {
-                // sommets + liste avec priorité
-                const s: FormatSommetTchat = {
+                // utilisateurs
+                const s: FormatUtilisateurTchat = {
                     ID: this.generateurIdentifiants.produire('sommet'),
-                    priorite: i * tailleTchat + j,
                     pseudo: this.noms[j],
                     actif: false
                 }
-                sommets.ajouter(s.ID, s);
-                fileInactifs.ajouter(s.ID, s.priorite);
-                sommetsTchat.ajouterEnFin(s.ID);
+                utilisateurs.ajouter(s.ID, s);
+                utilisateursTchat.ajouterEnFin(s.ID);
             }
             // adjacence
             for (let j = 0; j < tailleTchat; j++) {
                 const voisins: EnsembleMutableIdentifiants<'sommet'> = creerEnsembleMutableIdentifiantsVide('sommet');
-                voisins.ajouter(sommetsTchat.valeur((j + tailleTchat - 1) % tailleTchat));
-                voisins.ajouter(sommetsTchat.valeur((j + 1) % tailleTchat));
-                adjacence.ajouter(sommetsTchat.valeur(j), voisins);
+                voisins.ajouter(utilisateursTchat.valeur((j + tailleTchat - 1) % tailleTchat));
+                voisins.ajouter(utilisateursTchat.valeur((j + 1) % tailleTchat));
+                adjacence.ajouter(utilisateursTchat.valeur(j), voisins);
             }
 
         }
 
-        return creerReseauMutable(sommets, fileInactifs, adjacence, modificationActivite);
+        return creerReseauMutableTchat(utilisateurs, fileInactifs, adjacence);
     }
 }
 
 export function creerGenerateurReseauAnneau<C extends CanalPersistantEcritureJSON>(
     code: string,
     nombreTchats: number,
-    noms: ReadonlyArray<string>): GenerateurReseau<FormatSommetTchat, C> {
+    noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
     return new GenerateurReseauAnneau<C>(code, nombreTchats, noms);
 }
 
-class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatSommetTchat, C>{
+class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>>{
 
     private generateurIdentifiants: GenerateurIdentifiants<'sommet'>;
 
@@ -77,51 +130,49 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
         this.generateurIdentifiants = creerGenerateurIdentifiantParCompteur(code + "-" + "etoile-");
     }
 
-    engendrer(): ReseauMutable<FormatSommetTchat, C> {
+    engendrer(): ReseauMutableTchat<C> {
         const tailleTchat = this.noms.length;
-        const sommets: TableIdentificationMutable<'sommet', FormatSommetTchat> = creerTableIdentificationMutableVide('sommet');
-        const fileInactifs: FileMutableAPriorite<Identifiant<'sommet'>> = creerFileAPriorite();
+        const utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat> = creerTableIdentificationMutableVide('sommet');
+        const fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'> = creerFileMutableVideIdentifiantsPrioritaires('sommet');
 
         const adjacence:
-            TableIdentificationMutable<'sommet', 
-            EnsembleMutableIdentifiants<'sommet'>> =  creerTableIdentificationMutableVide('sommet');
+            TableIdentificationMutable<'sommet',
+                EnsembleMutableIdentifiants<'sommet'>> = creerTableIdentificationMutableVide('sommet');
 
         for (let i = 0; i < this.nombreTchats; i++) {
             // Un tchat (une composante connexe du graphe)
 
-            const sommetsTchat = creerTableauMutableVide<Identifiant<'sommet'>>();
+            const utilisateursTchat = creerTableauMutableVide<Identifiant<'sommet'>>();
             for (let j = 0; j < tailleTchat; j++) {
-                // sommets + liste avec priorité
-                const s: FormatSommetTchat = {
+                // utilisateurs
+                const s: FormatUtilisateurTchat = {
                     ID: this.generateurIdentifiants.produire('sommet'),
-                    priorite: i * tailleTchat + j,
                     pseudo: this.noms[j],
                     actif: false
                 }
-                sommets.ajouter(s.ID, s);
-                fileInactifs.ajouter(s.ID, s.priorite);
-                sommetsTchat.ajouterEnFin(s.ID);
+                utilisateurs.ajouter(s.ID, s);
+                utilisateursTchat.ajouterEnFin(s.ID);
             }
             // adjacence
             for (let j = 0; j < tailleTchat; j++) {
                 const voisins: EnsembleMutableIdentifiants<'sommet'> = creerEnsembleMutableIdentifiantsVide('sommet');
                 for (let k = 0; k < tailleTchat; k++) {
                     if (j !== k) {
-                        voisins.ajouter(sommetsTchat.valeur(k));
+                        voisins.ajouter(utilisateursTchat.valeur(k));
                     }
                 }
-                adjacence.ajouter(sommetsTchat.valeur(j), voisins);
+                adjacence.ajouter(utilisateursTchat.valeur(j), voisins);
             }
 
         }
 
-        return creerReseauMutable(sommets, fileInactifs, adjacence, modificationActivite);
+        return creerReseauMutableTchat(utilisateurs, fileInactifs, adjacence);
     }
 }
 
 export function creerGenerateurReseauEtoile<C extends CanalPersistantEcritureJSON>(
     code: string,
     nombreTchats: number,
-    noms: ReadonlyArray<string>): GenerateurReseau<FormatSommetTchat, C> {
+    noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
     return new GenerateurReseauEtoile<C>(code, nombreTchats, noms);
 }

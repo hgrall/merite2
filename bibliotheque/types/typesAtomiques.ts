@@ -31,16 +31,6 @@ export interface Mesurable {
 }
 
 /**
- * Interface exprimant la propriété d'être prioritarisable.
- * Attribut :
- * - priorité : entier naturel.
- */
-
-export interface Prioritarisable {
-    readonly priorite : number;
-}
-
-/**
  * Interface exprimant la propriété d'être activable.
  * Attribut :
  * - actif : booléen.

@@ -1,30 +1,29 @@
-/**
- * Type représentant l'ensemble des sortes pour les identifiants.
- * 
- * Définir un type union formé de singletons de type string.
- */
-export type EnsembleSortes = "sommet" | "message" | "test"; 
+import { SorteIdentifiant } from "../applications/sortes";
+import { Record } from "immutable";
 
 /**
  * Identifiant au format JSON. Type paramétré et valeur paramétrée par la sorte des identifiants,
  * donnée par une chaîne de caractères (considérée comme un type et une valeur respectivement).
  *
- * Exemple : Identifiant<"sommet"> ("sommet" étant aussi un type singleton sous-type de string),
- * { val : un_identifiant, sorte : "sommet" }.
+ * Exemple : Identifiant<'utilisateur'> ('utilisateur' étant aussi un type singleton sous-type de string),
+ * { val : un_identifiant, sorte : 'utilisateur' }.
  *
  * Remarque : les identifiants sont toujours accédés via un champ nommé ID ou ID_x.
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  */
-export type Identifiant<Sorte extends EnsembleSortes> = {
-    readonly val: string;
+
+export type Identifiant<Sorte extends SorteIdentifiant> = {
     readonly sorte: Sorte;
+    readonly val: string;
 }
+
+export type IdentifiantR<Sorte extends SorteIdentifiant> = Record<Identifiant<Sorte>>; // ??? & Readonly<Identifiant<Sorte>>;
 
 /**
  * Format JSON mutable pour les identifiants.
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  */
-export interface FormatIdentifiableMutable<Sorte extends EnsembleSortes> {
+export interface FormatIdentifiableMutable<Sorte extends SorteIdentifiant> {
     ID: Identifiant<Sorte>; // en majuscule par exception
 }
 
@@ -32,7 +31,7 @@ export interface FormatIdentifiableMutable<Sorte extends EnsembleSortes> {
  * Format JSON pour les identifiants.
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  */
-export interface FormatIdentifiable<Sorte extends EnsembleSortes> {
+export interface FormatIdentifiable<Sorte extends SorteIdentifiant> {
     readonly ID: Identifiant<Sorte>; // en majuscule par exception
 }
 
@@ -40,7 +39,7 @@ export interface FormatIdentifiable<Sorte extends EnsembleSortes> {
  * Interface pour un générateur d'identifiants d'une sorte donnée.
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  */
-export interface GenerateurIdentifiants<Sorte extends EnsembleSortes> {
+export interface GenerateurIdentifiants<Sorte extends SorteIdentifiant> {
     /**
      * Fabrique un identifiant "frais" (d'où l'effet de bord).
      * @param s sorte des identifiants (précondition : valeur s = type Sorte).
@@ -53,7 +52,7 @@ export interface GenerateurIdentifiants<Sorte extends EnsembleSortes> {
  * un préfixe fourni lors de la construction de la fabrique.
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  */
-class GenerateurIdentifiantsParCompteur<Sorte extends EnsembleSortes>
+class GenerateurIdentifiantsParCompteur<Sorte extends SorteIdentifiant>
     implements GenerateurIdentifiants<Sorte> {
     /**
      * Compteur privé initialisé à zéro.
@@ -84,7 +83,7 @@ class GenerateurIdentifiantsParCompteur<Sorte extends EnsembleSortes>
  * @param prefixe préfixe des identifiants.
  */
 export function creerGenerateurIdentifiantParCompteur<
-    Sorte extends EnsembleSortes
+    Sorte extends SorteIdentifiant
     >(prefixe: string)
     : GenerateurIdentifiants<Sorte> {
     return new GenerateurIdentifiantsParCompteur(prefixe);
@@ -94,15 +93,19 @@ export function creerGenerateurIdentifiantParCompteur<
  * Fabrique d'un identifiant (au format JSON).
  * @param Sorte chaîne donnant la sorte des identifiants (précondition : sous-type singleton de string).
  * @param s sorte des identifiants (précondition : valeur s = type Sorte).
- * @param cle valeur de l'identifiant.
+ * @param val valeur de l'identifiant.
  */
-export function identifiant<Sorte extends EnsembleSortes>(
-    s: Sorte, cle: string
+export function identifiant<Sorte extends SorteIdentifiant>(
+    s: Sorte, val: string
 ): Identifiant<Sorte> {
     return {
-        val: cle,
+        val: val,
         sorte: s
     };
+}
+
+export function fabriqueIdentifiant<Sorte extends SorteIdentifiant>(s : Sorte, valeurDefaut : string) : Record.Factory<Identifiant<Sorte>> {
+    return Record<Identifiant<Sorte>>(identifiant(s, valeurDefaut));
 }
 
 /**
@@ -111,7 +114,7 @@ export function identifiant<Sorte extends EnsembleSortes>(
  * @param id1 premier identifiant.
  * @param id2 second identifiant.
  */
-export function sontIdentifiantsEgaux<Sorte extends EnsembleSortes>(
+export function sontIdentifiantsEgaux<Sorte extends SorteIdentifiant>(
     id1: Identifiant<Sorte>,
     id2: Identifiant<Sorte>
 ): boolean {

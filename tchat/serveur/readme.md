@@ -14,9 +14,9 @@
       - lorsqu'il reçoit un accusé de réception, il peut comparer la liste originale des destinataires à celle contenue dans l'accusé,
       - lorsqu'il reçoit un message en transit, il l'affiche.
 - GET persistant en `/tchat/code/etoile/reception`
-    - avertissement notifié au client lorsque la connexion est impossible, tous les sommets étant actifs.
-    - activation d'un sommet et envoi de la configuration initiale.
+    - avertissement notifié au client lorsque la connexion est impossible, tous les utilisateurs étant actifs.
+    - activation d'un utilisateur et envoi de la configuration initiale.
     - diffusion de la nouvelle configuration aux voisins actifs.
     - enregistrement du traitement lors de la déconnexion : 
-      - inactivation du sommet,
+      - inactivation de l'utilisateur,
       - diffusion de la nouvelle configuration aux voisins actifs. 

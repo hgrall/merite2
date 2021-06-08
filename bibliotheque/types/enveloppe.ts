@@ -58,7 +58,7 @@ export abstract class Enveloppe<T, J, E extends string> implements TypeEnveloppe
      * du constructeur et l'instance construite.
      * @param etat valeur initiale de l'état
      */
-    constructor(private _etat: T) {
+    constructor(protected _etat: T) {
     }
     /**
      * Valeur de l'état.

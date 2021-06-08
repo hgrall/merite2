@@ -1,9 +1,7 @@
-import { ReseauMutable } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { identifiant } from "../../bibliotheque/types/identifiant";
-import { FormatSommetTchat } from "../../tchat/commun/echangesTchat";
-import { creerGenerateurReseauAnneau, creerGenerateurReseauEtoile } from "../../tchat/serveur/reseauTchat";
-import { testUnitaireJsonJson, testUnitaireStringString } from "../utilitaires";
+import { creerGenerateurReseauAnneau, creerGenerateurReseauEtoile, ReseauMutableTchat } from "../../tchat/serveur/reseauTchat";
+import { testUnitaireJsonJson } from "../utilitaires";
 
 class ConnexionFictive implements CanalPersistantEcritureJSON {
     constructor(public val : number){}
@@ -21,8 +19,8 @@ function cf(n : number) : ConnexionFictive {
 
 describe('Réseau tchat étoile', () => {
     let genR = creerGenerateurReseauEtoile<ConnexionFictive>("code", 2, ["coco", "lulu", "zaza"]);
-    let r: ReseauMutable<FormatSommetTchat, ConnexionFictive> = genR.engendrer();
-    const id1 = r.activerSommet(cf(17));
+    let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
+    const id1 = r.activerutilisateur(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -41,11 +39,11 @@ describe('Réseau tchat étoile', () => {
         r.nombreInactifs(),
     ); 
     testUnitaireJsonJson(
-        "priorité",
-        0,
-        r.sommet(id1).priorite
+        "priorité maximale (ordre inversé)",
+        1,
+        r.etat().fileInactifs.etat().prioriteMaximale
     );
-    const id2 = r.activerSommet(cf(19));
+    const id2 = r.activerutilisateur(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -56,9 +54,9 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "voisinage",
         true,
-        r.sontVoisins(id1, identifiant("sommet", id2.val))
+        r.sontVoisins(id1, identifiant('sommet', id2.val))
     );
-    const id3 = r.activerSommet(cf(22));
+    const id3 = r.activerutilisateur(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
@@ -69,9 +67,9 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "voisinage",
         true,
-        r.sontVoisins(id1, identifiant("sommet", id3.val))
+        r.sontVoisins(id1, identifiant('sommet', id3.val))
     );    
-    const id4 = r.activerSommet(cf(24));
+    const id4 = r.activerutilisateur(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -81,14 +79,14 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "voisinage",
         false,
-        r.sontVoisins(id1, identifiant("sommet", id4.val))
+        r.sontVoisins(id1, identifiant('sommet', id4.val))
     );    
     testUnitaireJsonJson(
         "connexion",
         24,
         r.connexion(id4)
     );
-    r.inactiverSommet(id4);
+    r.inactiverutilisateur(id4);
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre inactif - 0 voisin actif",
@@ -99,9 +97,9 @@ describe('Réseau tchat étoile', () => {
 
 describe('Réseau tchat anneau', () => {
     let genR = creerGenerateurReseauAnneau<ConnexionFictive>("code", 2, ["coco", "lulu", "momo", "zaza"]);
-    let r: ReseauMutable<FormatSommetTchat, ConnexionFictive> = genR.engendrer();
+    let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
     
-    const id1 = r.activerSommet(cf(17));
+    const id1 = r.activerutilisateur(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -120,11 +118,11 @@ describe('Réseau tchat anneau', () => {
         r.nombreInactifs(),
     ); 
     testUnitaireJsonJson(
-        "priorité",
-        0,
-        r.sommet(id1).priorite
+        "priorité maximale (ordre inversé)",
+        1,
+        r.etat().fileInactifs.etat().prioriteMaximale
     );
-    const id2 = r.activerSommet(cf(19));
+    const id2 = r.activerutilisateur(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -132,11 +130,11 @@ describe('Réseau tchat anneau', () => {
         [n.toJSON().centre.actif, n.nombreConnexionsActives()]
     );
     testUnitaireJsonJson(
-        "voisinage",
+        "voisinage id1 avec id2",
         true,
-        r.sontVoisins(id1, identifiant("sommet", id2.val))
+        r.sontVoisins(id1, identifiant('sommet', id2.val))
     );
-    const id3 = r.activerSommet(cf(22));
+    const id3 = r.activerutilisateur(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -144,11 +142,12 @@ describe('Réseau tchat anneau', () => {
         [n.toJSON().centre.actif, n.nombreConnexionsActives()]
     );
     testUnitaireJsonJson(
-        "voisinage",
-        false,
-        r.sontVoisins(id1, identifiant("sommet", id3.val))
+        "voisinage id3 avec id1 ou id2 ?!",
+        true,
+        r.sontVoisins(id1, identifiant('sommet', id3.val)) 
+        || r.sontVoisins(id2, identifiant('sommet', id3.val)) 
     );    
-    const id4 = r.activerSommet(cf(24));
+    const id4 = r.activerutilisateur(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
@@ -156,21 +155,18 @@ describe('Réseau tchat anneau', () => {
         [n.toJSON().centre.actif, n.nombreConnexionsActives()]
     );
     testUnitaireJsonJson(
-        "voisinage",
-        true,
-        r.sontVoisins(id1, identifiant("sommet", id4.val))
+        "voisins inactifs / id4",
+        0, 
+        r.voisinsInactifs(id4).taille()
+
     );    
     testUnitaireJsonJson(
         "connexion",
         24,
         r.connexion(id4)
     ); 
-    testUnitaireStringString(
-        "sommets",
-        r.net('sommets'),
-        r.net('sommets'),
-    );
-    r.inactiverSommet(id4);
+    
+    r.inactiverutilisateur(id4);
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre inactif - 2 voisins actifs",

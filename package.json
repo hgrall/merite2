@@ -9,6 +9,7 @@
   "scripts": {
     "tsc": "tsc --incremental",
     "webpack": "webpack",
+    "compil": "npm run tsc",
     "build": "npm run tsc && npm run webpack",
     "buildAvecVerif": "npm run tsc && npm run verif && npm run webpack",
     "test": "mocha -r ts-node/register test/general.ts",
@@ -35,6 +36,7 @@
     "chai": "^4.3.4",
     "express": "^4.17.1",
     "g": "^2.0.1",
+    "immutable": "^4.0.0-rc.12",
     "mocha": "^8.4.0",
     "morgan": "^1.10.0",
     "react": "^17.0.2",

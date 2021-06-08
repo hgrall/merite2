@@ -58,7 +58,7 @@ describe('TableIdentificationMutable - type non sérialisable', () => {
     );
     testUnitaireJsonJson(
         "domaine +2",
-        { taille : 2, tableau : [{val: "id1", sorte: "test"},{val: "id2", sorte: "test"}]},
+        [{val: "id1", sorte: "test"},{val: "id2", sorte: "test"}],
         table.domaine()
     );
     table.retirer({ val: "id1", sorte: 'test' });
@@ -74,7 +74,7 @@ describe('TableIdentificationMutable - type non sérialisable', () => {
     );
     testUnitaireJsonJson(
         "domaine +2-1",
-        { taille : 1, tableau : [{"val":"id2","sorte":"test"}]},
+        [{"val":"id2","sorte":"test"}],
         table.domaine()
     );
     table.retirer({ val: "id2", sorte: 'test' });

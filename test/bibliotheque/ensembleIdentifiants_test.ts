@@ -10,13 +10,16 @@ describe('EnsembleMutableIdentifiants', () => {
     ens.ajouter(identifiant("test", "a2"));
 
     testUnitaireJsonJson(
-        "taille +2", 
-        2, 
+        "taille +2",
+        2,
         ens.taille()
     );
+    console.log("*** Ensemble : " + ens.representation());
+    let opt = ens.selectionIdentifiantSuivantCritere((id) => id.val === "a2");
+    console.log("option : " + opt.representation());
     testUnitaireJsonJson(
         "sélection +2",
-        { val: "a2", sorte: 'test' }, 
+        { val: "a2", sorte: 'test' },
         ens.selectionIdentifiantSuivantCritere((id) => id.val === "a2").valeur()
     );
     testUnitaireJsonJson(
@@ -26,13 +29,13 @@ describe('EnsembleMutableIdentifiants', () => {
     );
     ens.retirer({ val: "a1", sorte: 'test' });
     testUnitaireJsonJson(
-        "taille +2-1", 
+        "taille +2-1",
         1,
         ens.taille()
     );
     testUnitaireJsonJson(
         "valeur +2-1",
-        { taille : 1, tableau : [{ val: "a2", sorte: 'test' }]}, 
+        {"sorte":"test","ensemble":["a2"]},
         ens.toJSON()
     );
     testUnitaireJsonJson(
@@ -45,6 +48,20 @@ describe('EnsembleMutableIdentifiants', () => {
         "vacuité +2-1-1",
         true,
         ens.estVide()
+    );
+    for (let i = 0; i < 10; i++) {
+        ens.ajouter(identifiant("test", i.toString()));
+    }
+    testUnitaireJsonJson(
+        "taille crible mod 2 +10",
+        5,
+        ens.crible((id) => parseInt(id.val) % 2 === 0).taille()
+    );
+    ens.cribler((id) => parseInt(id.val) % 2 === 0);
+    testUnitaireJsonJson(
+        "taille cribler mod 2 +10",
+        5,
+        ens.taille()
     );
 });
 

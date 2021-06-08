@@ -1,26 +1,32 @@
+import { Map, Set, Record } from 'immutable';
+
+
 import { Enveloppe, TypeEnveloppe } from "../types/enveloppe";
-import { FormatIdentifiable, Identifiant } from "../types/identifiant";
-import { FormatTableIdentification, TableIdentification, tableIdentification } from "../types/tableIdentification";
-import { Activable, jamais, Prioritarisable } from "../types/typesAtomiques";
+import { FormatIdentifiable, identifiant, Identifiant } from "../types/identifiant";
+import { FormatTableIdentification, tableIdentification, TableIdentification } from "../types/tableIdentification";
+import { Activable, jamais } from "../types/typesAtomiques";
+
 
 /**
  * Format pour les noeuds du réseau de tchat.
  * Structure :
- * - centre : un sommet
- * - voisins : une table d'identification au format pour les sommets actifs ou inactifs
+ * - centre : un utilisateur
+ * - voisins : une table d'identification au format pour les utilisateurs actifs ou inactifs
  *
- * @param S type représentant les sommets en JSON.
+ * @param S type représentant les utilisateurs en JSON.
  */
-export interface FormatNoeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable> {
+export interface FormatNoeud<
+    S extends FormatIdentifiable<'sommet'> & Activable> {
     readonly centre: S;
     readonly voisins: FormatTableIdentification<'sommet', S>;
 }
 
 /**
- * Etat d'un noeud, formé d'un sommet, le centre, et de sommets voisins.
+ * Etat d'un noeud, formé d'un utilisateur, le centre, et de utilisateurs voisins.
  */
 
-export interface EtatNoeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable> {
+export interface EtatNoeud<
+    S extends FormatIdentifiable<'sommet'>> {
     readonly centre: S;
     readonly voisins: TableIdentification<'sommet', S>;
 }
@@ -28,10 +34,12 @@ export interface EtatNoeud<S extends FormatIdentifiable<'sommet'> & Prioritarisa
  * 
  * @param n noeud au format
  */
-function etatNoeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>(n: FormatNoeud<S>): EtatNoeud<S> {
+function etatNoeud<
+    S extends FormatIdentifiable<'sommet'> & Activable>
+    (n: FormatNoeud<S>): EtatNoeud<S> {
     return {
         centre: n.centre,
-        voisins: tableIdentification<'sommet', S>(n.voisins)
+        voisins: tableIdentification('sommet', Map(n.voisins.identification).mapEntries(([id, v]) => [identifiant('sommet',id), v]))
     };
 }
 
@@ -45,41 +53,44 @@ export type EtiquetteNoeud = 'centre' | 'voisins';
 /**
  * Interface structurelle définissant un noeud.
  *
- * @param S type représentant un sommet en JSON.
+ * @param S type représentant un utilisateur en JSON.
  */
-export interface Noeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>
+export interface Noeud<
+    
+    S extends FormatIdentifiable<'sommet'> & Activable>
     extends TypeEnveloppe<EtatNoeud<S>, FormatNoeud<S>, EtiquetteNoeud> {
     /**
-     * Teste si le sommet identifié par l'argument est voisin de ce noeud.
-     * @param ID_sommet identifiant du sommet potentiellement voisin.
-     * @returns true si le sommet identifié par ID_sommet est voisin, false sinon.
+     * Teste si l'utilisateur identifié par l'argument est voisin de ce noeud.
+     * @param ID_util identifiant de l'utilisateur potentiellement voisin.
+     * @returns true si l'utilisateur identifié par ID_util est voisin, false sinon.
      */
-    aPourVoisin(ID_sommet: Identifiant<'sommet'>): boolean;
+    aPourVoisin(ID_util: Identifiant<'sommet'>): boolean;
 
     /**
      * Itère une procédure sur chaque voisin du noeud.
      *
      * @param proc procédure appelée à chaque itération, prenant en entrée l'identifiant
-     *   du sommet et le sommet.
+     *   de l'utilisateur et l'utilisateur.
      */
-    itererVoisins(proc: (ID_sommet: Identifiant<'sommet'>, v: S) => void): void;
+    itererVoisins(proc: (ID_util: Identifiant<'sommet'>, v: S) => void): void;
 
     /**
      * Nombre de connexions actives.
      */
-    nombreConnexionsActives() : number;
+    nombreConnexionsActives(): number;
 }
 
-class NoeudParEnveloppe<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>
-extends Enveloppe<EtatNoeud<S>, FormatNoeud<S>, EtiquetteNoeud>
-implements Noeud<S> {
-    constructor(en : EtatNoeud<S>){
+class NoeudParEnveloppe<
+    S extends FormatIdentifiable<'sommet'> & Activable>
+    extends Enveloppe<EtatNoeud<S>, FormatNoeud<S>, EtiquetteNoeud>
+    implements Noeud<S> {
+    constructor(en: EtatNoeud<S>) {
         super(en);
     }
-    aPourVoisin(ID_sommet: Identifiant<"sommet">): boolean {
-        return this.etat().voisins.contient(ID_sommet);
+    aPourVoisin(ID_util: Identifiant<'sommet'>): boolean {
+        return this.etat().voisins.contient(ID_util);
     }
-    itererVoisins(proc: (ID_sommet: Identifiant<"sommet">, v: S) => void): void {
+    itererVoisins(proc: (ID_util: Identifiant<'sommet'>, v: S) => void): void {
         this.etat().voisins.iterer(proc);
     }
     net(e: EtiquetteNoeud): string {
@@ -94,16 +105,16 @@ implements Noeud<S> {
     }
     toJSON(): FormatNoeud<S> {
         return {
-            centre : this.etat().centre,
-            voisins : this.etat().voisins.toJSON()
+            centre: this.etat().centre,
+            voisins: this.etat().voisins.toJSON()
         };
     }
-     /**
-     * Nombre de connexions actives.
-     */
-    nombreConnexionsActives() : number {
+    /**
+    * Nombre de connexions actives.
+    */
+    nombreConnexionsActives(): number {
         let r = 0;
-        this.itererVoisins((id, s) => {if(s.actif) r++;});
+        this.itererVoisins((id, s) => { if (s.actif) r++; });
         return r;
     }
 }
@@ -113,7 +124,10 @@ implements Noeud<S> {
  * @param n noeud au format
  * @return noeud
  */
-export function noeud<S extends FormatIdentifiable<'sommet'> & Prioritarisable & Activable>(n: FormatNoeud<S>): Noeud<S> {
+export function noeud<
+    
+    S extends FormatIdentifiable<'sommet'> & Activable>
+    (n: FormatNoeud<S>): Noeud<S> {
     return new NoeudParEnveloppe<S>(etatNoeud(n));
 }
 

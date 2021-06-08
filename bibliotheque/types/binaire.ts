@@ -2,20 +2,26 @@
 - mots binaires formés de ZERO (valant 0) et UN (valant 1).
 */
 
-import { Tableau, FormatTableau, EtiquetteTableau, tableauDeNatif } from './tableau';
-import { Deux } from './typesAtomiques';
+import { Deux, jamais, Mesurable } from './typesAtomiques';
 import { entierAleatoire } from './nombres';
 import { Enveloppe, TypeEnveloppe } from './enveloppe';
+import * as im from 'immutable';
+import e = require('express');
 
 /**
  * Schéma JSON pour représenter des mots en binaire :
  * - { taille: Naturel, tableau: [(Deux.ZERO | Deux.UN), ...] }.
  * Remaque : Deux.Zero == 0, Deux.UN == 1.
  */
-export type FormatMot = FormatTableau<Deux>;
-export type EtatMot = Tableau<Deux>;
+export interface FormatMot extends Mesurable {
+    readonly mot : ReadonlyArray<Deux>;
+}
 
-export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteTableau> {
+export type EtatMot = im.List<Deux>;
+
+export type EtiquetteMot = "taille" | "mot";
+
+export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteMot> {
   /**
    * Représentation sous la forme "ZERO | UN.ZERO | UN. etc.".
    * @return une représentation binaire littérale utilisant Zero et UN, et un point pour séparateur.
@@ -53,7 +59,7 @@ export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteTableau>
  * un tableau.
  * - Tableau de {ZERO, UN}.
  */
-class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> implements Mot {
+class MotParListe extends Enveloppe<EtatMot, FormatMot, EtiquetteMot> implements Mot {
   
   /**
    * Constructeur à partir d'un état.
@@ -64,22 +70,26 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
     super(etat);
   }
 
-  net(etiquette: EtiquetteTableau): string {
-      return this.etat().net(etiquette);
+  net(e: EtiquetteMot): string {
+    switch (e) {
+      case 'taille': return JSON.stringify(this.taille());
+      case 'mot': return JSON.stringify(this.tableauBinaire());
+  }
+  return jamais(e);
   }
   toJSON(): FormatMot {
-    return this.etat().toJSON();
+    return { taille : this.taille(), mot : this.etat().toJSON() };
   }
   
   taille(): number {
-    return this.etat().taille();
+    return this.etat().size;
   }
   /**
    * Utilisation de la représentation nette "valeurs".
    * @return une représentation du tableau de {0 , 1}.
    */
   representation(): string {
-    return '[' + this.net('valeurs') + ']';
+    return this.net('mot');
   }
 
   /**
@@ -90,17 +100,14 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
    * et un point pour séparateur.
    */
   base2Litteral(): string {
-    return this.etat().application((i, v) => Deux[v])
-      .reduction('', (x, y) => x + '.' + y)
-      .slice(1);
+    return this.etat().join(".");
   }
   /**
    * Application pour convertir en chaîne puis réduction pour concaténer.
    * @return la représentation binaire utilisant 0 et 1, sans séparateur.
    */
   base2(): string {
-    return this.etat().application((i, v) => v.toString())
-      .reduction('', (x, y) => x + y);
+    return this.etat().join("");
   }
   /**
    * Représentation sous la forme d'un entier naturel décimal.
@@ -114,14 +121,14 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
    * @return le tableau de {ZERO, UN}.
    */
   tableauBinaire(): ReadonlyArray<Deux> {
-    return this.etat().toJSON().tableau;
+    return this.etat().toJSON();
   }
   /**
    * Alias de valeur.
    * @param index position dans le mot, la position zéro étant à gauche.
    */
   bit(index: number): Deux {
-    return this.etat().valeur(index);
+    return this.etat().get(index, 0);
   }
 }
 
@@ -131,7 +138,7 @@ class MotParTableau extends Enveloppe<EtatMot, FormatMot, EtiquetteTableau> impl
  * @returns un mot binaire formé à partir du tableau mot.
  */
 export function mot(tab2: ReadonlyArray<Deux>): Mot {
-  return new MotParTableau(tableauDeNatif(tab2));
+  return new MotParListe(im.List(tab2));
 }
 
 /**

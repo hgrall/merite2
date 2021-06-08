@@ -230,7 +230,7 @@ class ModuleTableauAuFormat {
 /**
  * Module singleton permettant de manipuler les tableaux au format.
  */
-const MODULE_TABLEAU_AU_FORMAT = new ModuleTableauAuFormat();
+export const MODULE_TABLEAU_AU_FORMAT = new ModuleTableauAuFormat();
 
 /**
  * Etiquettes utilisées pour la représentation des tableaux.
@@ -501,7 +501,7 @@ export interface TableauMutable<T> extends TableauGenerique<T, FormatTableauMuta
     /**
      * Crible les associations (indice, élément) du tableau vérifiant le prédicat.
      * @param prop prédicat utilisé pour cribler.
-     * @returns tableau mutable contenant les associations vérifiant le prédicat.
+     * @returns nouveau tableau mutable contenant les associations vérifiant le prédicat.
      */
     cribler(prop: (i : number, x: T) => boolean): TableauMutable<T>;
     /**
@@ -554,7 +554,7 @@ class TableauMutableParEnveloppe<T>
     /**
      * Crible les associations (indice, élément) du tableau vérifiant le prédicat.
      * @param prop prédicat utilisé pour cribler.
-     * @returns tableau mutable contenant les associations vérifiant le prédicat.
+     * @returns nouveau tableau mutable contenant les associations vérifiant le prédicat.
      */
     cribler(prop: (i : number, x: T) => boolean): TableauMutable<T> {
         return new TableauMutableParEnveloppe<T>(

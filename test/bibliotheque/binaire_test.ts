@@ -38,7 +38,7 @@ describe('nombres binaires', () => {
     )
     testUnitaireStringString(
         'fonction base2',
-        "UN.UN.UN",
+        "1.1.1",
         binaire(7).base2Litteral()
     );
 
