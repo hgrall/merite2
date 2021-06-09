@@ -6,7 +6,7 @@ export const PanneauMessageContainer = styled.div`
 `;
 
 export const MessagesContainer = styled.div`
-    height: 60%;
+    height: 70vh;
     overflow: scroll;
     display: flex;
     flex-direction: column;

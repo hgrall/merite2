@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Individu, Message, ToutIndividu} from "./Helpers/typesInterface";
 import {
-    creerTableIdentificationMutableVide, FormatTableIdentification,
+    creerTableIdentificationMutableVide, FormatTableIdentification, TableIdentification,
     tableIdentification, TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
@@ -21,7 +21,7 @@ import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
-import {tableau} from "../../bibliotheque/types/tableau";
+import {tableau, tableauDeNatif} from "../../bibliotheque/types/tableau";
 import {Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
     FormatMessageARTchat,
@@ -29,7 +29,7 @@ import {
     FormatMessageEnvoiTchat,
     FormatMessageErreurTchat,
     FormatMessageTransitTchat,
-    FormatSommetTchat
+    FormatNoeudTchat, FormatUtilisateurTchat, NoeudTchat
 } from "../../tchat/commun/echangesTchat";
 import {AxiosError, AxiosResponse} from "axios";
 
@@ -76,7 +76,7 @@ export class Corps extends React.Component<{}, Etat> {
 
         this.state = {
             toutIndividu: {
-                IDVoisins: tableau([]),
+                IDVoisins: tableauDeNatif([]),
                 nom: "tous",
                 fond: COUPLE_FOND_ENCRE_TOUS.fond,
                 encre: COUPLE_FOND_ENCRE_TOUS.encre,
@@ -147,9 +147,9 @@ export class Corps extends React.Component<{}, Etat> {
 
 
     envoyerMessage(m: Message) {
-        let destinataires = tableau<Identifiant<"sommet">>([]);
+        let destinataires = tableauDeNatif<Identifiant<"sommet">>([]);
         if ("ID" in m.destinataire) {
-            destinataires = tableau([m.destinataire.ID]);
+            destinataires = tableauDeNatif([m.destinataire.ID]);
         } else if ("IDVoisins" in m.destinataire) {
             destinataires = m.destinataire.IDVoisins;
         }
@@ -176,7 +176,7 @@ export class Corps extends React.Component<{}, Etat> {
         requetePost<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
-    remplirIndividuSujet(noeudSujet: Noeud<FormatSommetTchat>) {
+    remplirIndividuSujet(noeudSujet: Noeud<FormatUtilisateurTchat>) {
         this.individuSujet = {
             ID: noeudSujet.etat().centre.ID,
             nom: noeudSujet.etat().centre.pseudo,
@@ -186,8 +186,7 @@ export class Corps extends React.Component<{}, Etat> {
         };
     }
 
-    remplirVoisins(voisinsSujet: FormatTableIdentification<"sommet", FormatSommetTchat>) {
-        const voisins = tableIdentification<"sommet", FormatSommetTchat>("sommet", voisinsSujet);
+    remplirVoisins(voisins: TableIdentification<"sommet", FormatUtilisateurTchat>) {
         const nouveauxVoisins = creerTableIdentificationMutableVide<"sommet", Individu>("sommet");
         const suite = new SuiteCouplesFondEncre();
         const identifiantsVoisins: Identifiant<"sommet">[] = [];
@@ -205,7 +204,7 @@ export class Corps extends React.Component<{}, Etat> {
             }
         });
         const nouveauToutIndividu = {
-            IDVoisins: tableau(identifiantsVoisins),
+            IDVoisins: tableauDeNatif<Identifiant<"sommet">>( identifiantsVoisins),
             nom: "tous",
             fond: COUPLE_FOND_ENCRE_TOUS.fond,
             encre: COUPLE_FOND_ENCRE_TOUS.encre,
@@ -224,9 +223,9 @@ export class Corps extends React.Component<{}, Etat> {
         });
         const self = this;
         this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
-            const noeudSujet = noeud<FormatSommetTchat>(JSON.parse(e.data));
+            const noeudSujet = noeud<FormatUtilisateurTchat>(JSON.parse(e.data));
             this.remplirIndividuSujet(noeudSujet);
-            this.remplirVoisins(noeudSujet.etat().voisins.etat());
+            this.remplirVoisins(noeudSujet.etat().voisins);
 
             self.setState({
                 nombreConnexions: noeudSujet.nombreConnexionsActives() + 1,

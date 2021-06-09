@@ -26,4 +26,3 @@ export interface Message {
   readonly contenu: string;
   readonly accuses: Couleur[]; // Couleurs des individus destinataires
 }
-
