@@ -39,7 +39,13 @@ export interface Activable {
     readonly actif : boolean;
 }
 
-/**
+
+export function modificationActivite<T extends Activable>(s: T): T {
+    return {...s, actif : !(s.actif) };
+}
+
+
+/*
  * TODO inutile Interface exprimant la propriété d'être activable et mutable.
  * Attribut :
  * - actif : booléen.

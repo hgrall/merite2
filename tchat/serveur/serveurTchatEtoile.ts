@@ -52,7 +52,7 @@ function traitementPOST(msg: FormatMessageEnvoiTchat)
             .crible((i, id) => reseau.sontVoisins(msg.corps.ID_emetteur, id));
     const idsDestinatairesEffectifs =
         idsDestinatairesVoisins
-            .crible((i, id) => reseau.utilisateur(id).actif);
+            .crible((i, id) => reseau.sommet(id).actif);
     return {
         accuseReception: traductionEnvoiEnAR(msg,       idsDestinatairesEffectifs, generateurIdentifiantsMessages.produire('message')),
         messagesEnTransit: idsDestinatairesEffectifs
@@ -105,7 +105,7 @@ serveurApplications.specifierTraitementRequetePOST<
 */
 
 export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
-    if (!reseau.aUnutilisateurInactif()) {
+    if (!reseau.aUnSommetInactifDeconnecte()) {
         const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
         logger.warn(desc);
         canal.envoyerJSON(
@@ -114,14 +114,14 @@ export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
         return;
     }
     // Envoi de la configuration initiale 
-    const ID_util = reseau.activerutilisateur(canal);
+    const ID_util = reseau.activerSommet(canal);
     const noeud = reseau.noeud(ID_util);
     canal.envoyerJSON('config', noeud);
     // Envoi de la nouvelle configuration aux voisins actifs
     reseau.diffuserConfigurationAuxVoisins(ID_util);
     // Enregistrement du traitement lors de la déconnexion
     canal.enregistrerTraitementDeconnexion(() => {
-        reseau.inactiverutilisateur(ID_util);
+        reseau.inactiverSommet(ID_util);
         reseau.diffuserConfigurationAuxVoisins(ID_util);
     });
 }

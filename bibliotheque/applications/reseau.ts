@@ -7,7 +7,7 @@ import {
     TableIdentificationMutable
 } from "../types/tableIdentification";
 import { creerFileMutableVideIdentifiantsPrioritaires, FileMutableIdentifiantsPrioritaires, FormatFileIdentifiantsPrioritaires } from "../types/fileIdentifiantsPrioritaires";
-import { Activable, jamais } from "../types/typesAtomiques"
+import { Activable, jamais, modificationActivite } from "../types/typesAtomiques"
 import { noeud, Noeud } from "./noeud";
 import { CanalPersistantEcritureJSON } from "../communication/connexion";
 import { EnsembleIdentifiants } from "../types/ensembleIdentifiants";
@@ -15,20 +15,21 @@ import { EnsembleIdentifiants } from "../types/ensembleIdentifiants";
 
 /**
  * Etat d'un réseau composé
- * - d'un table mutable d'identification de utilisateurs,
- * - d'un file mutable de utilisateurs inactifs, munis d'une priorité,
- * - d'une table d'adjacence, associant à un identifiant de utilisateur
- *   un ensemble d'identifiants de utilisateurs voisins,
+ * - d'un table mutable d'identification de sommets,
+ * - d'un file mutable de sommets inactifs déconnectés,
+ *  munis d'une priorité,
+ * - d'une table d'adjacence, associant à un identifiant 
+ * de sommet un ensemble d'identifiants de sommets voisins,
  * - d'une table de connexions, 
- *   associant à un identifiant de utilisateur un canal.
- * @param FS format des utilisateurs identifiables et activables.
- * @param C canal en écriture du serveur vers un client hôte d'un utilisateur actif.
+ *   associant à un identifiant de sommet un canal.
+ * @param FS format des sommets identifiables et activables.
+ * @param C canal en écriture du serveur vers un client hôte d'un sommet actif.
  */
 export interface EtatReseau<
     FS extends FormatIdentifiable<'sommet'> & Activable,
     C extends CanalPersistantEcritureJSON> {
-    readonly utilisateurs: TableIdentificationMutable<'sommet', FS>;
-    readonly fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'>;
+    readonly sommets: TableIdentificationMutable<'sommet', FS>;
+    readonly fileInactifsDeconnectes: FileMutableIdentifiantsPrioritaires<'sommet'>;
     readonly adjacence: TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>;
     readonly connexions: TableIdentificationMutable<'sommet', C>;
 }
@@ -36,16 +37,17 @@ export interface EtatReseau<
 
 /**
  * Format d'un réseau composé
- * - d'une table de utilisateurs, identifiables et activables,
- * - d'un file de utilisateurs inactifs, munis d'une priorité,
- * - d'une table d'adjacence, associant à un identifiant de utilisateur
- *   un tableau d'identifiants de utilisateurs voisins.
- * @param FS format des utilisateurs identifiables et activables
+ * - d'une table de sommets, identifiables et activables,
+ * - d'un file de sommets inactifs et déconnectés,
+ *  munis d'une priorité,
+ * - d'une table d'adjacence, associant à un identifiant 
+ * de sommet un tableau d'identifiants de sommets voisins.
+ * @param FS format des sommets identifiables et activables.
  */
 export interface FormatReseau<
     FS extends FormatIdentifiable<'sommet'> & Activable> {
-    readonly utilisateurs: FormatTableIdentification<'sommet', FS>;
-    readonly fileInactifs: FormatFileIdentifiantsPrioritaires<'sommet'>;
+    readonly sommets: FormatTableIdentification<'sommet', FS>;
+    readonly fileInactifsDeconnectes: FormatFileIdentifiantsPrioritaires<'sommet'>;
     readonly adjacence: FormatTableIdentification<'sommet', ReadonlyArray<string>>;
 }
 
@@ -53,22 +55,24 @@ export interface FormatReseau<
  * Etiquettes utilisées pour la représentation des réseaux.
  * TODO à compléter à l'usage.
  */
-export type EtiquetteReseau = 'utilisateurs' | 'inactifs' | 'adjacence';
+export type EtiquetteReseau = 'sommets' | 'inactifs' | 'adjacence';
 
 /**
- * Interface pour un réseau, paramétrée par le type des utilisateurs.
+ * Interface pour un réseau, paramétrée par le type des sommetss.
  * Le réseau contient :
- * - une table d'identification pour les utilisateurs,identifiables et activables,
- * - une table d'adjacence pour tous les utilisateurs,
- * - une table de connexions pour les utilisateurs actifs distants,
- * - une file de utilisateurs inactifs, munis d'une priorité.
- * Le calcul de la priorité se fait dynamiquement 
- * suivant la configuration du réseau. 
+ * - une table d'identification pour les sommets,
+ * identifiables et activables,
+ * - une table d'adjacence pour tous les sommets,
+ * - une table de connexions pour les sommets actifs distants,
+ * - une file de sommets inactifs et déconnectés, 
+ * munis d'une priorité.
+ * Le calcul de la priorité se fait dynamiquement suivant la
+ * configuration du réseau. 
  * Cette classe abstraite doit être étendue par 
  * - l'initialisation de la file,
  * - le retrait de la file,
  * - l'ajout à la file. 
- * @param FS type décrivant les utilisateurs en JSON.
+ * @param FS type décrivant les sommets en JSON.
  * @param C type décrivant les connexions (serveur vers client)
  */
 export interface ReseauMutable<
@@ -80,133 +84,141 @@ export interface ReseauMutable<
      * Méthode appelée lors de la construction, 
      * à implémenter dans chaque réseau concret.
      */
-    initierFileDesInactifs(): void;
+    initierFileDesInactifsDeconnectes(): void;
     /**
-     * Détermine si le  réseau possède l'utilisateur identifié par l'argument.
-     * @param ID_util identité de l'utilisateur.
-     * @returns true si le réseau possède ce utilisateur, false sinon.
+     * Détermine si le  réseau possède le sommet identifié par l'argument.
+     * @param ID_sommet identité de le sommet.
+     * @returns true si le réseau possède ce sommet, false sinon.
      */
-    possedeutilisateur(ID_util: Identifiant<'sommet'>): boolean;
+    possedeSommet(ID_sommet: Identifiant<'sommet'>): boolean;
 
     /**
-     * Détermine si les deux utilisateurs identifiés par les arguments sont voisins.
-     * Précondition : les utilisateurs appartiennent au réseau.
-     * @param ID_util1 identité de l'utilisateur.
-     * @param ID_util2 identité de l'utilisateur.
+     * Détermine si les deux sommets identifiés par les arguments sont voisins.
+     * Précondition : les sommets appartiennent au réseau.
+     * @param ID_sommet1 identité de le sommet.
+     * @param ID_sommet2 identité de le sommet.
      */
-    sontVoisins(ID_util1: Identifiant<'sommet'>,
-        ID_util2: Identifiant<'sommet'>): boolean;
+    sontVoisins(ID_sommet1: Identifiant<'sommet'>,
+        ID_sommet2: Identifiant<'sommet'>): boolean;
 
     /**
-     * utilisateur actif identifié par l'argument.
-     * Précondition : l'utilisateur est présent.
-     * @param ID_util identité de l'utilisateur.
-     * @returns la description de l'utilisateur.
+     * Sommet actif identifié par l'argument.
+     * Précondition : le sommet est présent.
+     * @param ID_sommet identité de le sommet.
+     * @returns la description de le sommet.
      */
-    utilisateur(ID_util: Identifiant<'sommet'>): FS;
+    sommet(ID_sommet: Identifiant<'sommet'>): FS;
 
     /**
-     * Connexion associée au utilisateur identifié par l'argument.
-     * Précondition : l'utilisateur est actif.
-     * @param ID_util 
+     * Connexion associée au sommet identifié par l'argument.
+     * Précondition : le sommet est actif.
+     * @param ID_sommet 
      */
-    connexion(ID_util: Identifiant<'sommet'>): C;
+    connexion(ID_sommet: Identifiant<'sommet'>): C;
 
     /**
-     * Détermine si le réseau possède un utilisateur actif.
-     * @returns true si le réseau possède un utilisateur actif, false sinon.
+     * Active un sommet inactif déconnecté.
+     * C'est le sommet le plus prioritaire qui est activé.
+     * Précondition : le réseau possède un sommet inactif déconnecté.
+     * @returns identifiant du sommet activé.
      */
-    aUnutilisateurActif(): boolean;
+    activerSommet(connexion: C): Identifiant<'sommet'>;
 
     /**
-     * Détermine si le réseau possède un utilisateur inactif.
-     * @returns true si le réseau possède un utilisateur inactif, false sinon.
-     */
-    aUnutilisateurInactif(): boolean;
-
-    /**
-     * Active un utilisateur inactif.
-     * C'est l'utilisateur le plus prioritaire qui est activé.
-     * Précondition : le réseau possède un utilisateur inactif.
-     * @returns utilisateur activé.
-     */
-    activerutilisateur(connexion: C): Identifiant<'sommet'>;
-
-    /**
-     * Retire l'utilisateur de la file. Méthode abstraite à implémenter 
+     * Retire le sommet de la file. Méthode abstraite à implémenter 
      * dans chaque classe concrète suivant les règles de priorité.
      * Attention : 
-     * le retrait de la file se fait alors que l'utilisateur est encore
+     * le retrait de la file se fait alors que le sommet est encore
      * considéré comme inactif. Tout calcul de priorités dépendant 
-     * de la table d'adjacence et de la description des utilisateurs 
-     * donne donc la priorité avant l'activation de l'utilisateur. 
-     * @returns identifiant de l'utilisateur à retirer de la file
+     * de la table d'adjacence et de la description des sommets 
+     * donne donc la priorité avant l'activation de le sommet. 
+     * @returns identifiant de le sommet à retirer de la file
      */
-    retirerutilisateurDeFile(): Identifiant<'sommet'>;
+    retirerSommetDeFile(): Identifiant<'sommet'>;
 
     /**
-     * Inactive l'utilisateur identifié par l'argument.
-     * Précondition : le réseau possède ce utilisateur actif. 
-     * @param ID_util identité de l'utilisateur à inactiver.
+     * Inactive le sommet identifié par l'argument, 
+     * après une déconnexion.
+     * Précondition : le réseau possède ce sommet actif. 
+     * @param ID_sommet identité de le sommet à inactiver.
      */
-    inactiverutilisateur(ID_util: Identifiant<'sommet'>): void;
+    inactiverSommet(ID_sommet: Identifiant<'sommet'>): void;
 
     /**
-     * Ajoute l'utilisateur à la file. Méthode abstraite à implémenter 
+     * Ajoute le sommet à la file. Méthode abstraite à implémenter 
      * dans chaque classe concrète suivant les règles de priorité.
      * Attention : 
-     * l'ajout de la file se fait alors que l'utilisateur est encore
+     * l'ajout de la file se fait alors que le sommet est encore
      * considéré comme actif. Tout calcul de priorités dépendant 
-     * de la table d'adjacence et de la description des utilisateurs 
-     * donne donc la priorité avant l'inactivation de l'utilisateur.  
+     * de la table d'adjacence et de la description des sommets 
+     * donne donc la priorité avant l'inactivation du sommet.  
      * 
-     * @param ID_util identifiant de l'utilisateur à ajouter à la file
+     * @param ID_sommet identifiant de le sommet à ajouter à la file
      */
-    ajouterutilisateurAFile(ID_util: Identifiant<'sommet'>): void;
+    ajouterSommetAFile(ID_sommet: Identifiant<'sommet'>): void;
 
     /**
-     * Nombre total de utilisateurs inactifs dans le réseau.
+     * Nombre total de sommets inactifs déconnectés dans le réseau.
      */
-    nombreInactifs(): number;
+    nombreInactifsDeconnectes(): number;
 
     /**
-     * Nombre total de utilisateurs inactifs dans le réseau.
+     * Détermine si le réseau possède un sommet inactif et déconnecté.
+     */
+    aUnSommetInactifDeconnecte() : boolean;
+
+    /**
+     * Nombre total de sommets inactifs dans le réseau.
+     */
+    nombreTotalInactifs(): number;
+
+
+    /**
+     * Nombre total de sommets actifs dans le réseau.
      */
     nombreActifs(): number;
 
     /**
-     * Noeud de cente l'utilisateur identifié par l'argument.
-     * @param identifant de l'utilisateur
-     * @returns noeud de centre l'utilisateur identifié
+     * Noeud de cente le sommet identifié par l'argument.
+     * @param identifant de le sommet
+     * @returns noeud de centre le sommet identifié
      */
-    noeud(ID_util: Identifiant<'sommet'>): Noeud<FS>;
+    noeud(ID_sommet: Identifiant<'sommet'>): Noeud<FS>;
     /**
      * Diffuse la configuration formée de la représentation JSON 
      * du noeud. 
-     * @param ID_util utilisateur au centre du noeud 
+     * @param ID_sommet sommet au centre du noeud 
      */
-    diffuserConfigurationAuxVoisins(ID_util: Identifiant<'sommet'>): void;
+    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void;
 
     /**
-     * Itère sur tous les utilisateurs actifs en leur appliquant une fonction.
-     * @param f procédure à appliquer a chaque association (identifant, utilisateur actif).
+     * Itère sur tous les sommets en leur appliquant une fonction. 
+     * @param f procédure à appliquer a chaque association (identifant, sommet actif).
      */
-    itererutilisateurs(f: (ID_util: Identifiant<'sommet'>, s: FS) => void): void;
+    itererSommets(f: (ID_sommet: Identifiant<'sommet'>, s: FS) => void): void;
 
     /**
-     * Voisins de l'utilisateur identifié par l'argument.
+     * Voisins de le sommet identifié par l'argument.
      */
-    voisins(ID_util: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'>;
-
+    voisins(ID_sommet: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'>;
     /**
-     * Voisins actifs de l'utilisateur identifié par l'argument.
+     * Crible des voisins d'un sommet.
+     * @param ID_sommet identifiant du sommet.
+     * @param prop prédicat s'appliquant à un couple (identifiant, sommet identifié).
+     * @return ensemble des identifiants des sommets appartenant au crible.
      */
-    voisinsActifs(ID_util: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'>;
-
+    cribleVoisins(
+        ID_sommet: Identifiant<'sommet'>,
+        prop: (ID: Identifiant<'sommet'>, s: FS) => boolean): EnsembleIdentifiants<'sommet'>;
     /**
-     * Voisins inactifs de l'utilisateur identifié par l'argument.
+     * Taille du crible des voisins d'un sommet.
+     * @param ID_sommet identifiant du sommet.
+     * @param prop prédicat s'appliquant à un couple (identifiant, sommet identifié).
+     * @returns taille du crible.
      */
-    voisinsInactifs(ID_util: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'>;
+    tailleCribleVoisins(
+        ID_sommet: Identifiant<'sommet'>,
+        prop: (ID: Identifiant<'sommet'>, s: FS) => boolean): number
 
 }
 
@@ -219,149 +231,171 @@ export abstract class ReseauMutableParEnveloppe<
 {
 
     constructor(
-        utilisateurs: TableIdentificationMutable<'sommet', FS>,
+        sommets: TableIdentificationMutable<'sommet', FS>,
         adjacence:
             TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>,
-        private modificationActivite: (s: FS) => FS
     ) {
         super({
-            utilisateurs: utilisateurs,
-            fileInactifs: creerFileMutableVideIdentifiantsPrioritaires('sommet'),
+            sommets: sommets,
+            fileInactifsDeconnectes: creerFileMutableVideIdentifiantsPrioritaires('sommet'),
             adjacence: adjacence,
             connexions: creerTableIdentificationMutableVide<'sommet', C>('sommet')
         });
-        this.initierFileDesInactifs();
+        this.initierFileDesInactifsDeconnectes();
     }
     /**
      * Initie la file des inactifs. Méthode appelée lors de la construction, à implémenter dans chaque réseau concret.
      */
-    abstract initierFileDesInactifs(): void;
+    abstract initierFileDesInactifsDeconnectes(): void;
     net(e: EtiquetteReseau): string {
         switch (e) {
-            case "utilisateurs":
-                return this.etat().utilisateurs.representation();
+            case "sommets":
+                return this.etat().sommets.representation();
             case "adjacence":
                 return this.etat().adjacence.representation();
             case "inactifs":
-                return this.etat().fileInactifs.representation();
+                return this.etat().fileInactifsDeconnectes.representation();
         }
         return jamais(e);
     }
 
     representation(): string {
-        return `utilisateurs : ${this.net("utilisateurs")} - Adjacence : ${this.net("adjacence")}`;
+        return `Sommets : ${this.net("sommets")} - Adjacence : ${this.net("adjacence")}`;
     }
     toJSON(): FormatReseau<FS> {
         return {
-            utilisateurs: this.etat().utilisateurs.toJSON(),
-            fileInactifs: this.etat().fileInactifs.toJSON(),
+            sommets: this.etat().sommets.toJSON(),
+            fileInactifsDeconnectes: this.etat().fileInactifsDeconnectes.toJSON(),
             adjacence: this.etat()
                 .adjacence.application((id, x) => x.toJSON().ensemble).toJSON()
         };
     }
 
-    possedeutilisateur(ID_util: Identifiant<'sommet'>): boolean {
-        return this.etat().utilisateurs.contient(ID_util);
+    possedeSommet(ID_sommet: Identifiant<'sommet'>): boolean {
+        return this.etat().sommets.contient(ID_sommet);
     }
 
-    sontVoisins(ID_util1: Identifiant<'sommet'>, ID_util2: Identifiant<'sommet'>): boolean {
-        return this.etat().adjacence.valeur(ID_util1).contient(ID_util2);
+    sontVoisins(ID_sommet1: Identifiant<'sommet'>, ID_sommet2: Identifiant<'sommet'>): boolean {
+        return this.etat().adjacence.valeur(ID_sommet1).contient(ID_sommet2);
     }
 
-    utilisateur(ID_util: Identifiant<'sommet'>): FS {
-        return this.etat().utilisateurs.valeur(ID_util);
+    sommet(ID_sommet: Identifiant<'sommet'>): FS {
+        return this.etat().sommets.valeur(ID_sommet);
     }
 
-    connexion(ID_util: Identifiant<'sommet'>): C {
-        return this.etat().connexions.valeur(ID_util);
+    connexion(ID_sommet: Identifiant<'sommet'>): C {
+        return this.etat().connexions.valeur(ID_sommet);
     }
 
-    aUnutilisateurActif(): boolean {
-        return this.etat().utilisateurs.selectionAssociationSuivantCritere((id, s) => s.actif).estPresent();
+    aUnSommetActif(): boolean {
+        return this.etat().sommets.selectionAssociationSuivantCritere((id, s) => s.actif).estPresent();
     }
 
-    aUnutilisateurInactif(): boolean {
-        return this.etat().utilisateurs.selectionAssociationSuivantCritere((id, s) => !(s.actif)).estPresent();
+    aUnSommetInactif(): boolean {
+        return this.etat().sommets.selectionAssociationSuivantCritere((id, s) => !(s.actif)).estPresent();
     }
 
-    activerutilisateur(connexion: C): Identifiant<'sommet'> {
-        //Sélectionne l'utilisateur le plus prioritaire et met à jour la file.
-        const ID_util = this.retirerutilisateurDeFile();
-        // Active l'utilisateur.
-        const utilisateur = this.etat().utilisateurs.valeur(ID_util);
-        this.etat().utilisateurs.modifier(ID_util, this.modificationActivite(utilisateur));
+    activerSommet(connexion: C): Identifiant<'sommet'> {
+        //Sélectionne le sommet le plus prioritaire et met à jour la file.
+        const ID_sommet = this.retirerSommetDeFile();
+        // Active le sommet.
+        const sommet = this.etat().sommets.valeur(ID_sommet);
+        this.etat().sommets.modifier(ID_sommet, modificationActivite(sommet));
         // Enregistre la connexion.
-        this.etat().connexions.ajouter(ID_util, connexion);
-        return ID_util;
+        this.etat().connexions.ajouter(ID_sommet, connexion);
+        return ID_sommet;
     }
 
-    abstract retirerutilisateurDeFile(): Identifiant<'sommet'>;
+    abstract retirerSommetDeFile(): Identifiant<'sommet'>;
 
-    inactiverutilisateur(ID_util: Identifiant<'sommet'>): void {
-        // Ajoute l'utilisateur à la file des inactifs et met à jour la file.
-        this.ajouterutilisateurAFile(ID_util);
-        // Inactive l'utilisateur.
-        const utilisateur = this.etat().utilisateurs.valeur(ID_util);
-        this.etat().utilisateurs.modifier(ID_util, this.modificationActivite(utilisateur));
-        // Retire la connexion associée au utilisateur.
-        this.etat().connexions.retirer(ID_util);
+    inactiverSommet(ID_sommet: Identifiant<'sommet'>): void {
+        // Ajoute le sommet à la file des inactifs et met à jour la file.
+        this.ajouterSommetAFile(ID_sommet);
+        // Inactive le sommet.
+        const sommet = this.etat().sommets.valeur(ID_sommet);
+        this.etat().sommets.modifier(ID_sommet, modificationActivite(sommet));
+        // Retire la connexion associée au sommet.
+        this.etat().connexions.retirer(ID_sommet);
     }
 
-    abstract ajouterutilisateurAFile(ID_util: Identifiant<'sommet'>): void;
+    abstract ajouterSommetAFile(ID_sommet: Identifiant<'sommet'>): void;
 
-    nombreInactifs(): number {
-        return this.etat().fileInactifs.taille();
+    nombreInactifsDeconnectes(): number {
+        return this.etat().fileInactifsDeconnectes.taille();
     }
 
-    nombreActifs(): number {
-        return this.etat().utilisateurs.taille() - this.nombreInactifs();
+    aUnSommetInactifDeconnecte() : boolean {
+        return this.nombreInactifsDeconnectes() > 0;
     }
 
     /**
-     * Noeud de cente l'utilisateur identifié par l'argument.
-     * @param identifant de l'utilisateur
-     * @returns noeud de centre l'utilisateur identifié
+    * Nombre total de sommets inactifs dans le réseau.
+    */
+    nombreTotalInactifs(): number {
+        return this.etat().sommets.taille() - this.nombreActifs();
+    }
+
+
+    nombreActifs(): number {
+        let r = 0;
+        this.etat().sommets.iterer((id, val) => { if (val.actif) { r++; } });
+        return r;
+
+    }
+
+    /**
+     * Noeud de cente le sommet identifié par l'argument.
+     * @param identifant du sommet
+     * @returns noeud de centre le sommet identifié
      */
-    noeud(ID_util: Identifiant<'sommet'>): Noeud<FS> {
+    noeud(ID_sommet: Identifiant<'sommet'>): Noeud<FS> {
         const tableVoisins: TableIdentificationMutable<'sommet', FS> = creerTableIdentificationMutableVide('sommet');
-        this.voisins(ID_util).iterer((id) => tableVoisins.ajouter(id, this.etat().utilisateurs.valeur(id)));
+        this.voisins(ID_sommet).iterer((id) => tableVoisins.ajouter(id, this.etat().sommets.valeur(id)));
         return noeud({
-            centre: this.etat().utilisateurs.valeur(ID_util),
+            centre: this.etat().sommets.valeur(ID_sommet),
             voisins: tableVoisins.toJSON()
         }
         );
     }
 
-    diffuserConfigurationAuxVoisins(ID_util: Identifiant<'sommet'>): void {
-        this.voisins(ID_util).iterer((id) => {
-            if (this.utilisateur(id).actif) {
+    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
+        this.voisins(ID_sommet).iterer((id) => {
+            if (this.sommet(id).actif) {
                 const canalVoisin = this.connexion(id);
                 canalVoisin.envoyerJSON('config', this.noeud(id));
             }
         });
     }
 
-    itererutilisateurs(f: (ID_util: Identifiant<'sommet'>, s: FS) => void): void {
-        this.etat().utilisateurs.iterer(f);
+    itererSommets(f: (ID_sommet: Identifiant<'sommet'>, s: FS) => void): void {
+        this.etat().sommets.iterer(f);
     }
 
-    voisins(ID_util: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'> {
-        return this.etat().adjacence.valeur(ID_util);
+    voisins(ID_sommet: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'> {
+        return this.etat().adjacence.valeur(ID_sommet);
     }
 
-    /**
-     * Voisins actifs de l'utilisateur identifié par l'argument.
-     */
-    voisinsActifs(ID_util: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'> {
-        return this.etat().adjacence.valeur(ID_util).crible((id) => this.etat().utilisateurs.valeur(id).actif);
+    cribleVoisins(
+        ID_sommet: Identifiant<'sommet'>,
+        prop: (ID: Identifiant<'sommet'>, s: FS) => boolean): EnsembleIdentifiants<'sommet'> {
+        return this.etat().adjacence.valeur(ID_sommet).crible((ID) => prop(ID, this.etat().sommets.valeur(ID)));
     }
 
-    /**
-     * Voisins inactifs de l'utilisateur identifié par l'argument.
-     */
-    voisinsInactifs(ID_util: Identifiant<'sommet'>): EnsembleIdentifiants<'sommet'> {
-        return this.etat().adjacence.valeur(ID_util).crible((id) => !(this.etat().utilisateurs.valeur(id).actif));
+    tailleCribleVoisins(
+        ID_sommet: Identifiant<'sommet'>,
+        prop: (ID: Identifiant<'sommet'>, s: FS) => boolean): number {
+        let r = 0;
+        this.etat().adjacence.valeur(ID_sommet).iterer(
+            (ID) => {
+                const s = this.etat().sommets.valeur(ID);
+                if (prop(ID, s)) {
+                    r++;
+                }
+            }
+        )
+        return r;
     }
+
 
 
 }

@@ -11,5 +11,6 @@ import { Unite } from "../types/typesAtomiques";
 export type SorteIdentifiant = 
 "message" 
 | "sommet"
+| "consigne"
 | "test"; 
 

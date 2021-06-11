@@ -1,4 +1,4 @@
-import { GenerateurReseau, ReseauMutableParEnveloppe } from "../../bibliotheque/applications/reseau";
+import { GenerateurReseau, ReseauMutable, ReseauMutableParEnveloppe } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { creerEnsembleMutableIdentifiantsVide, EnsembleIdentifiants, EnsembleMutableIdentifiants } from "../../bibliotheque/types/ensembleIdentifiants";
 import { creerFileMutableVideIdentifiantsPrioritaires, FileMutableIdentifiantsPrioritaires } from "../../bibliotheque/types/fileIdentifiantsPrioritaires";
@@ -6,47 +6,73 @@ import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifi
 import { creerTableauMutableVide } from "../../bibliotheque/types/tableau";
 
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
+import { modificationActivite } from "../../bibliotheque/types/typesAtomiques";
 import { FormatUtilisateurTchat } from "../commun/echangesTchat";
-import { modificationActivite } from "./echangesServeurTchat";
 
+/**
+ * Interface spécifique pour un réseau de tchat. Les méthodes 
+ * facilitent la manipulation de la file.
+ */
+interface GrapheReseauTchat {
+    /**
+     * Voisins inactifs d'un sommet.
+     * @param ID_sommet identifiant du sommet.
+     * @returns ensemble des voisins inactifs.
+     */
+    voisinsInactifs(ID_sommet: Identifiant<"sommet">): EnsembleIdentifiants<"sommet">;
+    nombreVoisinsInactifs(ID_domaine: Identifiant<"sommet">): number;
+}
+
+/**
+ * Réseau mutable de tchat. La priorité pour un sommet 
+ * (correspondnant à un utilisateur du tchat) est donnée 
+ * par le nombre de sommets adjacents (voisins) inactifs. 
+ */
 export class ReseauMutableTchat<
     C extends CanalPersistantEcritureJSON>
-    extends ReseauMutableParEnveloppe<FormatUtilisateurTchat, C> {
+    extends ReseauMutableParEnveloppe<FormatUtilisateurTchat, C>
+    implements ReseauMutable<FormatUtilisateurTchat, C>, GrapheReseauTchat {
 
     constructor(
         utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat>,
         adjacence:
             TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>
     ) {
-        super(utilisateurs, adjacence, modificationActivite);
+        super(utilisateurs, adjacence);
+    }
+    voisinsInactifs(ID_sommet: Identifiant<"sommet">): EnsembleIdentifiants<"sommet"> {
+        return this.cribleVoisins(ID_sommet, (ID, s) => !s.actif);
+    }
+    nombreVoisinsInactifs(ID_sommet: Identifiant<"sommet">): number {
+        return this.tailleCribleVoisins(ID_sommet, (ID, s) => !s.actif);
     }
 
     /**
      * Initie la file des inactifs. La priorité est égale au nombre de voisins inactifs.
      */
-    initierFileDesInactifs(): void {
+    initierFileDesInactifsDeconnectes(): void {
         // Tous les utilisateurs sont initialement inactifs.
-        this.itererutilisateurs((id, s) => {
+        this.itererSommets((id, s) => {
             const p = this.voisinsInactifs(id).taille();
-            this.etat().fileInactifs.ajouter(id, p);
+            this.etat().fileInactifsDeconnectes.ajouter(id, p);
         });
     }
 
-    retirerutilisateurDeFile(): Identifiant<'sommet'> {
-        const ID = this.etat().fileInactifs.retirer();
+    retirerSommetDeFile(): Identifiant<'sommet'> {
+        const ID = this.etat().fileInactifsDeconnectes.retirer();
         this.voisinsInactifs(ID).iterer((id) => {
             const p = this.voisinsInactifs(id).taille();
-            this.etat().fileInactifs.modifier(id, p, p - 1);
+            this.etat().fileInactifsDeconnectes.modifier(id, p, p - 1);
         });
         return ID;
     }
-    ajouterutilisateurAFile(ID_util: Identifiant<'sommet'>): void {
+    ajouterSommetAFile(ID_util: Identifiant<'sommet'>): void {
         const voisinsInactifs = this.voisinsInactifs(ID_util);
         const pID = voisinsInactifs.taille();
-        this.etat().fileInactifs.ajouter(ID_util, pID);
+        this.etat().fileInactifsDeconnectes.ajouter(ID_util, pID);
         this.voisinsInactifs(ID_util).iterer((id) => {
             const p = voisinsInactifs.taille();
-            this.etat().fileInactifs.modifier(id, p, p + 1);
+            this.etat().fileInactifsDeconnectes.modifier(id, p, p + 1);
         });
     }
 
@@ -56,7 +82,6 @@ export function creerReseauMutableTchat<
     C extends CanalPersistantEcritureJSON>
     (
         utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat>,
-        fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'>,
         adjacence:
             TableIdentification<'sommet', EnsembleIdentifiants<'sommet'>>,
 ): ReseauMutableTchat<C> {
@@ -108,7 +133,7 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
 
         }
 
-        return creerReseauMutableTchat(utilisateurs, fileInactifs, adjacence);
+        return creerReseauMutableTchat(utilisateurs, adjacence);
     }
 }
 
@@ -133,8 +158,7 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
     engendrer(): ReseauMutableTchat<C> {
         const tailleTchat = this.noms.length;
         const utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat> = creerTableIdentificationMutableVide('sommet');
-        const fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'> = creerFileMutableVideIdentifiantsPrioritaires('sommet');
-
+        
         const adjacence:
             TableIdentificationMutable<'sommet',
                 EnsembleMutableIdentifiants<'sommet'>> = creerTableIdentificationMutableVide('sommet');
@@ -166,7 +190,7 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
 
         }
 
-        return creerReseauMutableTchat(utilisateurs, fileInactifs, adjacence);
+        return creerReseauMutableTchat(utilisateurs, adjacence);
     }
 }
 

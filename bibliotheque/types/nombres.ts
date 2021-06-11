@@ -20,3 +20,10 @@ export function normalisationNombre(n : number, taille : number) : string {
 export function entierAleatoire(max: number): number {
 	return Math.floor(Math.random() * Math.floor(max));
 }
+
+/**
+ * Quotient de la division eudlidienne.
+ */
+export function quotient(numerateur : number, denominateur : number) : number {
+    return Math.floor(numerateur / denominateur);
+}

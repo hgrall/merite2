@@ -16,14 +16,6 @@ export function traductionEnvoiEnAR(e : FormatMessageEnvoiTchat,
     };
 }
 
-export function modificationActivite(s: FormatUtilisateurTchat): FormatUtilisateurTchat {
-    return {
-        ID: s.ID,
-        actif: !(s.actif),
-        pseudo: s.pseudo
-    };
-}
-
 export function traductionEnvoiEnTransit(e : FormatMessageEnvoiTchat, ID_msg : Identifiant<'message'>, ID_dest : Identifiant<'sommet'>) : FormatMessageTransitTchat {
     return {
         ID: ID_msg,

@@ -20,12 +20,12 @@ function cf(n : number) : ConnexionFictive {
 describe('Réseau tchat étoile', () => {
     let genR = creerGenerateurReseauEtoile<ConnexionFictive>("code", 2, ["coco", "lulu", "zaza"]);
     let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
-    const id1 = r.activerutilisateur(cf(17));
+    const id1 = r.activerSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
         [true, 0],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
 
     testUnitaireJsonJson(
@@ -36,19 +36,19 @@ describe('Réseau tchat étoile', () => {
     testUnitaireJsonJson(
         "nombre d'inactifs",
         5,
-        r.nombreInactifs(),
+        r.nombreInactifsDeconnectes(),
     ); 
     testUnitaireJsonJson(
         "priorité maximale (ordre inversé)",
         1,
-        r.etat().fileInactifs.etat().prioriteMaximale
+        r.etat().fileInactifsDeconnectes.etat().prioriteMaximale
     );
-    const id2 = r.activerutilisateur(cf(19));
+    const id2 = r.activerSommet(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
         [true, 1],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
     
     testUnitaireJsonJson(
@@ -56,12 +56,12 @@ describe('Réseau tchat étoile', () => {
         true,
         r.sontVoisins(id1, identifiant('sommet', id2.val))
     );
-    const id3 = r.activerutilisateur(cf(22));
+    const id3 = r.activerSommet(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
         [true, 2],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
 
     testUnitaireJsonJson(
@@ -69,12 +69,12 @@ describe('Réseau tchat étoile', () => {
         true,
         r.sontVoisins(id1, identifiant('sommet', id3.val))
     );    
-    const id4 = r.activerutilisateur(cf(24));
+    const id4 = r.activerSommet(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
         [true, 0],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
     testUnitaireJsonJson(
         "voisinage",
@@ -86,12 +86,12 @@ describe('Réseau tchat étoile', () => {
         24,
         r.connexion(id4)
     );
-    r.inactiverutilisateur(id4);
+    r.inactiverSommet(id4);
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre inactif - 0 voisin actif",
         [false, 0],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );   
 });
 
@@ -99,12 +99,12 @@ describe('Réseau tchat anneau', () => {
     let genR = creerGenerateurReseauAnneau<ConnexionFictive>("code", 2, ["coco", "lulu", "momo", "zaza"]);
     let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
     
-    const id1 = r.activerutilisateur(cf(17));
+    const id1 = r.activerSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
         [true, 0],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
     
     testUnitaireJsonJson(
@@ -115,31 +115,31 @@ describe('Réseau tchat anneau', () => {
     testUnitaireJsonJson(
         "nombre d'inactifs",
         7,
-        r.nombreInactifs(),
+        r.nombreInactifsDeconnectes(),
     ); 
     testUnitaireJsonJson(
         "priorité maximale (ordre inversé)",
         1,
-        r.etat().fileInactifs.etat().prioriteMaximale
+        r.etat().fileInactifsDeconnectes.etat().prioriteMaximale
     );
-    const id2 = r.activerutilisateur(cf(19));
+    const id2 = r.activerSommet(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
         [true, 1],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
     testUnitaireJsonJson(
         "voisinage id1 avec id2",
         true,
         r.sontVoisins(id1, identifiant('sommet', id2.val))
     );
-    const id3 = r.activerutilisateur(cf(22));
+    const id3 = r.activerSommet(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
         [true, 1],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
     testUnitaireJsonJson(
         "voisinage id3 avec id1 ou id2 ?!",
@@ -147,12 +147,12 @@ describe('Réseau tchat anneau', () => {
         r.sontVoisins(id1, identifiant('sommet', id3.val)) 
         || r.sontVoisins(id2, identifiant('sommet', id3.val)) 
     );    
-    const id4 = r.activerutilisateur(cf(24));
+    const id4 = r.activerSommet(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
         [true, 2],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );
     testUnitaireJsonJson(
         "voisins inactifs / id4",
@@ -166,12 +166,12 @@ describe('Réseau tchat anneau', () => {
         r.connexion(id4)
     ); 
     
-    r.inactiverutilisateur(id4);
+    r.inactiverSommet(id4);
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre inactif - 2 voisins actifs",
         [false, 2],
-        [n.toJSON().centre.actif, n.nombreConnexionsActives()]
+        [n.toJSON().centre.actif, n.nombreVoisinsActifs()]
     );   
 
 });

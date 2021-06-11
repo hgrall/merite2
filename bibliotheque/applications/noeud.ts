@@ -77,7 +77,7 @@ export interface Noeud<
     /**
      * Nombre de connexions actives.
      */
-    nombreConnexionsActives(): number;
+    nombreVoisinsActifs(): number;
 }
 
 class NoeudParEnveloppe<
@@ -112,7 +112,7 @@ class NoeudParEnveloppe<
     /**
     * Nombre de connexions actives.
     */
-    nombreConnexionsActives(): number {
+    nombreVoisinsActifs(): number {
         let r = 0;
         this.itererVoisins((id, s) => { if (s.actif) r++; });
         return r;

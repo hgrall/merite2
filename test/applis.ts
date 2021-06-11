@@ -2,7 +2,8 @@
 
 console.log("* Début des tests");
 
-import "./applications/reseauTchat_test";
+//import "./applications/reseauTchat_test";
+import "./applications/reseauDistribution_test";
 
 
 console.log("* Fin des tests - Présentation des résultats");

@@ -2,11 +2,17 @@
 - mots binaires formés de ZERO (valant 0) et UN (valant 1).
 */
 
+import { List } from 'immutable';
+
 import { Deux, jamais, Mesurable } from './typesAtomiques';
 import { entierAleatoire } from './nombres';
 import { Enveloppe, TypeEnveloppe } from './enveloppe';
-import * as im from 'immutable';
-import e = require('express');
+
+/**
+ * Format binaire. Un mot (ou nom, ou message) binaire a pour format 
+ * un tableau de 0 (Deux.ZERO) et 1 (Deux.Un).
+ */
+export type FormatBinaire = ReadonlyArray<Deux>;
 
 /**
  * Schéma JSON pour représenter des mots en binaire :
@@ -14,13 +20,21 @@ import e = require('express');
  * Remaque : Deux.Zero == 0, Deux.UN == 1.
  */
 export interface FormatMot extends Mesurable {
-    readonly mot : ReadonlyArray<Deux>;
+    readonly mot : FormatBinaire;
 }
+/**
+ * Etat d'un mot binaire.
+ */
+export type EtatMot = List<Deux>;
 
-export type EtatMot = im.List<Deux>;
-
+/**
+ * Etiquettes d'un mot : la taille et le contenu.
+ */
 export type EtiquetteMot = "taille" | "mot";
 
+/**
+ * Interface pour les mots, un type enveloppe.
+ */
 export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteMot> {
   /**
    * Représentation sous la forme "ZERO | UN.ZERO | UN. etc.".
@@ -41,7 +55,7 @@ export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteMot> {
    * Tableau JSON composé de ZERO et de UN.
    * @return le tableau de {ZERO, UN}.
    */
-  tableauBinaire(): ReadonlyArray<Deux>;
+  tableauBinaire(): FormatBinaire;
   /**
    * Taille du mot binaire.
    */
@@ -56,8 +70,7 @@ export interface Mot extends TypeEnveloppe<EtatMot, FormatMot, EtiquetteMot> {
 
 /**
  * Classe représentant des mots en binaire par
- * un tableau.
- * - Tableau de {ZERO, UN}.
+ * une liste de 0 et 1.
  */
 class MotParListe extends Enveloppe<EtatMot, FormatMot, EtiquetteMot> implements Mot {
   
@@ -120,7 +133,7 @@ class MotParListe extends Enveloppe<EtatMot, FormatMot, EtiquetteMot> implements
    * Alias de l'attribut tableau de l'état.
    * @return le tableau de {ZERO, UN}.
    */
-  tableauBinaire(): ReadonlyArray<Deux> {
+  tableauBinaire(): FormatBinaire {
     return this.etat().toJSON();
   }
   /**
@@ -137,8 +150,8 @@ class MotParListe extends Enveloppe<EtatMot, FormatMot, EtiquetteMot> implements
  * @param mot
  * @returns un mot binaire formé à partir du tableau mot.
  */
-export function mot(tab2: ReadonlyArray<Deux>): Mot {
-  return new MotParListe(im.List(tab2));
+export function mot(tab2: FormatBinaire): Mot {
+  return new MotParListe(List(tab2));
 }
 
 /**
