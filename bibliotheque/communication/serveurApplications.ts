@@ -119,6 +119,20 @@ export interface ServeurApplications<EConcret, SConcret> {
         suffixe: string, repertoire: string, application: string): void;
 
     /**
+     * Spécifie l'application à servir étant donné un code
+     * et un chemin. L'application est désignée par son nom et son
+     * répertoire.
+     * - méthode http : GET
+     * - url : prefixe/code/suffixe
+     * - réponse : envoi du fichier repertoire/application
+     *
+     * @param prefixe préfixe du chemin de l'URL
+     * @param repertoire répertoire contenant l'application
+     * @param application nom du fichier de l'application à servir
+     */
+    specifierApplicationInitaleAServir(prefixe: string, repertoire: string, application: string): void;
+
+    /**
      * Spécifie le traitement d'une requête GET.
      * Requête :
      * - méthode http : GET
@@ -358,6 +372,35 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
                 let options = {
                     root: chemin(this.repertoire, cheminAppli),
                 };
+                console.log(chemin(this.repertoire, cheminAppli))
+                response.sendFile(application, options);
+                logger.info("Le serveur envoie l'application " + chemin(options.root, application) + " après une requête en " + chUrl + ".");
+            }
+        );
+    }
+    /**
+     * Spécifie l'application à servir étant donné un code
+     * et un chemin. L'application est désignée par son nom et son
+     * répertoire.
+     * - méthode http : GET
+     * - url : prefixe/code/suffixe
+     * - réponse : envoi du fichier repertoire/application
+     *
+     * @param prefixe préfixe du chemin de l'URL
+     * @param cheminAppli chemin relatif menant à l'application
+     * @param application nom du fichier de l'application à servir
+     */
+    specifierApplicationInitaleAServir(prefixe: string,  cheminAppli: string, application: string): void {
+        const chUrl = cheminURL(prefixe);
+        const nomCompletAppli = chemin(prefixe, application);
+        logger.info("Le serveur enregistre le service de l'application " + nomCompletAppli + " à l'adresse " + chUrl + ".");
+        this.appli.get(
+            chUrl,
+            (requete: express.Request, response: express.Response) => {
+                let options = {
+                    root: chemin(this.repertoire, cheminAppli),
+                };
+                console.log(chemin(this.repertoire, cheminAppli))
                 response.sendFile(application, options);
                 logger.info("Le serveur envoie l'application " + chemin(options.root, application) + " après une requête en " + chUrl + ".");
             }

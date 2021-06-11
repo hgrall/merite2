@@ -5,7 +5,7 @@ import {Individu, ToutIndividu} from "../Helpers/typesInterface";
 import {PastilleAdmin} from "../../../shared/Pastilles";
 import {Pseudo} from "../Label/Pseudo";
 import {ButtonDestinataire} from "../Button/ButtonDestinataire";
-import {TexteInformation, TexteXLarge} from "../../../shared/texte"
+import {TexteInformation, TexteXLarge} from "../../../shared/Texte"
 import {TableIdentificationMutable} from "../../../bibliotheque/types/tableIdentification";
 
 

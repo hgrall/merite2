@@ -1,8 +1,7 @@
 import * as React from "react";
 import {Individu, Message, ToutIndividu} from "./Helpers/typesInterface";
 import {
-    creerTableIdentificationMutableVide, FormatTableIdentification, TableIdentification,
-    tableIdentification, TableIdentificationMutable
+    creerTableIdentificationMutableVide, TableIdentification,TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
     Couleur,
@@ -16,7 +15,7 @@ import {
     Identifiant
 } from "../../bibliotheque/types/identifiant";
 import {dateEnveloppe, dateMaintenant} from "../../bibliotheque/types/date";
-import {creerFluxDeEvenements, requetePost} from "../communication/communicationServeur";
+import {creerFluxDeEvenements, requetePOST} from "../communication/communicationServeur";
 import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
@@ -30,7 +29,7 @@ import {
     FormatMessageErreurTchat,
     FormatMessageTransitTchat,
     FormatNoeudTchat, FormatUtilisateurTchat, NoeudTchat
-} from "../../tchat/commun/echangesTchat";
+} from "../commun/echangesTchat";
 import {AxiosError, AxiosResponse} from "axios";
 
 
@@ -173,7 +172,7 @@ export class Corps extends React.Component<{}, Etat> {
                 this.setState({etatInterface: EtatInterfaceTchat.ERRONE});
             }
         }
-        requetePost<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
+        requetePOST<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
     remplirIndividuSujet(noeudSujet: Noeud<FormatUtilisateurTchat>) {
@@ -228,7 +227,7 @@ export class Corps extends React.Component<{}, Etat> {
             this.remplirVoisins(noeudSujet.etat().voisins);
 
             self.setState({
-                nombreConnexions: noeudSujet.nombreConnexionsActives() + 1,
+                nombreConnexions: noeudSujet.nombreVoisinsActifs() + 1,
                 etatInterface: EtatInterfaceTchat.NORMAL,
                 nombreTotalConnexions: noeudSujet.etat().voisins.taille() + 1
             });

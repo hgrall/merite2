@@ -4,7 +4,8 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 var config = {
     entry: {
-        tchatReact: "./build/prototype/client/renduPrototype.js"
+        tchatReact: "./build/Tchat/client/renduTchat.js",
+        accueilReact: "./build/accueil/renduAccueil.js",
     }, // Les clés remplacent name ci-dessous.
     output: {
         path: __dirname + "/build",
@@ -39,6 +40,12 @@ var config = {
             template: 'site/interfaceTemplate.html',
             filename: "interfaceTchat.html", // output file name
             chunks: ['tchatReact'] // to inject in the body
+        }),
+        new HtmlWebpackPlugin({
+            title: 'Accueil',
+            template: 'site/interfaceTemplate.html',
+            filename: "interfaceAccueil.html",
+            chunks: ['accueilReact']
         }),
         new CopyPlugin({
             patterns: [
