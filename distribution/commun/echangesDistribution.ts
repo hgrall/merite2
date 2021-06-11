@@ -14,7 +14,8 @@ import {
     Identifiant, FormatIdentifiable} from "../../bibliotheque/types/identifiant";
 
 import { FormatNoeud, Noeud } from "../../bibliotheque/applications/noeud";
-import { FormatBinaire } from "../../bibliotheque/types/binaire";
+import {FormatBinaire, Mot} from "../../bibliotheque/types/binaire";
+import {FormatDateFr} from "../../bibliotheque/types/date";
 
 /**
  * Nombre de bits inutiles dans la trame.
@@ -165,3 +166,19 @@ export function estUtilisateur(s : FormatSommetDistribution) : s is FormatUtilis
 export function estDomaine(s : FormatSommetDistribution) : s is FormatDomaineDistribution {
     return !estUtilisateur(s);
 }
+
+
+export interface FormatMessageDistribution<TypeMsg> {
+    readonly ID: Identifiant<'message'>;
+    readonly ID_emetteur: Identifiant<'sommet'>;
+    readonly domaine_origine: Identifiant<'sommet'>;
+    readonly type: TypeMsg;
+    readonly contenu: Mot;
+    readonly date: FormatDateFr
+}
+
+export type FormatMessageEnvoiDistribution = FormatMessageDistribution<'distribution'>;
+export type FormatMessageEssaiDistribution = FormatMessageDistribution<'essai'>;
+export type FormatMessageDemandeVerrouillageDistribution = FormatMessageDistribution<'verrou'>;
+export type FormatMessageDemandeDeverrouillageDistribution = FormatMessageDistribution<'libe'>;
+export type FormatMessageTransmissionDistribution = FormatMessageDistribution<'transmettre'>;

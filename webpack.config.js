@@ -6,6 +6,7 @@ var config = {
     entry: {
         tchatReact: "./build/Tchat/client/renduTchat.js",
         accueilReact: "./build/accueil/renduAccueil.js",
+        distributionReact: "./build/distribution/client/renduJeu1.js"
     }, // Les clés remplacent name ci-dessous.
     output: {
         path: __dirname + "/build",
@@ -46,6 +47,12 @@ var config = {
             template: 'site/interfaceTemplate.html',
             filename: "interfaceAccueil.html",
             chunks: ['accueilReact']
+        }),
+        new HtmlWebpackPlugin({
+            title: 'Jeu 1 v0',
+            template: 'site/interfaceTemplate.html',
+            filename: "interfaceJeu1Distribution.html",
+            chunks: ['distributionReact']
         }),
         new CopyPlugin({
             patterns: [

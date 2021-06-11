@@ -19,7 +19,16 @@ import {
     FormatMessageTransitTchat,
     FormatUtilisateurTchat
 } from '../commun/echangesTchat';
-import {CODE, ENVOI, PREFIXE_ACCUEIL, PREFIXE_AUTH, PREFIXE_TCHAT, RECEPTION, SUFFIXE_ETOILE} from '../commun/routes';
+import {
+    CODE,
+    ENVOI,
+    PREFIXE_ACCUEIL,
+    PREFIXE_AUTH,
+    PREFIXE_DISTRIBUTION,
+    PREFIXE_TCHAT,
+    RECEPTION,
+    SUFFIXE_ETOILE, SUFFIXE_JEU1
+} from '../commun/routes';
 import {avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit} from './echangesServeurTchat';
 import {creerGenerateurReseauEtoile} from './reseauTchat';
 import {FormatMessageTchatValidator} from "../commun/verificationFormat";
@@ -40,6 +49,8 @@ const repertoireHtml: string = "build";
 serveurApplications.specifierRepertoireScriptsEmbarques(repertoireHtml);
 
 serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, repertoireHtml, "interfaceTchat.html");
+
+serveurApplications.specifierApplicationAServir(PREFIXE_DISTRIBUTION, CODE, SUFFIXE_JEU1, repertoireHtml, "interfaceJeu1Distribution.html");
 
 serveurApplications.specifierApplicationInitaleAServir(PREFIXE_ACCUEIL, repertoireHtml, "interfaceAccueil.html");
 
