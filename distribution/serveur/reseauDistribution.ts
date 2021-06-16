@@ -268,8 +268,12 @@ class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implem
         return creerReseauMutableDistribution(this.sommets, this.adjacence, this.consignesParDestination);
     }
 
+    /*TODO test(reseau : ReseauMutableDistribution<C>, ID_util : Identifiant<'sommet'>) : Noeud<FormatSommetDistribution> {
+        let ID_dom = reseau.domaine(ID_util);
+        return reseau.noeud(ID_dom);
+    }*/
 
-    // 2. Les utilisateurs par domaine
+    
 }
 
 export function creerGenerateurReseauDistribution<C extends CanalPersistantEcritureJSON>(

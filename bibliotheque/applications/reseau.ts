@@ -357,7 +357,7 @@ export abstract class ReseauMutableParEnveloppe<
         }
         );
     }
-
+    // TODO à vérifier - meilleure solution : une méthode abstraite sans doute - non générique
     diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
         this.voisins(ID_sommet).iterer((id) => {
             if (this.sommet(id).actif) {
