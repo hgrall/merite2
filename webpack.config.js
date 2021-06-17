@@ -1,14 +1,11 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
-const dotEnv = require('dotenv-webpack')
 const CopyPlugin = require("copy-webpack-plugin");
 
 var config = {
     entry: {
-        tchatReact: "./build/tchat/client/renduTchat.js",
-        distributionReact: "./build/distribution/client/renduJeu1.js",
+        tchatReact: "./build/Tchat/client/renduTchat.js",
         accueilReact: "./build/accueil/renduAccueil.js",
-        adminReact: "./build/admin/renduAdmin.js"
     }, // Les clés remplacent name ci-dessous.
     output: {
         path: __dirname + "/build",
@@ -45,25 +42,10 @@ var config = {
             chunks: ['tchatReact'] // to inject in the body
         }),
         new HtmlWebpackPlugin({
-            title: 'Jeu 1 v0',
-            template: 'site/interfaceTemplate.html',
-            filename: "interfaceJeu1Distribution.html",
-            chunks: ['distributionReact']
-        }),
-        new HtmlWebpackPlugin({
             title: 'Accueil',
             template: 'site/interfaceTemplate.html',
             filename: "interfaceAccueil.html",
             chunks: ['accueilReact']
-        }),
-        new HtmlWebpackPlugin({
-            title: 'Admin',
-            template: 'site/interfaceTemplate.html',
-            filename: "interfaceAdmin.html",
-            chunks: ['adminReact']
-        }),
-        new dotEnv({
-            systemvars: true // privilégier les variables d'environnement (Heroku's config vars), pas un fichier .env
         }),
         new CopyPlugin({
             patterns: [
@@ -74,4 +56,3 @@ var config = {
 };
 
 module.exports = config;
-

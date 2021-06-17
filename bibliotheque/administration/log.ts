@@ -1,4 +1,4 @@
-import * as winston from 'winston';
+import winston from 'winston';
 
 /*
 * Système de gestion des logs Winston : 

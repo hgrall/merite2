@@ -1,17 +1,30 @@
 import * as express from 'express';
-import { logger } from '../../bibliotheque/administration/log';
-import { ReseauMutable } from '../../bibliotheque/applications/reseau';
-import { ConnexionExpress, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
+import { isRight } from 'fp-ts/lib/Either'
+import {logger} from '../../bibliotheque/administration/log';
+import {ReseauMutable} from '../../bibliotheque/applications/reseau';
+import {ConnexionExpress, ConnexionLongueExpress} from '../../bibliotheque/communication/connexion';
 
-import { chemin, creerServeurApplicationsExpress, ServeurApplications } from "../../bibliotheque/communication/serveurApplications";
+import {
+    chemin,
+    creerServeurApplicationsExpress,
+    ServeurApplications
+} from "../../bibliotheque/communication/serveurApplications";
 
-import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
-import { option, Option, rienOption } from '../../bibliotheque/types/option';
-import { tableau, Tableau } from '../../bibliotheque/types/tableau';
-import { FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat, FormatUtilisateurTchat } from '../commun/echangesTchat';
-import { PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, ENVOI, RECEPTION } from '../commun/routes';
-import { avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
-import { creerGenerateurReseauEtoile } from './reseauTchat';
+import {creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants} from "../../bibliotheque/types/identifiant";
+import {option, Option, rienOption} from '../../bibliotheque/types/option';
+import {tableau, Tableau} from '../../bibliotheque/types/tableau';
+import {
+    FormatMessageARTchat,
+    FormatMessageEnvoiTchat,
+    FormatMessageTransitTchat,
+    FormatUtilisateurTchat
+} from '../commun/echangesTchat';
+import {CODE, ENVOI, PREFIXE_ACCUEIL, PREFIXE_AUTH, PREFIXE_TCHAT, RECEPTION, SUFFIXE_ETOILE} from '../commun/routes';
+import {avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit} from './echangesServeurTchat';
+import {creerGenerateurReseauEtoile} from './reseauTchat';
+import {FormatMessageTchatValidator} from "../commun/verificationFormat";
+
+const crypto = require('crypto');
 
 const generateurIdentifiantsMessages:
     GenerateurIdentifiants<'message'> = creerGenerateurIdentifiantParCompteur(CODE + "-" + "tchat-etoile-");
@@ -23,9 +36,12 @@ serveurApplications.demarrer();
 /*
 * Service de l'application.
 */
-serveurApplications.specifierRepertoireScriptsEmbarques("scripts");
+const repertoireHtml: string = "build";
+serveurApplications.specifierRepertoireScriptsEmbarques(repertoireHtml);
 
-serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, "html", "appliTchatEtoile.html");
+serveurApplications.specifierApplicationAServir(PREFIXE_TCHAT, CODE, SUFFIXE_ETOILE, repertoireHtml, "interfaceTchat.html");
+
+serveurApplications.specifierApplicationInitaleAServir(PREFIXE_ACCUEIL, repertoireHtml, "interfaceAccueil.html");
 
 /*
 * Définition du réseau en étoile.
@@ -64,7 +80,8 @@ function traitementPOST(msg: FormatMessageEnvoiTchat)
 
 function traductionEntreePost(canal: ConnexionExpress): Option<FormatMessageEnvoiTchat> {
     const msg: FormatMessageEnvoiTchat = canal.lire();
-    if (("type" in msg) && msg.type === "envoi") {
+    const message = FormatMessageTchatValidator.decode(canal.lire());
+    if (isRight(message)) {
         // Le message reçu est supposé correct,
         // en première approximation.
         return option(msg);
@@ -131,4 +148,48 @@ serveurApplications
         PREFIXE_TCHAT, CODE, chemin(SUFFIXE_ETOILE, RECEPTION), traiterGETpersistant
     );
 
+interface SortieAuth {
+    code: string,
+    jeuxTchat: Jeu[],
+    jeuxDistribution: Jeu[]
+}
+export interface Jeu {
+    url: string,
+    nom: string
+}
 
+function traitementAUTH(infoAuth:  SortieAuth)
+    : SortieAuth {
+    return infoAuth;
+}
+
+
+function traductionEntreeAUTH(canal: ConnexionExpress): Option<SortieAuth> {
+    const code = canal.canalEntree().query.code as string;
+    if (code != undefined) {
+        const sha256 = crypto.createHash('sha256');
+        // TODO: Les jeux disponibles devraient être définis par le serveur
+        // TODO: changer le chemin de tous les jeux
+        const sortie: SortieAuth = {
+            code: sha256.update(code).digest('base64'),
+            jeuxDistribution:
+                [{nom:'Distribution', url:"http://localhost:8080/tchat/code/etoile"}],
+            jeuxTchat:
+                [{nom: 'Tchat étoile', url:"http://localhost:8080/tchat/code/etoile"},
+                {nom:'Tchat anneau', url:"http://localhost:8080/tchat/code/etoile" }],
+
+        }
+        return option(sortie);
+    }
+    const desc = "Le code n'est pas donné dans le params de la requête.";
+    // TODO: Ajouter erreur authentication
+    canal.envoyerJSONCodeErreur(400, desc);
+    logger.error(desc);
+    return rienOption<SortieAuth>();
+}
+
+function traduireSortieAUTH(sortieAuth: SortieAuth, canal: ConnexionExpress): void {
+    canal.envoyerJSON(sortieAuth);
+}
+
+serveurApplications.specifierTraitementRequeteAuthentification(PREFIXE_AUTH, traitementAUTH, traductionEntreeAUTH, traduireSortieAUTH)

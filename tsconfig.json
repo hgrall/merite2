@@ -1,8 +1,10 @@
 {
     "compilerOptions": {
+        "esModuleInterop": true,
         "incremental": true,
         "target": "es5",
         "module": "commonjs",
+        "esModuleInterop": true,
         "moduleResolution": "node",
         "sourceMap": true,
         "noImplicitAny": true,
@@ -19,7 +21,6 @@
     },
     "exclude": [
         "./node_modules",
-        "prototype",
         "brouillon",
         "obsolete"
     ]
