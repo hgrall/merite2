@@ -4,7 +4,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 var config = {
     entry: {
-        tchatReact: "./build/Tchat/client/renduTchat.js",
+        tchatReact: "./build/tchat/client/renduTchat.js",
         accueilReact: "./build/accueil/renduAccueil.js",
     }, // Les clés remplacent name ci-dessous.
     output: {

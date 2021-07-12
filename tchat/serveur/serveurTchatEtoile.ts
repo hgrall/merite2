@@ -19,7 +19,7 @@ import {
     FormatMessageTransitTchat,
     FormatUtilisateurTchat
 } from '../commun/echangesTchat';
-import {CODE, ENVOI, PREFIXE_ACCUEIL, PREFIXE_AUTH, PREFIXE_TCHAT, RECEPTION, SUFFIXE_ETOILE} from '../commun/routes';
+import {CODE, ENVOI, PREFIXE_ACCUEIL, PREFIXE_AUTH, PREFIXE_TCHAT, RECEPTION, SUFFIXE_ETOILE} from '../../accueil/serveur/routes';
 import {avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit} from './echangesServeurTchat';
 import {creerGenerateurReseauEtoile} from './reseauTchat';
 import {FormatMessageTchatValidator} from "../commun/verificationFormat";
