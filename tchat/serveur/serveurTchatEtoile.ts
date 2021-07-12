@@ -19,7 +19,7 @@ import {
     FormatMessageTransitTchat,
     FormatUtilisateurTchat
 } from '../commun/echangesTchat';
-import {CODE, ENVOI, PREFIXE_ACCUEIL, PREFIXE_AUTH, PREFIXE_TCHAT, RECEPTION, SUFFIXE_ETOILE} from '../../accueil/serveur/routes';
+import {CODE, ENVOI, PREFIXE_ACCUEIL, PREFIXE_AUTH, PREFIXE_TCHAT, RECEPTION, SUFFIXE_ETOILE} from '../commun/routes';
 import {avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit} from './echangesServeurTchat';
 import {creerGenerateurReseauEtoile} from './reseauTchat';
 import {FormatMessageTchatValidator} from "../commun/verificationFormat";
@@ -130,7 +130,7 @@ export function traiterGETpersistant(canal: ConnexionLongueExpress): void {
             avertissement(generateurIdentifiantsMessages.produire('message'), desc));
         return;
     }
-    // Envoi de la configuration initiale 
+    // Envoi de la configuration initiale
     const ID_util = reseau.activerSommet(canal);
     const noeud = reseau.noeud(ID_util);
     canal.envoyerJSON('config', noeud);

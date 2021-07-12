@@ -43,7 +43,7 @@ const Cachet = styled.div`
 export class ContainerMessageReçu extends React.Component<ProprietesMessage, {}> {
     render() {
         return (
-            <ContainerMessage className={this.props.className}>
+            <DivMessageReçu className={this.props.className}>
                 <Row>
                     <Col md={3} sm={12}>
                         <InterlocuteurMessage fond={this.props.message.emetteur.fond}
@@ -72,7 +72,7 @@ export class ContainerMessageReçu extends React.Component<ProprietesMessage, {}
                                               role={Role.Recepteur}/>
                     </Col>
                 </Row>
-            </ContainerMessage>
+            </DivMessageReçu>
         );
     }
 }
@@ -80,7 +80,7 @@ export class ContainerMessageReçu extends React.Component<ProprietesMessage, {}
 export class ContainerMessageEmis extends React.Component<ProprietesMessage, {}> {
     render() {
         return (
-            <ContainerMessage className={this.props.className}>
+            <DivMessageEmis className={this.props.className}>
                 <Row>
                     <Col md={3} sm={12}>
 
@@ -111,14 +111,24 @@ export class ContainerMessageEmis extends React.Component<ProprietesMessage, {}>
                                               role={Role.Emetteur}/>
                     </Col>
                 </Row>
-            </ContainerMessage>
+            </DivMessageEmis>
         );
     }
 }
 
-export const ContainerMessage = styled.div`
+export const DivMessageReçu = styled.div`
   background: ${FOND_TEXTE};
-  border-radius: 1ex;
-  margin: 1ex auto;
-  width: 80%;
+  border-radius: 3ex;
+  margin: 1ex 55px;
+  width: 70%;
+  text-align: right;
 `;
+
+export const DivMessageEmis = styled.div`
+  background: ${FOND_TEXTE};
+  border-radius: 3ex;
+  margin: 1ex 70px 1ex auto;
+  width: 70%;
+  text-align: left;
+`;
+

@@ -275,8 +275,8 @@ export class Corps extends React.Component<{}, Etat> {
             case EtatInterfaceTchat.NORMAL:
                 return (
                     <CorpsContainer>
-                        <Row>
-                            <StyledCol sm={12} md={3}>
+                        <StyledRow>
+                            <StyledAdminCol sm={12} md={3}>
                                 <PanneauAdmin sujet={this.individuSujet}
                                               objets={this.state.voisins.image()}
                                               tous={this.state.toutIndividu}
@@ -285,15 +285,15 @@ export class Corps extends React.Component<{}, Etat> {
                                               nombreConnexions={this.state.nombreConnexions}
                                               nombreTotalConnexions={this.state.nombreTotalConnexions}
                                 />
-                            </StyledCol>
-                            <StyledCol sm={12} md={9}>
+                            </StyledAdminCol>
+                            <StyledMessagesCol sm={12} md={9}>
                                 <PanneauMessages sujet={this.individuSujet} messages={this.state.messages}
                                                  selection={this.state.selection} envoiMessage={this.envoyerMessage}
                                                  afficherAlerte={this.state.afficherAlerte}
                                                  messageAlerte={this.state.messageAlerte}
                                                  masquerAlerte={this.masquerAlerte}/>
-                            </StyledCol>
-                        </Row>
+                            </StyledMessagesCol>
+                        </StyledRow>
                     </CorpsContainer>
                 );
             case EtatInterfaceTchat.INITIAL:
@@ -314,9 +314,22 @@ export class Corps extends React.Component<{}, Etat> {
 }
 
 const CorpsContainer = styled.div`
-  background: ${FOND}
+  background: ${FOND};
+  overflow: hidden;
+  height: 100vh;
 `;
 
-const StyledCol = styled(Col)`
-  padding: 0
+const StyledMessagesCol = styled(Col)`
+  padding: 0;
+  height: 100vh;
 `;
+
+const StyledAdminCol = styled(Col)`
+  padding: 0;
+  overflow: scroll;
+  height: 100vh;
+`;
+
+const StyledRow = styled(Row)`
+  height: 100%;
+`
