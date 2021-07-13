@@ -86,6 +86,5 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
 }
 
 const StyledInputGroup = styled(InputGroup)`
-  min-width: 80%;
   height: 200px;
 `

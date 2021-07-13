@@ -56,12 +56,10 @@ export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
 }
 
 const PanneauAdminDiv = styled.div`
-  border-right: 5px solid ${CADRE};
-  min-height:100vh;
+  height:100%;
   background: ${FOND};
   @media (max-width: 768px) {
     border-bottom: 5px solid ${CADRE};
-    border-right: 0;
   }
 `;
 
