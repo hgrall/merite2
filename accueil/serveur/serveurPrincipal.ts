@@ -3,12 +3,13 @@ import { logger } from '../../bibliotheque/administration/log';
 import { ConnexionExpress } from '../../bibliotheque/communication/connexion';
 
 import {
+    chemin,
     creerServeurApplicationsExpress,
     ServeurApplications
 } from "../../bibliotheque/communication/serveurApplications";
 
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
-import { PREFIXE_ACCUEIL, PREFIXE_CONNEXION } from './routes';
+import { PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION } from './routes';
 import { ConfigurationJeux } from '../commun/echangesAccueil';
 import { cleAccesAleatoire, configurationJeuxParNom, nomConfigurationJeuxParCodeAcces } from './acces';
 
@@ -82,7 +83,7 @@ function traduireSortieConnexion(sortieConnexion: string, canal: ConnexionExpres
     canal.envoyerJSON(sortieConnexion);
 }
 
-serveurApplications.specifierTraitementRequeteAuthentification(PREFIXE_CONNEXION, traitementConnexion, traductionEntreeConnexion, traduireSortieConnexion);
+serveurApplications.specifierTraitementRequeteAuthentification(chemin(PREFIXE_CONNEXION, PREFIXE_ACCES), traitementConnexion, traductionEntreeConnexion, traduireSortieConnexion);
 
 /*
 * Traitement de l'authentification pour un utilisateur.
@@ -113,8 +114,8 @@ function traductionEntreeAccueil(canal: ConnexionExpress): Option<ConfigurationJ
     }
 }
 
-function traduireSortieAccueil(sortieAuth: ConfigurationJeux, canal: ConnexionExpress): void {
-    canal.envoyerJSON(sortieAuth);
+function traduireSortieAccueil(sortieAccueil: ConfigurationJeux, canal: ConnexionExpress): void {
+    canal.envoyerJSON(sortieAccueil);
 }
 
-serveurApplications.specifierTraitementRequeteAuthentification(PREFIXE_ACCUEIL, traitementAccueil, traductionEntreeAccueil, traduireSortieAccueil)
+serveurApplications.specifierTraitementRequeteAuthentification(chemin(PREFIXE_ACCUEIL, PREFIXE_ACCES), traitementAccueil, traductionEntreeAccueil, traduireSortieAccueil)
