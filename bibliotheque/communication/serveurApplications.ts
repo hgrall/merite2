@@ -14,7 +14,7 @@ import { logger } from '../administration/log';
 const SEPARATEUR: string = "/";
 
 /**
- * Concaténation des châines en argument, en les séparant (en interne)
+ * Concaténation des chaînes en argument, en les séparant (en interne)
  * par SEPARATEUR.
  * @param ch tabeau de chaînes de caractères, donné sous la forme d'arguments dits "var args")
  */
@@ -23,7 +23,7 @@ export function chemin(...ch: string[]): string {
 }
 
 /**
- * Concaténation des châines en argument, en les séparant (en interne)
+ * Concaténation des chaînes en argument, en les séparant (en interne)
  * par SEPARATEUR et en ajoutant SEPARATEUR au début. 
  * Le séparateur est requis pour indiquer un chemin d'URL. 
  * @param ch tabeau de chaînes de caractères, donné sous la forme d'arguments dits "var args")
@@ -119,11 +119,11 @@ export interface ServeurApplications<EConcret, SConcret> {
         suffixe: string, repertoire: string, application: string): void;
 
     /**
-     * Spécifie l'application à servir étant donné un code
-     * et un chemin. L'application est désignée par son nom et son
-     * répertoire.
+     * Spécifie l'application à servir étant donné un chemin, formé
+     * d'un simple préfixe. L'application est désignée par son nom 
+     * et son répertoire.
      * - méthode http : GET
-     * - url : prefixe/code/suffixe
+     * - url : prefixe
      * - réponse : envoi du fichier repertoire/application
      *
      * @param prefixe préfixe du chemin de l'URL
@@ -379,11 +379,11 @@ class ServeurApplicationsExpress implements ServeurApplications<express.Request,
         );
     }
     /**
-     * Spécifie l'application à servir étant donné un code
-     * et un chemin. L'application est désignée par son nom et son
-     * répertoire.
+     * Spécifie l'application à servir étant donné un chemin, formé
+     * d'un simple préfixe. L'application est désignée par son nom 
+     * et son répertoire.
      * - méthode http : GET
-     * - url : prefixe/code/suffixe
+     * - url : prefixe
      * - réponse : envoi du fichier repertoire/application
      *
      * @param prefixe préfixe du chemin de l'URL

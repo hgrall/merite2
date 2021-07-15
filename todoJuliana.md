@@ -7,11 +7,27 @@
 
 # Distribution
 
+## Réseau 
 
-dom 1   <-> dom 2 <-> dom3
+- des domaines en anneau
+- des utilisateurs en étoile autur d'un domaine
 
-util 1 <-> dom 2
-util 2 <-> dom 2
-util 3 <-> dom 2
+```
+    dom 1 <-> dom 2 <-> dom3
+                |
+            ---------
+            |   |   |
+            U1  U2  U3              
+```
 
-non (util 1 <-> util 2)
+- aucun lien direct entre les utilisateurs d'un même domaine
+
+# Accueil
+
+## Connexion
+
+Le client, un administrateur, envoie son code d'accès. Le serveur vérifie le code et renvoie une clé d'accès, permettant d'accéder à deux tchats (anneau et étoile) et un jeu de distribution. Le client affiche la clé d'accès.
+
+## Accueil
+
+Le client, un joueur, envoie la clé d'accès. Le serveur vérifie la clé d'accès et renvoie une configuration des jeux, décrivant les caractéristiques des jeux, deux tchats (anneau et étoile) et un jeu de distribution. Le client affiche un menu proposant les jeux, éventuellment avec des informations associées aux jeux. 

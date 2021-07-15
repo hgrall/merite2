@@ -1,10 +1,10 @@
 import * as React from "react";
 import styled, {keyframes} from "styled-components";
 import {useState} from "react";
-import {requeteGET} from "../tchat/communication/communicationServeur";
+import {requeteGET} from "../../tchat/communication/communicationServeur";
 import {AxiosResponse} from "axios";
-import {CADRE, FOND} from "../bibliotheque/interface/couleur";
-import {Jeu} from "../tchat/serveur/serveurTchatEtoile";
+import {CADRE, FOND} from "../../bibliotheque/interface/couleur";
+import {Jeu} from "../../tchat/serveur/serveurTchatEtoile";
 
 const Wrapper = styled.section`
   display: flex;
