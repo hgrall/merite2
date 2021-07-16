@@ -9,9 +9,10 @@ import {
 } from "../../bibliotheque/communication/serveurApplications";
 
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
-import { PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION } from './routes';
-import { ConfigurationJeux } from '../commun/echangesAccueil';
+import { ENVOI, PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION, RECEPTION } from './routes';
+import { ConfigurationJeux } from '../commun/configurationJeux';
 import { cleAccesAleatoire, configurationJeuxParNom, nomConfigurationJeuxParCodeAcces } from './acces';
+import { creerServiceTchat } from '../../tchat/serveur/serviceTchat';
 
 const serveurApplications: ServeurApplications<express.Request, express.Response> = creerServeurApplicationsExpress(8080);
 
@@ -45,12 +46,17 @@ let clesAccesActives: {
 } = {};
 
 function initialiserJeux(codeAcces: string, cleAcces: string) {
+    const config = 
+        configurationJeuxParNom [
+            nomConfigurationJeuxParCodeAcces[codeAcces]];
     clesAccesActives[cleAcces] = {
         codeAcces: codeAcces,
-        configuration: configurationJeuxParNom[nomConfigurationJeuxParCodeAcces[codeAcces]]
+        configuration: config 
     };
     // TODO suivant la configuration associée à codeAcces, 
     // initialiser les jeux.
+    creerServiceTchat(config.tchat_anneau, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html", ENVOI, RECEPTION);
+    creerServiceTchat(config.tchat_etoile, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html", ENVOI, RECEPTION);
 }
 
 function traitementConnexion(codeAcces: string)

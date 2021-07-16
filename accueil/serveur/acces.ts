@@ -1,12 +1,12 @@
 /*
  * Accès : 
- * - sécurité, 
- * - routes,
- * - configurations des jeux.
+ * - code d'accès
+ * - clés d'accès,
+ * - TODO.
  */
 
 import { entierAleatoire, normalisationNombre } from "../../bibliotheque/types/nombres";
-import { configurationClassiqueJeux, ConfigurationJeux } from "../commun/echangesAccueil";
+import { configurationClassiqueJeux, ConfigurationJeux } from "../commun/configurationJeux";
 
 function initialisationNomConfigurationParCodeAcces(): { [code: string]: string } {
     return {

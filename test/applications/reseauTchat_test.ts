@@ -1,6 +1,6 @@
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { identifiant } from "../../bibliotheque/types/identifiant";
-import { creerGenerateurReseauAnneau, creerGenerateurReseauEtoile, ReseauMutableTchat } from "../../tchat/serveur/reseauTchat";
+import { creerGenerateurReseau, ReseauMutableTchat } from "../../tchat/serveur/reseauTchat";
 import { testUnitaireJsonJson } from "../utilitaires";
 
 class ConnexionFictive implements CanalPersistantEcritureJSON {
@@ -18,7 +18,7 @@ function cf(n : number) : ConnexionFictive {
 }
 
 describe('Réseau tchat étoile', () => {
-    let genR = creerGenerateurReseauEtoile<ConnexionFictive>("code", 2, ["coco", "lulu", "zaza"]);
+    let genR = creerGenerateurReseau<ConnexionFictive>("etoile", "code", 2, ["coco", "lulu", "zaza"]);
     let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
     const id1 = r.activerSommet(cf(17));
     let n = r.noeud(id1);
@@ -96,7 +96,7 @@ describe('Réseau tchat étoile', () => {
 });
 
 describe('Réseau tchat anneau', () => {
-    let genR = creerGenerateurReseauAnneau<ConnexionFictive>("code", 2, ["coco", "lulu", "momo", "zaza"]);
+    let genR = creerGenerateurReseau<ConnexionFictive>("anneau", "code", 2, ["coco", "lulu", "momo", "zaza"]);
     let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
     
     const id1 = r.activerSommet(cf(17));

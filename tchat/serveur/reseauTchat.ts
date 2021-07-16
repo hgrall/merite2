@@ -1,3 +1,4 @@
+import { TypeTchat } from "../../accueil/commun/configurationJeux";
 import { GenerateurReseau, ReseauMutable, ReseauMutableParEnveloppe } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { creerEnsembleMutableIdentifiantsVide, EnsembleIdentifiants, EnsembleMutableIdentifiants } from "../../bibliotheque/types/ensembleIdentifiants";
@@ -6,7 +7,7 @@ import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifi
 import { creerTableauMutableVide } from "../../bibliotheque/types/tableau";
 
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
-import { modificationActivite } from "../../bibliotheque/types/typesAtomiques";
+import { jamais, modificationActivite } from "../../bibliotheque/types/typesAtomiques";
 import { FormatUtilisateurTchat } from "../commun/echangesTchat";
 
 /**
@@ -137,7 +138,7 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
     }
 }
 
-export function creerGenerateurReseauAnneau<C extends CanalPersistantEcritureJSON>(
+function creerGenerateurReseauAnneau<C extends CanalPersistantEcritureJSON>(
     code: string,
     nombreTchats: number,
     noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
@@ -194,9 +195,21 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
     }
 }
 
-export function creerGenerateurReseauEtoile<C extends CanalPersistantEcritureJSON>(
+function creerGenerateurReseauEtoile<C extends CanalPersistantEcritureJSON>(
     code: string,
     nombreTchats: number,
     noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
     return new GenerateurReseauEtoile<C>(code, nombreTchats, noms);
+}
+
+export function creerGenerateurReseau<C extends CanalPersistantEcritureJSON>(
+    type : TypeTchat, 
+    code: string,
+    nombreTchats: number,
+    noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
+        switch (type) {
+            case 'etoile': return new GenerateurReseauEtoile<C>(code, nombreTchats, noms);
+            case 'anneau': return new GenerateurReseauAnneau<C>(code, nombreTchats, noms);
+        }
+        return jamais(type);
 }
