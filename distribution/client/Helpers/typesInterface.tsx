@@ -4,11 +4,9 @@ import {Identifiant} from "../../../bibliotheque/types/identifiant";
 import {Deux} from "../../../bibliotheque/types/typesAtomiques";
 import {FormatDateFr} from "../../../bibliotheque/types/date";
 import {
-    FormatConsigne,
-    FormatDomaineDistribution,
+    FormatConsigne, FormatDomaineDistribution,
     FormatUtilisateurDistribution
 } from "../../commun/echangesDistribution";
-
 
 export interface DomaineInterface {
     readonly domaine: FormatDomaineDistribution;
@@ -24,23 +22,21 @@ export interface Formulaire extends ActionAffichable {
 
 export class FormulaireMessage implements Formulaire {
     constructor(
-        public readonly ID: Identifiant<'message'>,
         public readonly emetteur: FormatUtilisateurDistribution,
         public readonly domaineEmission: DomaineInterface,
         public readonly domaineDestin: DomaineInterface,
         public trame: ReadonlyArray<Deux>,
-        public readonly consigne: string) {
+        public readonly consigne: FormatConsigne) {
     }
 }
 
 export function formulaireMessage(
-    id: Identifiant<"message">,
     emetteur: FormatUtilisateurDistribution,
     domaineEmission: DomaineInterface,
     domaineDestin: DomaineInterface,
     trame: ReadonlyArray<Deux>,
-    consigne: string): FormulaireMessage {
-    return new FormulaireMessage(id, emetteur, domaineEmission, domaineDestin, trame, consigne);
+    consigne: FormatConsigne): FormulaireMessage {
+    return new FormulaireMessage(emetteur, domaineEmission, domaineDestin, trame, consigne);
 }
 
 export class FormulaireEssai implements Formulaire {

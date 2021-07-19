@@ -11,7 +11,7 @@ import {DateFr, dateMaintenant} from "../../../bibliotheque/types/date";
 import {DomaineInterface, MessageInformant} from "../Helpers/typesInterface";
 import {MessageFixe} from "./MessageFixe";
 import {Action} from "../Button/ButtonAction";
-import {InterlocuteurMessage, Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
+import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 interface ProprietesMessageVerrouille {
     // see https://github.com/Microsoft/TypeScript/issues/8588

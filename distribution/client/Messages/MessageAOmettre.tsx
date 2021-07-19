@@ -6,7 +6,7 @@ import {Identifiant} from "../../../bibliotheque/types/identifiant";
 import styled from "styled-components";
 import {Action} from "../Button/ButtonAction";
 import { MessageFixe } from "./MessageFixe";
-import {InterlocuteurMessage, Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
+import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 
 interface ProprietesMessageAOmettre {

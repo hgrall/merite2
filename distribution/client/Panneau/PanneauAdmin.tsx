@@ -7,9 +7,9 @@ import {DomaineInterface} from "../Helpers/typesInterface";
 import {mot} from "../../../bibliotheque/types/binaire";
 import {ButtonAdmin} from "../Button/ButtonAdmin";
 import {TableIdentification} from "../../../bibliotheque/types/tableIdentification";
-import {FormatConsigne, FormatUtilisateurDistribution} from "../../../../../../Desktop/Copia de distribution/commun/echangesDistribution";
-import {PastilleAdmin} from "../../../../../../Desktop/shared/Pastilles";
-import {TexteInformation, TexteNormal, TexteXLarge} from "../../../../../../Desktop/shared/Texte";
+import {FormatConsigne, FormatUtilisateurDistribution} from "../../commun/echangesDistribution";
+import {PastilleAdmin} from "../../../shared/Pastilles";
+import {TexteInformation, TexteNormal, TexteXLarge} from "../../../shared/Texte";
 
 interface ProprietesAdmin {
     // see https://github.com/Microsoft/TypeScript/issues/8588
@@ -21,8 +21,8 @@ interface ProprietesAdmin {
     domainesVoisins: ReadonlyArray<DomaineInterface>;
     selection: DomaineInterface;
     modifSelection: (d: DomaineInterface) => void;
-    nombreConnexions: string
-    tailleReseau: string
+    utilisateursActifsDomain: number;
+    tailleDomain: number;
 }
 
 const SujetAdmin = styled.div`
@@ -44,7 +44,6 @@ const SujetAdminContainer = styled.div`
   width: 100%;
 
   display: flex;
-  flex-wrap: wrap;
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -55,7 +54,22 @@ const SeparateurVertical = styled.div`
   margin: 0 0 1ex 0;
 `;
 
+const CorpsPanneauAdmin = styled.div`
+  padding: 10px;
+`
 
+/**
+ * Représentation de la consigne sous la forme suivante :
+ * - "envoyer le mot binaire [0 | 1, ...] à l'utilisateur [0 | 1, ...] (id)
+ *    du domaine [0 | 1, ...] (id) dans une trame de x chiffres binaires.".
+ */
+const representationConsigne = (consigne: FormatConsigne)=> {
+    return "Envoyer le mot binaire [" + consigne.mot
+        + "] à l'utilisateur ["
+        + consigne.destinataire + '] du domaine ['
+        + consigne.adresse + '] dans une trame de '
+        + consigne.tailleTrame + ' chiffres binaires.';
+}
 export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
     render() {
         const dom = mot(this.props.domaine.domaine.domaine).representation();
@@ -67,53 +81,42 @@ export class PanneauAdmin extends React.Component<ProprietesAdmin, {}> {
         });
         return (
             <ContainerAdmin className={this.props.className}>
-                        <SujetAdmin>
-                            <SujetAdminContainer>
-                                <TexteXLarge>
-                                    {mot(this.props.utilisateur.utilisateur).representation()
-                                    + " @ "
-                                    + dom}
-                                </TexteXLarge>
-                                <PastilleAdmin fond={this.props.domaine.fond}/>
-                            </SujetAdminContainer>
-                            <SeparateurVertical/>
-                            <SujetAdminContainer>
-                                <TexteNormal>
-                                    {"Autres utilisateurs du domaine " + dom + " : "}
-                                </TexteNormal>
-                            </SujetAdminContainer>
-                            <SujetAdminContainer>
-                                {utils.map(u =>
-                                    <TexteNormal key={u.ID.val}>
-                                        {mot(u.utilisateur).representation() + "@" + dom}
-                                    </TexteNormal>)}
-                            </SujetAdminContainer>
-                            <SeparateurVertical/>
-                            <SujetAdminContainer>
-                                <TexteXLarge>
-                                    {"Consigne : " +
-                                    this.props.consigne}
-                                </TexteXLarge>
-                            </SujetAdminContainer>
-                        </SujetAdmin>
-                        <TexteInformation>Sélectionner le domaine voisin destinataire :</TexteInformation>
-                        {this.props.domainesVoisins.map(i =>
-                            <ButtonAdmin choix={this.props.selection.domaine === i.domaine}
-                                         onClick={() => this.props.modifSelection(i)}
-                                         fond={i.fond}
-                                         nomDomaine={mot(i.domaine.domaine).representation()}
-                                         key={i.domaine.ID.val}/>
-                        )}
-                        <TexteInformation>Nombre de connexions
-                            : {this.props.nombreConnexions}/{this.props.tailleReseau}</TexteInformation>
+                <SujetAdmin>
+                    <SujetAdminContainer>
+                        <TexteXLarge>
+                            {mot(this.props.utilisateur.utilisateur).representation()
+                            + " @ "
+                            + dom}
+                        </TexteXLarge>
+                        <PastilleAdmin fond={this.props.domaine.fond}/>
+                    </SujetAdminContainer>
+                    <SeparateurVertical/>
+                    <SujetAdminContainer>
+                        <TexteNormal>
+                            {"Consigne : " +
+                            representationConsigne(this.props.consigne)}
+                        </TexteNormal>
+                    </SujetAdminContainer>
+                </SujetAdmin>
+                <CorpsPanneauAdmin>
+                    <TexteInformation>Sélectionner le domaine voisin destinataire :</TexteInformation>
+                    {this.props.domainesVoisins.map(i =>
+                        <ButtonAdmin choix={this.props.selection.domaine === i.domaine}
+                                     onClick={() => this.props.modifSelection(i)}
+                                     fond={i.fond}
+                                     nomDomaine={mot(i.domaine.domaine).representation()}
+                                     key={i.domaine.ID.val} actif={i.domaine.actif}/>
+                    )}
+                    <TexteInformation>Nombre de connexions actifs dans le domain
+                        : {this.props.utilisateursActifsDomain}/{this.props.tailleDomain}</TexteInformation>
+                </CorpsPanneauAdmin>
             </ContainerAdmin>
         );
     }
 }
 
 const ContainerAdmin = styled.div`
-  border-right: 5px solid ${CADRE};
   background: ${FOND};
-  height: 100%;
+  min-height: 100vh;
 `;
 

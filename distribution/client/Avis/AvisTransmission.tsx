@@ -6,7 +6,7 @@ import styled from "styled-components";
 import {Action} from "../Button/ButtonAction";
 import {Avis} from "./Avis";
 import {MessageFixe} from "../Messages/MessageFixe";
-import {InterlocuteurMessage, Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
+import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 
 interface ProprietesAvisTransmission {

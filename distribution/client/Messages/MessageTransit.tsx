@@ -5,7 +5,7 @@ import {COUPLE_FOND_ENCRE_SUJET, FOND_TEXTE, TEXTE, TEXTE_ERREUR} from "../../..
 import {MessageFixe} from "./MessageFixe";
 import styled from "styled-components";
 import {Action} from "../Button/ButtonAction";
-import {InterlocuteurMessage, Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
+import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 interface ProprietesMessageTransit {
     // see https://github.com/Microsoft/TypeScript/issues/8588

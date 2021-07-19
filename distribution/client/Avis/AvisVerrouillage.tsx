@@ -5,7 +5,7 @@ import {COUPLE_FOND_ENCRE_SUJET, FOND_TEXTE, TEXTE} from "../../../bibliotheque/
 import {MessageFixe} from "../Messages/MessageFixe";
 import styled from "styled-components";
 import {Avis} from "./Avis";
-import {InterlocuteurMessage, Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
+import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 interface ProprietesAvisVerrouillage {
     // see https://github.com/Microsoft/TypeScript/issues/8588

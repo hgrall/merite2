@@ -2,26 +2,27 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accueil/corps.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accueil/renduAccueil.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/merite2.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/merite2.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/distribution/serveur/serveurDistribution.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bibliotheque/communication/serveurApplications.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/communication/serveurApplications.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Button/ButtonDestinataire.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Button/ButtonDestinataire.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/ChampDeTexte/EntreeMessage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/ChampDeTexte/EntreeMessage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Helpers/typesInterface.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Label/Pseudo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Label/Pseudo.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Message/Message.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Message/Message.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Paneau/PaneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Paneau/PaneauMessages.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Paneau/PanneauAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Paneau/PanneauAdmin.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/Reseau/connexionServeur.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Reseau/connexionServeur.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/corps.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/client/renduPrototype.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/renduTchat.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prototype/communication/communicationServeur.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/communication/communicationServeur.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/MessagesContainer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/shared/MessagesContainer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tchat/commun/routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/commun/routes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/serveur/serveurTchatEtoile.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/serveur/routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/serveur/routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisGainPerte.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Avis/AvisGainPerte.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisTransmission.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Avis/AvisTransmission.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisVerrouillage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Avis/AvisVerrouillage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Button/ButtonAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Button/ButtonAdmin.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/ChampDeTexte/EntreeMessage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/ChampDeTexte/EntreeMessage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/ARMessageInitial.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/ARMessageInitial.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageAOmettre.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageAOmettre.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageTransit.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageTransit.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageVerrouille.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageVerrouille.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Panneau/PanneauAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Panneau/PanneauAdmin.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/renduJeu1.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/renduDistribution.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/serveur/reseauDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/serveur/reseauDistribution.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/Texte.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/shared/Texte.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/webpack.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/webpack.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -59,7 +60,7 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/distribution" />
     <property name="node.js.path.for.package.tslint" value="/usr/local/bin/node" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
@@ -68,9 +69,12 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/distribution" />
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/distribution" />
+      <recent name="$PROJECT_DIR$/distribution/serveur" />
       <recent name="$PROJECT_DIR$/tchat" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/tchat/serveur" />
@@ -85,6 +89,8 @@
       <option name="presentableId" value="Default" />
       <updated>1622453209194</updated>
       <workItem from="1622453211164" duration="8482000" />
+      <workItem from="1626702392068" duration="339000" />
+      <workItem from="1626702780116" duration="1874000" />
     </task>
     <servers />
   </component>
@@ -102,5 +108,17 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/webpack.config.js</url>
+          <line>30</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

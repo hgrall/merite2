@@ -17,8 +17,8 @@ import {ContainerAvisTransmission} from "../Avis/AvisTransmission";
 import {ContainerMessageVerrouille} from "../Messages/MessageVerrouille";
 import {ContainerAvisGainPerte} from "../Avis/AvisGainPerte";
 import {Alert} from "react-bootstrap";
-import {StyledAlert} from "../../../../../../Desktop/shared/MessageAlert";
-import {MessagesContainer, PanneauMessageContainer} from "../../../../../../Desktop/shared/MessagesContainer";
+import {StyledAlert} from "../../../shared/MessageAlert";
+import {MessagesContainer, PanneauMessageContainer} from "../../../shared/MessagesContainer";
 
 interface ProprietesPanneauMessages {
     // see https://github.com/Microsoft/TypeScript/issues/8588
@@ -106,8 +106,11 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
     }
 
     afficherFormulaire() {
-        let formulaireMessage = this.props.formulaireMessage.valeur() as FormulaireMessage;
-        if (option(formulaireMessage).estPresent()) {
+        if(this.props.formulaireMessage.estVide()){
+            return;
+        }
+        if (option(this.props.formulaireMessage).estPresent()) {
+            let formulaireMessage = this.props.formulaireMessage.valeur() as FormulaireMessage;
             return <EntreeMessage
                 domaineSelectionne={this.props.domaineSelectionne}
                 formulaire={formulaireMessage}

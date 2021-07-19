@@ -7,9 +7,9 @@ import styled from "styled-components";
 import {productionEntree} from "../Helpers/ProductionEntree";
 import {FormControl, InputGroup} from "react-bootstrap";
 import {creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants} from "../../../bibliotheque/types/identifiant";
-import { EntreeMessageContainer } from "../../../../../../Desktop/shared/MessagesContainer";
-import {Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
-import {ButtonEnvoi} from "../../../../../../Desktop/shared/ButtonEnvoi";
+import { EntreeMessageContainer } from "../../../shared/MessagesContainer";
+import {Role} from "../../../shared/InterlocuteurMessage";
+import {ButtonEnvoi} from "../../../shared/ButtonEnvoi";
 
 
 
@@ -39,7 +39,7 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
     }
 
     mettreAJourEntree(event: React.ChangeEvent<HTMLTextAreaElement>): void {
-        let t = this.props.formulaire.consigne.length;
+        let t = this.props.formulaire.consigne.tailleTrame;
         let msg = event.target.value;
         let prod = productionEntree(t, msg, "Envoi du message suivant la consigne : " + "\n");
         this.motBinaire = prod.motBin;
@@ -51,12 +51,12 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
         this.motBinaire = [0];
     }
     testerTrame(): boolean {
-        return (this.motBinaire.length === this.props.formulaire.consigne.length);
+        return (this.motBinaire.length === this.props.formulaire.consigne.tailleTrame);
     }
     render() {
         let instructions = "Envoi du message suivant la consigne." + "\n"
             + "Entrez un message de "
-            + this.props.formulaire.consigne.length + " chiffres binaires (0 ou 1), "
+            + this.props.formulaire.consigne.tailleTrame + " chiffres binaires (0 ou 1), "
             + "La trame apparaît progressivement sur la première ligne, "
             + "sous la forme '[?,?,...]', au dessus du texte entré, "
             + "après effacement de tout caractère autre que '0' ou '1'."
@@ -87,7 +87,6 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
                                          let d = dateMaintenant();
                                          this.props.envoiMessage(
                                              formulaireMessage(
-                                                 this.generateur.produire("message"),
                                                  this.props.formulaire.emetteur,
                                                  this.props.formulaire.domaineEmission,
                                                  this.props.domaineSelectionne,

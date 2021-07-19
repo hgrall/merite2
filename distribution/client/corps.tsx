@@ -2,31 +2,46 @@ import * as React from "react";
 
 import styled from "styled-components";
 
-import {COUPLE_FOND_ENCRE_INCONNU, FOND, TEXTE_ERREUR} from "../../bibliotheque/interface/couleur";
+import {
+    COUPLE_FOND_ENCRE_INCONNU, COUPLE_FOND_ENCRE_SUJET, FOND, SuiteCouplesFondEncre, TEXTE_ERREUR
+} from "../../bibliotheque/interface/couleur";
+
 
 import {
-    DomaineInterface,
-    FormulaireEssai,
-    formulaireEssai,
-    FormulaireMessage,
-    messageInformant,
-    MessageInformant,
+    DomaineInterface, FormulaireMessage,
+    messageInformant, MessageInformant, FormulaireEssai, formulaireEssai, formulaireMessage,
+
 } from "./Helpers/typesInterface";
-import {TableIdentification} from "../../bibliotheque/types/tableIdentification";
-import {identifiant, Identifiant} from "../../bibliotheque/types/identifiant";
-import {option, Option, rienOption} from "../../bibliotheque/types/option";
+import {
+    creerTableIdentificationMutableVide,
+    fabriqueTableIdentification, FormatTableIdentification,
+    tableIdentification,
+    TableIdentification, TableIdentificationMutable
+} from "../../bibliotheque/types/tableIdentification";
+import {
+    creerGenerateurIdentifiantParCompteur,
+    GenerateurIdentifiants,
+    identifiant,
+    Identifiant
+} from "../../bibliotheque/types/identifiant";
+import {rienOption, option, Option} from "../../bibliotheque/types/option";
 import {DateFr, dateMaintenant} from "../../bibliotheque/types/date";
+import {mot} from "../../bibliotheque/types/binaire";
 import {PanneauMessages} from "./Panneau/PanneauMessages";
 import {PanneauAdmin} from "./Panneau/PanneauAdmin";
 import {Col, Row} from "react-bootstrap";
 import {creerFluxDeEvenements, requetePOST} from "../../tchat/communication/communicationServeur";
 import {AxiosError, AxiosResponse} from "axios";
+import {Map} from "immutable";
 import {
-    FormatConsigne, FormatMessageDistribution,
-    FormatMessageInitialDistribution,
-    FormatUtilisateurDistribution,
+    FormatConfigDistribution,
+    FormatConsigne, FormatDomaineDistribution,
+    FormatMessageDistribution,
+    FormatMessageInitialDistribution, FormatNoeudDomaineDistribution, FormatUtilisateurDistribution,
     TypeMessageDistribution
 } from "../commun/echangesDistribution";
+
+
 interface ProprietesCorps {
     // see https://github.com/Microsoft/TypeScript/issues/8588
     className?: string;
@@ -36,7 +51,7 @@ enum EtatInterfaceJeu1 {
     INITIAL,
     NORMAL,
     ERRONE
-}
+};
 
 /*
   Etat contenant
@@ -50,36 +65,36 @@ interface EtatCorps {
     informations: MessageInformant[]; // Identification par l'identifiant du message.
     formulaireMessage: Option<FormulaireMessage>;
     formulaireEssai: Option<FormulaireEssai>;
-    nombreConnexions: string;
-    tailleReseau: string;
+    tailleDomain: number;
+    utilisateursActifsDomain: number;
     afficherAlerte: boolean;
     messageAlerte: string;
 }
 
 const ID_INCONNU: string = "?";
 
-/*
- * Degré du graphe limité à 4 - Cf. la liste des couples de couleurs.
- */
 class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
-    private urlServeurEnvoi: string; // avec protocole ws
     private fluxDeEvenements: EventSource;
 
     private utilisateur: FormatUtilisateurDistribution;
-    private populationDomaine: TableIdentification<"sommet", FormatUtilisateurDistribution>;
-    private consigne: FormatConsigne; // TODO : inutile ?
+    private populationDomaine: TableIdentificationMutable<"sommet", FormatUtilisateurDistribution>;
+    private consigne: FormatConsigne;
     private domaineUtilisateur: DomaineInterface;
-    private domainesVoisins: TableIdentification<'sommet', DomaineInterface>; // TODO : intile ?
+    private domainesVoisins: TableIdentificationMutable<'sommet', DomaineInterface>; // TODO : intile ?
     // TODO : voir les usages de ces attributs. possiblement, les transformer
     //   en variables locales si usage linéaire.
     private domaineInconnu: DomaineInterface;
+
     private messageErreur: string;
+    private generateur: GenerateurIdentifiants<'message'>;
 
     constructor(props: ProprietesCorps) {
         super(props);
-        const url = window.location.href;
-        this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
+
+        this.domainesVoisins = creerTableIdentificationMutableVide("sommet");
+        this.populationDomaine = creerTableIdentificationMutableVide("sommet");
+
         this.domaineInconnu = {
             domaine: {
                 ID: identifiant('sommet', ID_INCONNU),
@@ -89,15 +104,15 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             fond: COUPLE_FOND_ENCRE_INCONNU.fond,
             encre: COUPLE_FOND_ENCRE_INCONNU.encre
         };
-        this.urlServeurEnvoi = `${url}/envoi`;
+
         this.state = {
             etatInterface: EtatInterfaceJeu1.INITIAL,
             selection: this.domaineInconnu,
             informations: [],
             formulaireMessage: rienOption<FormulaireMessage>(),
             formulaireEssai: rienOption<FormulaireEssai>(),
-            nombreConnexions: "0",
-            tailleReseau: "0",
+            tailleDomain: 0,
+            utilisateursActifsDomain: 0,
             afficherAlerte: false,
             messageAlerte: "",
         };
@@ -118,7 +133,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         this.masquerAlerte = this.masquerAlerte.bind(this);
     }
 
-    masquerAlerte(){
+    masquerAlerte() {
         this.setState({afficherAlerte: false})
     }
 
@@ -129,16 +144,16 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     envoyerMessageInitial(m: FormulaireMessage, d: DateFr): void {
         this.mettreAJourApresEnvoiMessage(m);
         const message: FormatMessageDistribution = {
-            contenu: m.trame,
+            ID_utilisateur_emetteur: m.emetteur.ID,
+            ID_origine:  m.domaineEmission.domaine.ID,
             ID_destination: m.domaineDestin.domaine.ID,
-            ID_origine: m.domaineEmission.domaine.ID,
-            ID_utilisateur_emetteur: m.emetteur.ID
+            contenu: m.trame
         }
         let msg: FormatMessageInitialDistribution = {
-            date: d.toJSON(),
             corps: message,
-            ID: m.ID,
-            type: TypeMessageDistribution.INIT
+            type: TypeMessageDistribution.INIT,
+            date: d.toJSON(),
+            ID: this.generateur.produire("message")
         };
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
             // TODO: TRAITER REPONSE
@@ -151,21 +166,21 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     // ok
     envoyerEssai(m: MessageInformant): void {
-        // let msg: FormatMessageEssaiDistribution = {
-        //     type:  'essai',
-        //     date: m.date,
-        //     domaine_origine: m.domaineEmission.domaine.ID,
-        //     ID_emetteur: m.utilisateur.ID,
-        //     contenu : mot(m.trame),
-        //     ID: m.ID
-        // }
-        // const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-        //     // TODO: TRAITER REPONSE
-        // };
-        // const traitementErreur = (raison: AxiosError) => {
-        //     // TODO: TRAITER ERREUR
-        // }
-        // requetePOST<FormatMessageEssaiDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
+    //     let msg: FormatMessageEssaiDistribution = {
+    //         type: 'essai',
+    //         date: m.date,
+    //         domaine_origine: m.domaineEmission.domaine.ID,
+    //         ID_emetteur: m.utilisateur.ID,
+    //         contenu: mot(m.trame),
+    //         ID: m.ID
+    //     }
+    //     const traitementEnvoiMessage = (reponse: AxiosResponse) => {
+    //         // TODO: TRAITER REPONSE
+    //     };
+    //     const traitementErreur = (raison: AxiosError) => {
+    //         // TODO: TRAITER ERREUR
+    //     }
+    //     requetePOST<FormatMessageEssaiDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
     omettre(m: MessageInformant): void {
@@ -188,11 +203,11 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         // this.mettreAJourApresDemandeVerrouillage(m);
         //
         // let msg: FormatMessageDemandeVerrouillageDistribution = {
-        //     type:  'verrou',
+        //     type: 'verrou',
         //     date: m.date,
         //     domaine_origine: m.domaineEmission.domaine.ID,
         //     ID_emetteur: m.utilisateur.ID,
-        //     contenu : mot(m.trame),
+        //     contenu: mot(m.trame),
         //     ID: m.ID
         // }
         // const traitementEnvoiMessage = (reponse: AxiosResponse) => {
@@ -212,11 +227,11 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         // this.mettreAJourApresDemandeDeverrouillage(m);
         //
         // let msg: FormatMessageDemandeDeverrouillageDistribution = {
-        //     type:  'libe',
+        //     type: 'libe',
         //     date: m.date,
         //     domaine_origine: m.domaineEmission.domaine.ID,
         //     ID_emetteur: m.utilisateur.ID,
-        //     contenu : mot(m.trame),
+        //     contenu: mot(m.trame),
         //     ID: m.ID
         // };
         // const traitementEnvoiMessage = (reponse: AxiosResponse) => {
@@ -226,7 +241,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         //     // TODO: TRAITER ERREUR
         // }
         // requetePOST<FormatMessageDemandeDeverrouillageDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
-
     }
 
     mettreAJourApresTransmission(m: MessageInformant): void {
@@ -246,11 +260,11 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         // this.mettreAJourApresTransmission(m);
         //
         // let msg: FormatMessageTransmissionDistribution = {
-        //     type:  'transmettre',
+        //     type: 'transmettre',
         //     date: m.date,
         //     domaine_origine: m.domaineEmission.domaine.ID,
         //     ID_emetteur: m.utilisateur.ID,
-        //     contenu : mot(m.trame),
+        //     contenu: mot(m.trame),
         //     ID: m.ID
         // };
         // console.log("* Envoi du message");
@@ -383,38 +397,38 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                     <div className={this.props.className}>
                         <Row>
                             <StyledCol sm={12} md={3}>
-                        <PanneauAdmin
-                            utilisateur={this.utilisateur}
-                            populationDomaine={this.populationDomaine}
-                            domaine={this.domaineUtilisateur}
-                            consigne={this.consigne}
-                            domainesVoisins={this.domainesVoisins.image()}
-                            selection={this.state.selection}
-                            modifSelection={this.modifierSelection}
-                            nombreConnexions={this.state.nombreConnexions}
-                            tailleReseau={this.state.tailleReseau}
-                        />
+                                <PanneauAdmin
+                                    utilisateur={this.utilisateur}
+                                    populationDomaine={this.populationDomaine}
+                                    domaine={this.domaineUtilisateur}
+                                    consigne={this.consigne}
+                                    domainesVoisins={this.domainesVoisins.image()}
+                                    selection={this.state.selection}
+                                    modifSelection={this.modifierSelection}
+                                    tailleDomain={this.state.tailleDomain}
+                                    utilisateursActifsDomain={this.state.utilisateursActifsDomain}
+                                />
                             </StyledCol>
                             <StyledCol sm={12} md={9}>
-                        <PanneauMessages
-                            informations={this.state.informations}
-                            formulaireMessage={this.state.formulaireMessage}
-                            formulaireEssai={this.state.formulaireEssai}
-                            domaineSelectionne={this.state.selection}
-                            envoiMessageInitial={this.envoyerMessageInitial}
-                            envoiEssai={this.envoyerEssai}
-                            annulationOmission={this.annulerOmission}
-                            confirmationOmission={this.confirmerOmission}
-                            omission={this.omettre}
-                            demandeVerrouillage={this.envoyerDemandeVerrouillage}
-                            demandeDeverrouillage={this.envoyerDemandeDeverrouillage}
-                            transmissionMessage={this.transmettreMessage}
-                            interpretation={this.interpreter}
-                            annulation={this.annuler}
-                            afficherAlerte={this.state.afficherAlerte}
-                            messageAlerte={this.state.messageAlerte}
-                            masquerAlerte={this.masquerAlerte}
-                        />
+                                <PanneauMessages
+                                    informations={this.state.informations}
+                                    formulaireMessage={this.state.formulaireMessage}
+                                    formulaireEssai={this.state.formulaireEssai}
+                                    domaineSelectionne={this.state.selection}
+                                    envoiMessageInitial={this.envoyerMessageInitial}
+                                    envoiEssai={this.envoyerEssai}
+                                    annulationOmission={this.annulerOmission}
+                                    confirmationOmission={this.confirmerOmission}
+                                    omission={this.omettre}
+                                    demandeVerrouillage={this.envoyerDemandeVerrouillage}
+                                    demandeDeverrouillage={this.envoyerDemandeDeverrouillage}
+                                    transmissionMessage={this.transmettreMessage}
+                                    interpretation={this.interpreter}
+                                    annulation={this.annuler}
+                                    afficherAlerte={this.state.afficherAlerte}
+                                    messageAlerte={this.state.messageAlerte}
+                                    masquerAlerte={this.masquerAlerte}
+                                />
                             </StyledCol>
                         </Row>
                     </div>
@@ -433,44 +447,42 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
+        this.fluxDeEvenements = creerFluxDeEvenements(`http://localhost:8080/distribution/code/jeu1/reception`);
 
-        console.log("- du canal de communication avec le serveur d'adresse " + this.urlServeurEnvoi);
-        this.fluxDeEvenements.addEventListener('config',(e: MessageEvent) => {
-            //     let config = configurationJeu1Distribution(c);
-            //     console.log("* Réception");
-            //     console.log("- de la configuration brute : " + config.brut());
-            //     console.log("- de la configuration nette : " + config.representation());
-            //     console.log("* Initialisation de l'utilisateur et du domaine");
-            //     this.utilisateur = config.val().utilisateur;
-            //     this.population = config.val().population;
-            //     this.consigne = config.val().consigne;
-            //     let dom = config.val().centre;
-            //     this.domaineUtilisateur = {
-            //         domaine: dom,
-            //         fond: COUPLE_FOND_ENCRE_SUJET.fond,
-            //         encre: COUPLE_FOND_ENCRE_SUJET.encre
-            //     };
-            //     this.setState({tailleReseau: config.val().tailleReseau + ""});
-            //     let suite = new SuiteCouplesFondEncre();
-            //     this.domainesVoisins =
-            //         tableIdentification('sommet',
-            //             table(config.noeud().val().voisins.identification).application(d => {
-            //                 let c = suite.courant();
-            //                 return {
-            //                     domaine: d,
-            //                     fond: c.fond,
-            //                     encre: c.encre
-            //                 };
-            //             }).val());
-            //     let domaineSelectionne
-            //         = this.domainesVoisins.valeur(this.domainesVoisins.selectionCle());
-            //     this.modifierSelection(domaineSelectionne);
-            //     this.modifierEtatInterface(EtatInterfaceJeu1.NORMAL);
-            //     this.modifierFormulaireMessage(
-            //         formulaireMessage(this.utilisateur, this.domaineUtilisateur, [], this.consigne));
+        this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
+            const config: FormatConfigDistribution = JSON.parse(e.data)
+            const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
+            this.utilisateur = config.utilisateur;
+            this.generateur = creerGenerateurIdentifiantParCompteur(this.utilisateur.ID.val + "-MSG-");
+            const formatVoisins = Map(config.domainesVoisins.identification);
+            let suite = new SuiteCouplesFondEncre();
+            formatVoisins.forEach((value:FormatDomaineDistribution, key) => {
+                let c = suite.courant();
+                this.domainesVoisins.ajouter(identifiant("sommet", key), {
+                    domaine: value,
+                    encre: c.encre,
+                    fond: c.fond
+                })
+            })
+
+            this.consigne = this.utilisateur.consigne;
+            let dom = noeudDomaine.centre;
+            this.domaineUtilisateur = {
+                domaine: dom,
+                fond: COUPLE_FOND_ENCRE_SUJET.fond,
+                encre: COUPLE_FOND_ENCRE_SUJET.encre
+            };
+            //TODO: A completer
+            this.setState({tailleDomain: config.tailleDomaine, utilisateursActifsDomain: config.utilisateursActifsDuDomaine});
+
+            let domaineSelectionne = this.domainesVoisins.selectionAssociation().valeur()[1];
+            this.modifierSelection(domaineSelectionne);
+            this.modifierEtatInterface(EtatInterfaceJeu1.NORMAL);
+            this.modifierFormulaireMessage(
+                formulaireMessage(this.utilisateur, this.domaineUtilisateur, domaineSelectionne, [], this.consigne));
         });
 
-        this.fluxDeEvenements.addEventListener('distribution',(e: MessageEvent) => {
+        this.fluxDeEvenements.addEventListener('distribution', (e: MessageEvent) => {
             //TODO: REGARDER FORMAT TYPE DE MESSAGES
             //let msg = messageDistribution(m);
             // console.log("* Traitement d'un message");
@@ -701,7 +713,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         });
 
 
-        this.fluxDeEvenements.addEventListener('erreur',(e: MessageEvent) => {
+        this.fluxDeEvenements.addEventListener('erreur', (e: MessageEvent) => {
             // switch (err.type) {
             //     case TypeErreurDistribution.NOM_CONNEXIONS:
             //         this.setState({messageAlerte: err.messageErreur, afficherAlerte: true})
@@ -724,7 +736,8 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 }
 
 export const Corps = styled(CorpsBrut)`
-  background: ${FOND}
+  background: ${FOND};
+  height: 100vh;
 `;
 
 const StyledCol = styled(Col)`

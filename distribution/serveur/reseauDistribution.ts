@@ -7,7 +7,16 @@ import { quotient } from "../../bibliotheque/types/nombres";
 import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/types/tableau";
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
 import { modificationActivite } from "../../bibliotheque/types/typesAtomiques";
-import { COEUR_TRAME, estUtilisateur, FormatConsigne, FormatDomaineDistribution, FormatSommetDistribution, FormatUtilisateurDistribution, INUTILES_TRAME } from "../commun/echangesDistribution";
+import {
+    COEUR_TRAME,
+    estDomaine,
+    estUtilisateur,
+    FormatConsigne,
+    FormatDomaineDistribution,
+    FormatSommetDistribution,
+    FormatUtilisateurDistribution,
+    INUTILES_TRAME
+} from "../commun/echangesDistribution";
 
 /**
  * Interface spécifique pour un réseau du jeu de distribution. 
@@ -129,6 +138,18 @@ export class ReseauMutableDistribution<
         return this.consignesParDestination.valeur(ID_dest);
     }
 
+    tailleDeSonDomaine(ID_util: Identifiant<"sommet">): number {
+        const ID_dom = this.domaine(ID_util);
+        return this.tailleCribleVoisins(ID_dom, (ID, s) => estUtilisateur(s));
+    }
+    domainesVoisins(ID_dom: Identifiant<"sommet">): TableIdentificationMutable<"sommet", FormatSommetDistribution> {
+        const id_voisins = this.cribleVoisins(ID_dom, (ID, s) => estDomaine(s))
+        let voisins = creerTableIdentificationMutableVide<"sommet",FormatSommetDistribution>("sommet");
+        id_voisins.iterer(ID_sorte => {
+            voisins.ajouter(ID_sorte, this.sommet(ID_sorte))
+        })
+        return voisins;
+    }
 }
 
 export function creerReseauMutableDistribution<

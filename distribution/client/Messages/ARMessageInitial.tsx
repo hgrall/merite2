@@ -4,7 +4,7 @@ import * as React from "react";
 import {mot} from "../../../bibliotheque/types/binaire";
 import {MessageInformant} from "../Helpers/typesInterface";
 import {MessageFixe} from "./MessageFixe";
-import {InterlocuteurMessage, Role} from "../../../../../../Desktop/shared/InterlocuteurMessage";
+import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 interface ProprietesARMessageInitial {
     // see https://github.com/Microsoft/TypeScript/issues/8588
