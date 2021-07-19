@@ -28,8 +28,9 @@ import {
     FormatMessageEnvoiTchat,
     FormatMessageErreurTchat,
     FormatMessageTransitTchat,
-    FormatNoeudTchat, FormatUtilisateurTchat, NoeudTchat
+    FormatUtilisateurTchat,
 } from "../commun/echangesTchat";
+import {useLocation} from "react-router-dom";
 import {AxiosError, AxiosResponse} from "axios";
 
 
@@ -64,7 +65,9 @@ export class Corps extends React.Component<{}, Etat> {
 
     constructor(props: {}) {
         super(props);
-        this.fluxDeEvenements = creerFluxDeEvenements(`http://localhost:8080/tchat/code/etoile/reception`);
+        const url = window.location.href;
+        console.log(`${url}/reception`)
+        this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
         this.individuInconnu = {
             ID: identifiant('sommet', ID_INCONNU),
             nom: "inconnu",

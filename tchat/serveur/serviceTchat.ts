@@ -25,7 +25,6 @@ import {
 import { avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseau } from './reseauTchat';
 import { FormatMessageTchatValidator } from "../commun/verificationFormat";
-import { ENVOI } from '../../brouillon/routes';
 
 /*
 * Service de l'application.

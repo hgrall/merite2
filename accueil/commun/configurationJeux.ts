@@ -1,6 +1,7 @@
 /**
  * TODO à compléter.
  */
+import {pseudos} from "../../tchat/serveur/pseudos";
 
 export type TypeTchat = 'etoile' | 'anneau';
 

@@ -4,7 +4,6 @@
         "incremental": true,
         "target": "es5",
         "module": "commonjs",
-        "esModuleInterop": true,
         "moduleResolution": "node",
         "sourceMap": true,
         "noImplicitAny": true,
@@ -23,8 +22,6 @@
         "./node_modules",
         "brouillon",
         "obsolete",
-        "prototype",
-        "accueil",
         "distribution_vx"
     ]
 }
