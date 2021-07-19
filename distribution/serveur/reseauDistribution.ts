@@ -336,13 +336,10 @@ export function generationAleatoireMotConsigne(): Mot {
 function tailleTrame(nombreDomaines: number, effectifParDomaine: ReadonlyArray<number>): number {
     let total = INUTILES_TRAME + COEUR_TRAME;
     total = total + tailleEnBinaire(nombreDomaines);
-    let m = 0;
-    for (let e of effectifParDomaine) {
-        let t = tailleEnBinaire(e);
-        if (t > m) {
-            m = t;
-        }
-    }
+    let m
+        = effectifParDomaine
+            .map((e) => tailleEnBinaire(e))
+            .reduce((p, t) => Math.max(p, t), 0);  
     total = total + m;
     return total;
 }
