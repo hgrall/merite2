@@ -1,4 +1,4 @@
-const pseudos = [
+export const pseudos = [
     "dede",
     "fifi",
     "jojo",

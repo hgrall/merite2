@@ -1,11 +1,13 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const CopyPlugin = require("copy-webpack-plugin");
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
 
 var config = {
     entry: {
         tchatReact: "./build/tchat/client/renduTchat.js",
-        accueilReact: "./build/accueil/renduAccueil.js",
+        accueilReact: "./build/accueil/client/Accueil/renduAccueil.js",
+        connexionReact: "./build/accueil/client/Connexion/renduConnexion.js",
     }, // Les clés remplacent name ci-dessous.
     output: {
         path: __dirname + "/build",
@@ -18,7 +20,16 @@ var config = {
     mode: "production",
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
-        extensions: [".ts", ".tsx", ".js", ".json"]
+        extensions: [".ts", ".tsx", ".js", ".json"],
+        //https://stackoverflow.com/questions/64557638/how-to-polyfill-node-core-modules-in-webpack-5
+        fallback: {
+            "fs": false,
+            "child_process":false,
+            "net": false,
+            "assert": false,
+            "querystring": false,
+            "crypto": false,
+        }
     },
     module: {
         rules: [
@@ -47,12 +58,20 @@ var config = {
             filename: "interfaceAccueil.html",
             chunks: ['accueilReact']
         }),
+        new HtmlWebpackPlugin({
+            title: 'Connexion',
+            template: 'site/interfaceTemplate.html',
+            filename: "interfaceConnexion.html",
+            chunks: ['connexionReact']
+        }),
         new CopyPlugin({
             patterns: [
                 {from: "config.json"},
             ],
         }),
-    ]
+        new NodePolyfillPlugin()
+    ],
+
 };
 
 module.exports = config;
