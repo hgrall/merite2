@@ -7,7 +7,7 @@ import {
 } from "../Helpers/typesInterface";
 import {EntreeMessage} from "../ChampDeTexte/EntreeMessage";
 import {EntreeEssai} from "../ChampDeTexte/EntreeEssai";
-import {Option, option} from "../../../bibliotheque/types/option";
+import {Option, option, rienOption} from "../../../bibliotheque/types/option";
 import {Identifiant} from "../../../bibliotheque/types/identifiant";
 import {ContainerARMessageInitial} from "../Messages/ARMessageInitial";
 import {ContainerMessageTransit} from "../Messages/MessageTransit";

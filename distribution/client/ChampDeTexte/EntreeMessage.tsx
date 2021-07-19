@@ -96,7 +96,7 @@ export class EntreeMessage extends React.Component<ProprietesEntreeMessage, Etat
                                          this.reinitialiserEntree();
                                      }
                                  }}
-                                 inactif = {false}
+                                 inactif = { false }
                     />
                 </InputGroup.Append>
             </StyledInputGroup>

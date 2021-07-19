@@ -20,7 +20,7 @@ import {Col, Row} from "react-bootstrap";
 import {PanneauAdmin} from "./Paneau/PanneauAdmin";
 import {PanneauMessages} from "./Paneau/PaneauMessages";
 import styled from "styled-components";
-import {tableau, tableauDeNatif} from "../../bibliotheque/types/tableau";
+import {tableauDeNatif} from "../../bibliotheque/types/tableau";
 import {Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
     FormatMessageARTchat,
@@ -30,7 +30,6 @@ import {
     FormatMessageTransitTchat,
     FormatUtilisateurTchat,
 } from "../commun/echangesTchat";
-import {useLocation} from "react-router-dom";
 import {AxiosError, AxiosResponse} from "axios";
 
 
@@ -62,12 +61,13 @@ export class Corps extends React.Component<{}, Etat> {
     private individuInconnu: Individu;
 
     private fluxDeEvenements: EventSource;
+    private urlEnvoi: string;
 
     constructor(props: {}) {
         super(props);
         const url = window.location.href;
-        console.log(`${url}/reception`)
         this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
+        this.urlEnvoi = `${url}/envoi`
         this.individuInconnu = {
             ID: identifiant('sommet', ID_INCONNU),
             nom: "inconnu",
@@ -175,7 +175,7 @@ export class Corps extends React.Component<{}, Etat> {
                 this.setState({etatInterface: EtatInterfaceTchat.ERRONE});
             }
         }
-        requetePOST<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
+        requetePOST<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     remplirIndividuSujet(noeudSujet: Noeud<FormatUtilisateurTchat>) {

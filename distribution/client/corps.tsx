@@ -14,9 +14,7 @@ import {
 } from "./Helpers/typesInterface";
 import {
     creerTableIdentificationMutableVide,
-    fabriqueTableIdentification, FormatTableIdentification,
-    tableIdentification,
-    TableIdentification, TableIdentificationMutable
+    TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
     creerGenerateurIdentifiantParCompteur,
@@ -26,7 +24,6 @@ import {
 } from "../../bibliotheque/types/identifiant";
 import {rienOption, option, Option} from "../../bibliotheque/types/option";
 import {DateFr, dateMaintenant} from "../../bibliotheque/types/date";
-import {mot} from "../../bibliotheque/types/binaire";
 import {PanneauMessages} from "./Panneau/PanneauMessages";
 import {PanneauAdmin} from "./Panneau/PanneauAdmin";
 import {Col, Row} from "react-bootstrap";
@@ -82,18 +79,22 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     private consigne: FormatConsigne;
     private domaineUtilisateur: DomaineInterface;
     private domainesVoisins: TableIdentificationMutable<'sommet', DomaineInterface>; // TODO : intile ?
-    // TODO : voir les usages de ces attributs. possiblement, les transformer
-    //   en variables locales si usage linéaire.
+
     private domaineInconnu: DomaineInterface;
 
     private messageErreur: string;
     private generateur: GenerateurIdentifiants<'message'>;
+    private urlEnvoi: string;
 
     constructor(props: ProprietesCorps) {
         super(props);
 
         this.domainesVoisins = creerTableIdentificationMutableVide("sommet");
         this.populationDomaine = creerTableIdentificationMutableVide("sommet");
+
+        const url = window.location.href;
+        this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
+        this.urlEnvoi = `${url}/envoi`
 
         this.domaineInconnu = {
             domaine: {
@@ -116,7 +117,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             afficherAlerte: false,
             messageAlerte: "",
         };
-        this.modifierSelection = this.modifierSelection.bind(this);
         this.envoyerMessageInitial = this.envoyerMessageInitial.bind(this);
         this.mettreAJourInformation = this.mettreAJourInformation.bind(this);
         this.retirerInformation = this.retirerInformation.bind(this);
@@ -156,12 +156,12 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             ID: this.generateur.produire("message")
         };
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-            // TODO: TRAITER REPONSE
+            // TODO: TRAITER REPONSE COMME MESSAGE AR POUR L'AFFICHAGE
         };
         const traitementErreur = (raison: AxiosError) => {
             // TODO: TRAITER ERREUR
         }
-        requetePOST<FormatMessageInitialDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
+        requetePOST<FormatMessageInitialDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     // ok
@@ -447,8 +447,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
-        this.fluxDeEvenements = creerFluxDeEvenements(`http://localhost:8080/distribution/code/jeu1/reception`);
-
         this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
             const config: FormatConfigDistribution = JSON.parse(e.data)
             const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
