@@ -7,7 +7,7 @@
  */
 
 import {
-    Activable
+    Activable, Deux
 } from "../../bibliotheque/types/typesAtomiques";
 
 import {
@@ -15,6 +15,7 @@ import {
 
 import { FormatNoeud, Noeud } from "../../bibliotheque/applications/noeud";
 import { FormatBinaire } from "../../bibliotheque/types/binaire";
+import { FormatMessage } from "../../bibliotheque/applications/message";
 
 /**
  * Nombre de bits inutiles dans la trame.
@@ -165,3 +166,74 @@ export function estUtilisateur(s : FormatSommetDistribution) : s is FormatUtilis
 export function estDomaine(s : FormatSommetDistribution) : s is FormatDomaineDistribution {
     return !estUtilisateur(s);
 }
+
+/**
+ * Type des messages pour la distribution.
+ * - Canaux du serveur
+ *   - initier : INIT
+ *   - verrouiller : VERROU
+ *   - transmettre : SUIVANT
+ *   - verifier : ESSAI
+ *   - deverrouiller : LIBE
+ * - Canaux du client
+ *   - recevoir : TRANSIT
+ *   - activer : ACTIF
+ *   - gagner : GAGNE
+ *   - perdre : PERDU
+ *   - detruire : DESTRUCT
+ */
+export enum TypeMessageDistribution {
+    INIT, // ok - S
+    AR_INIT,
+    VERROU, // ok - S
+    SUIVANT, // ok - S
+    AR_SUIVANT,
+    ESSAI, // ok - S
+    LIBE, // ok - S
+    TRANSIT, // ok - C
+    ACTIF, // ok - C
+    GAIN, // ok - C
+    PERTE, // ok - C
+    DESTRUCT, // ok - C
+    ECHEC_VERROU, // ok - C
+    INFO
+    //ADMIN,
+    //NONCONF, // ok
+    //SUCCES_INIT,
+    //SUCCES_ACTIF,
+    //INACTIF, // ok
+    //IGNOR, // ok
+    //FIN, // ok
+    //SUCCES_TRANSIT,
+    //ECHEC_TRANSIT,
+    //SUCCES_FIN,
+    //ECHEC_FIN,
+    //ERREUR_CONNEXION, // TODO
+    //ERREUR_EMET,
+    //ERREUR_DEST,
+    //ERREUR_TYPE,
+    //INTERDICTION,
+    //STATISTIQUES,
+    //CONF,
+    //CONNEXION
+  }
+  
+  /**
+   * Corps d'un message pour la distribution.
+   * TODO   
+   */
+  export interface FormatMessageDistribution {
+    readonly ID_utilisateur_emetteur: Identifiant<'sommet'>;
+    readonly ID_origine: Identifiant<'sommet'>; // domaine
+    readonly ID_destination: Identifiant<'sommet'>; // domaine
+    readonly contenu: ReadonlyArray<Deux>;
+  }
+  
+/** 
+ * Message au format JSON contenant un envoi d'un client du tchat.
+ * - ID : identifiant
+ * - type : 'envoi',
+ * - corps : l'envoi,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageInitialDistribution = FormatMessage<TypeMessageDistribution.INIT, FormatMessageDistribution>;

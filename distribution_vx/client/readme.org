@@ -1,0 +1,43 @@
+* Rendu
+
+- renduJeu1
+  - appel de la balise Corps (donc du composant React Corps)
+
+- Corps[CorpsBrut] - fixe - (0, 0) - H100% x L100%
+  - div
+    - Admin[AdminBrut] - fixe - (0, 0)
+      - div
+        - Scrollbars - H100% x L24%
+          - ContainerAdmin - absolu - (0, 0) - H100% x L24% - container
+            flex : colonne, items centrés, justifiés en bas
+	    - div
+	      - SujetAdmin - extension max (via flex: auto) - L24% -
+                container flex : colonne, items alignés en haut, justifiés
+                à gauche
+		- SujetAdminContainer - L24% x H7ex - container Flex :
+                  ligne, items alignés au centre verticalement, centrés
+                  horizontalement
+                  - Pseudo - item H4ex x Ladaptée (via flex: initial)
+                    - texte
+	      - texte 
+    - ApresAdmin (simple séparation définie dans corps)
+    - Action
+    - ApresAction  (simple séparation définie dans corps) 
+
+* BUGS
+
+** Problème de répertoire
+
+impossible d'utiliser "/jeu1/distribution0" comme chemin : la recherche
+du script se fait dans un mauvais répertoire, relatif au chemin.
+
+- solution
+  - utiliser specifierRepertoireScriptsEmbarques pour spécifier le
+    répertoire des scripts ("build").
+  - utiliser un chemin absolu dans le source html.
+    #+BEGIN_SRC html
+    <script src="/distributionReact.client.js"></script>
+    #+END_SRC
+
+
+
