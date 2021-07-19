@@ -1,0 +1,50 @@
+* Serveur
+
+Paramètres
+- nombre de domaines : ND
+- nombre d'utilisateurs par domaine : NU : [0, ND[ -> ]0, omega[
+
+Noms des domaines et des utilisateurs : NOM : Nat -> Mot binaire
+- traduction des naturels en notation binaire
+
+Réseau
+- Anneau formé de noeuds (sommet centre ou domaine avec identifiant +
+  sommets voisins) : Anneau : ID dom -> Noeud (via une interface
+  particulière)
+- Enumération : ED : [0, ND[ -> Identifiants de domaine
+
+Population : ID dom -> ID util -> utilisateur
+- population mutable vide initialement : popConnectée
+- population mutable complète initialement : popAConnecter
+- population : popComplète (utile ? non)
+- Enumération : EPop : (id : ID_Dom) -> ([0, NU(i)[ | ED(i) = id) ->
+  utilisateur  (variable locale utilisée lors de l'assemblage des consignes)
+
+Consigness
+- table des consignes : C : ID dom -> ID util -> (ID dom, ID util, message)
+  - émetteur vers destinataire à l'opposé
+  - taille des messages ?
+    - taille de la trame = |ND|_{base 2} + Max_i |NU(i)|_{base 2} + |message| + 1
+
+Calculs
+- Entrée : ND, NU
+- Assemblage du réseau en anneau
+  - anneau
+  - énumération ED
+- Assemblage de la population complète et des consignes
+  - 0 <= i < ND
+    - domaine émetteur : ED(i)
+    - 0 <= j < NU(i) - peuplement du domaine émetteur
+      - création de l'utilisateur de nom NOM(j) et d'identifiant
+          fonction de i et j
+      - ajout de l'utilisateur dans la population mutable
+          popAConnecter du domaine ED(i)
+      - ajout de l'utilisateur dans l'énumération EPop
+    - 0 <= j < NU(i) - génération des consignes
+      - création de la consigne :
+        - émetteur : ED(i), EPop(ED(i))(j)
+        - destinataire : ED(k), EPop(ED(k))((i + j) mod NU(k))
+          où k = (i + ND/2) mod ND
+        - message : contenu fonction de i et de j (à déterminer avec des
+          cas particuliers intéressants - exemple : une et une seule noire)
+      - ajout de la consigne à la table des consignes

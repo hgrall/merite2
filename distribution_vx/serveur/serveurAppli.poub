@@ -1,0 +1,112 @@
+/**
+ * Serveur de dix applications de tchat, cinq avec un réseau en étoile,
+ * cinq avec un réseau en anneau. La taille et les noms des utilisateurs sont
+ * communs à tous les réseaux. La classe étend ServeurApplicationExpress
+ * par un accesseur aux réseaux à connecter.
+ * Chemins :
+ * - etoileX (X entre 0 et 4),
+ * - anneauX (X entre 0 et 4).
+ */
+/*
+export class ServeurApplicationsJeu1Distribution extends ServeurApplicationsExpress {
+    /**
+     * Configuration du serveur. TODO
+     */
+    private cheminsJeu1: Table<Unite>;
+    private cheminsAdminJeu1: Table<Unite>;
+    /**
+     * Constructeur initialisant le réseau à partir des noms des utilisateurs,
+     * supposés communs à tous les réseaux.
+     * @param port port de l'hôte
+     */
+    constructor(port: number) {
+        super(port);
+        this.cheminsJeu1 = table(
+            {
+                "taille": 1,
+                "table":
+                {
+                    "/jeu/1_distribution/0": Unite.ZERO,
+                }
+            }
+        );
+        this.cheminsAdminJeu1 = table(
+            {
+                "taille": 1,
+                "table":
+                {
+                    "/jeu/1_distribution/0/admin": Unite.ZERO,
+                }
+            }
+        );
+    }
+    /**
+     * Accesseur en lecture à la configuration.
+     */
+    cheminsJeu1Distribution() {
+        return this.cheminsJeu1;
+    }
+    /**
+     * Accesseur en lecture à la configuration.
+    */
+    cheminsAdminJeu1Distribution() {
+        return this.cheminsAdminJeu1;
+    }
+
+    /**
+     * Initialise le serveur en enregistrant pour chaque chemin l'application
+     * à servir, soit la ressource "build/interfaceJeu1Distribution.html".
+     */
+    initialiser(): void {
+        const repertoireHtml: string = shell.pwd() + "/build";
+        this.specifierRepertoireScriptsEmbarques("build");
+        const ressource = "interfaceJeu1Distribution.html";
+        const ressourceAdmin = "interfaceAdminJeu1Distribution.html";
+        this.cheminsJeu1Distribution().iterer((chemin: string, z) => {
+            this.enregistrerReponseARequeteGET(chemin, (i: Interaction) => {
+                console.log("* " + dateMaintenant().representationLog()
+                    + " - Service de " + ressource + " en " + chemin);
+                i.servirFichier(repertoireHtml, ressource);
+            });
+        });
+        this.cheminsAdminJeu1Distribution().iterer((chemin: string, z) => {
+            this.enregistrerReponseARequeteGET(chemin, (i: Interaction) => {
+                console.log("* " + dateMaintenant().representationLog()
+                    + " - Service de " + ressourceAdmin + " en " + chemin);
+                i.servirFichier(repertoireHtml, ressourceAdmin);
+            });
+        });
+    }
+
+    administrer(chemin: string, nombreUtilisateurs: number) {
+        let effectifs = new Array<number>(5);
+        let d = divEuclidienne(nombreUtilisateurs, 5);
+        for (let j = 0; j < 5; j++) {
+            effectifs[j] = d.quotient + ((j < d.reste) ? 1 : 0);
+        }
+        const config = this._configuration.valeur(chemin);
+        config.engendrerReseau(
+            5, "DOM" + chemin.substr(chemin.length - 1) + "-");
+        config.engendrerPopulations(effectifs);
+        config.engendrerConsignes();
+    }
+}
+
+this._utilisateursConnectes = table(
+            {
+                "taille": 1,
+                "table":
+                {
+                    "/jeu/1_distribution/0": creerTableauMutableVide((u) => u.val()),
+                }
+            }
+        );
+        this._utilisateursAConnecter = table(
+            {
+                "taille": 1,
+                "table":
+                {
+                    "/jeu/1_distribution/0": creerTableauMutableVide((u) => u.val()),
+                }
+            }
+        );
