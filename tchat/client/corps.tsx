@@ -24,13 +24,12 @@ import {tableauDeNatif} from "../../bibliotheque/types/tableau";
 import {Noeud, noeud} from "../../bibliotheque/applications/noeud";
 import {
     FormatMessageARTchat,
-    FormatMessageAvertissementTchat,
     FormatMessageEnvoiTchat,
-    FormatMessageErreurTchat,
     FormatMessageTransitTchat,
     FormatUtilisateurTchat,
 } from "../commun/echangesTchat";
 import {AxiosError, AxiosResponse} from "axios";
+import {FormatMessageAvertissement, FormatMessageErreur} from "../../bibliotheque/applications/message";
 
 
 enum EtatInterfaceTchat {
@@ -168,7 +167,7 @@ export class Corps extends React.Component<{}, Etat> {
         };
         const traitementErreur = (raison: AxiosError) => {
             if (raison.response?.status == 400) {
-                const erreur: FormatMessageErreurTchat = raison.response.data;
+                const erreur: FormatMessageErreur = raison.response.data;
                 console.log(`Erreur: ${erreur.corps.erreur}`);
             } else if (raison.response?.status == 500) {
                 this.messageErreur = raison.response?.data
@@ -237,7 +236,7 @@ export class Corps extends React.Component<{}, Etat> {
         });
 
         this.fluxDeEvenements.addEventListener('avertissement', (e: MessageEvent) => {
-            const avertissement: FormatMessageAvertissementTchat = JSON.parse(e.data);
+            const avertissement: FormatMessageAvertissement = JSON.parse(e.data);
             console.log(`Avertissement: ${avertissement.corps.avertissement}`)
             this.setState({
                 messageAlerte: avertissement.corps.avertissement,

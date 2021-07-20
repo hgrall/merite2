@@ -13,6 +13,7 @@ import { ENVOI, PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION, RECEPTION } f
 import { ConfigurationJeux } from '../commun/configurationJeux';
 import { cleAccesAleatoire, configurationJeuxParNom, nomConfigurationJeuxParCodeAcces } from './acces';
 import { creerServiceTchat } from '../../tchat/serveur/serviceTchat';
+import {creerServiceDistribution} from "../../distribution/serveur/serviceDistribution";
 
 const serveurApplications: ServeurApplications<express.Request, express.Response> = creerServeurApplicationsExpress(8080);
 
@@ -57,6 +58,7 @@ function initialiserJeux(codeAcces: string, cleAcces: string) {
     // initialiser les jeux.
     creerServiceTchat(config.tchat_anneau, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html", ENVOI, RECEPTION);
     creerServiceTchat(config.tchat_etoile, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html", ENVOI, RECEPTION);
+    creerServiceDistribution(config.distribution, cleAcces).servirDistribution(serveurApplications, repertoireHtml, "interfaceDistribution.html", ENVOI, RECEPTION);
 }
 
 function traitementConnexion(codeAcces: string)

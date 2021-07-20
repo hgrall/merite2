@@ -77,6 +77,14 @@ export class ReseauMutableTchat<
         });
     }
 
+    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
+        this.voisins(ID_sommet).iterer((id) => {
+            if (this.sommet(id).actif) {
+                const canalVoisin = this.connexion(id);
+                canalVoisin.envoyerJSON('config', this.noeud(id));
+            }
+        });
+    }
 }
 
 export function creerReseauMutableTchat<

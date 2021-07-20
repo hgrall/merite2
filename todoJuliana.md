@@ -7,6 +7,8 @@
 
 # Distribution
 
+## Validation des requêtes - Voir serviceDistribution
+
 ## Réseau 
 
 - des domaines en anneau

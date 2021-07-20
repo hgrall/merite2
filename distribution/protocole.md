@@ -205,6 +205,9 @@ Requis
 
 ### Etat
 
+Compteur pour l'identification des messages
+- `IdentificationMsg(n, idMsg)` : `idMsg` identifie le `n`-ième message.
+
 Table des verroux pour les messages : message `idMessage` verrouillé par `(PERSONNE | idUtilisateur)` de `idDomaine`
 - `Verrou(idDomaine, idMessage, PERSONNE | idUtilisateur)*`
 
@@ -232,7 +235,7 @@ Vérifié
   // en autorisant le verrouillage pour le domaine destinataire puis
   // en démarrant la diffusion du message aux utilisateurs. 
       initier(idMsg, idUtil, origine, dest, contenu)
-  ->  accuserInitier[idUtil](idMsg, idUtil, origine, dest, contenu)
+  ->  accuserInitier[idUtil](idMsg, idUtil, origine, dest, contenu) // AR : même message que celui envoyé.
     & Verrou(dest, idMsg, PERSONNE) // verrouillage de 'idMsg' devenant possible pour
                                  //   les utilisateurs du domaine 'dest'
     & Diffusion(idMsg, idUtil, origine, dest, contenu) // diffusion vers 'dest'
@@ -247,10 +250,13 @@ Vérifié
 
   // Récurrence sur les utilisateurs de la liste lu. ok
       Diffusion(idMsg, idUtil, origine, dest, contenu, u::lu)
-  ->  Diffusion(idMsg, idUtil, origine, dest, contenu, lu) & recevoir[u](id, origine, dest, contenu)
+    & IdentificationMsg(n, idMsg)
+  ->  Diffusion(idMsg, idUtil, origine, dest, contenu, lu) 
+    & IdentificationMsg(n+1, idMsg')
+    & recevoir[u](idMsg', u, origine, dest, contenu) 
 
-      Diffusion(id, origine, dest, contenu, nil) 
-  -> vide
+      Diffusion(idMsg, idUtil, origine, dest, contenu, nil) 
+  ->  vide
 ```
 
 ```
@@ -336,15 +342,16 @@ Un canal se traduit pratiquement en
 
 - Canaux du serveur
   - initier : INIT ok
-  - verrouiller : VERROU ok
-  - transmettre : SUIVANT ok
-  - verifier : ESSAI ok
+  - verrouiller : VERROU 
+  - transmettre : SUIVANT 
+  - verifier : ESSAI 
   - deverrouiller : LIBE
 - Canaux du client
-  - recevoir : TRANSIT ok
+  - accuserInitier : INIT ok
+  - recevoir : TRANSIT 
   - activer : VERROU (avec discrimination suivant l'utilisateur)
-  - gagner : GAIN ok 
-  - perdre : PERTE ok
+  - gagner : GAIN 
+  - perdre : PERTE 
   - detruire : VERROU (avec discrimination suivant l'utilisateur)
 
 Complément (non décrit) :

@@ -357,15 +357,8 @@ export abstract class ReseauMutableParEnveloppe<
         }
         );
     }
-    // TODO à vérifier - meilleure solution : une méthode abstraite sans doute - non générique
-    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
-        this.voisins(ID_sommet).iterer((id) => {
-            if (this.sommet(id).actif) {
-                const canalVoisin = this.connexion(id);
-                canalVoisin.envoyerJSON('config', this.noeud(id));
-            }
-        });
-    }
+
+    abstract diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void;
 
     itererSommets(f: (ID_sommet: Identifiant<'sommet'>, s: FS) => void): void {
         this.etat().sommets.iterer(f);

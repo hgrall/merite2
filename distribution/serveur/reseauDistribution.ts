@@ -8,14 +8,14 @@ import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/type
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
 import { modificationActivite } from "../../bibliotheque/types/typesAtomiques";
 import {
-    COEUR_TRAME,
+    COEUR_TRAME, configuration,
     estDomaine,
-    estUtilisateur,
+    estUtilisateur, FormatConfigDistribution,
     FormatConsigne,
     FormatDomaineDistribution,
     FormatSommetDistribution,
     FormatUtilisateurDistribution,
-    INUTILES_TRAME
+    INUTILES_TRAME, NoeudDomaineDistribution
 } from "../commun/echangesDistribution";
 
 /**
@@ -85,6 +85,10 @@ export class ReseauMutableDistribution<
         return this.tailleCribleVoisins(ID_dom, (ID, s) => estUtilisateur(s) && s.actif);
     }
 
+    utilisateursDansDomaine(ID_Dom:Identifiant<"sommet">): EnsembleIdentifiants<"sommet"> {
+        return this.cribleVoisins(ID_Dom, (ID, s) => estUtilisateur(s))
+    }
+
     /**
      * Initie la file des inactifs déconnectés. Cette file contient
      * initialement tous les utilisateurs. 
@@ -150,6 +154,32 @@ export class ReseauMutableDistribution<
         })
         return voisins;
     }
+    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
+        this.voisins(ID_sommet).iterer((id) => {
+            const sommetVoisin = this.sommet(id);
+            if (estUtilisateur(sommetVoisin) && sommetVoisin.actif) {
+                const canalVoisin = this.connexion(id);
+                const config = this.configurationUtilisateur(id);
+                canalVoisin?.envoyerJSON('config', config);
+            }
+            else if(estDomaine(sommetVoisin) && sommetVoisin.actif) {
+                this.utilisateursDansDomaine(id).iterer(ID_sorte => {
+                    const canalVoisin = this.connexion(ID_sorte);
+                    const config = this.configurationUtilisateur(ID_sorte);
+                    canalVoisin?.envoyerJSON('config', config);
+                })
+            }
+        });
+    }
+    configurationUtilisateur(ID_sommet: Identifiant<'sommet'>): FormatConfigDistribution {
+        const sommetUtilisateur = this.sommet(ID_sommet) as FormatUtilisateurDistribution;
+        const ID_domaine = this.domaine(ID_sommet);
+        const noeudDomaine = this.noeud(ID_domaine) as NoeudDomaineDistribution;
+        const nombreActifsDomain =  this.nombreUtilisateursActifsDeSonDomaine(ID_sommet);
+        const tailleDomain =  this.tailleDeSonDomaine(ID_sommet);
+        const domainesVoisins = this.domainesVoisins(ID_domaine);
+        return configuration(noeudDomaine.toJSON(),sommetUtilisateur, nombreActifsDomain,tailleDomain, domainesVoisins.toJSON())
+    }
 }
 
 export function creerReseauMutableDistribution<
@@ -183,19 +213,19 @@ class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implem
     private nomsUtil: TableIdentificationMutable<"sommet", FormatBinaire>;
 
     constructor(
-        code: string,
+        cleAcces: string,
         private nombreDomaines: number,
         private effectifParDomaine: ReadonlyArray<number>
     ) {
         this.generateurIdentifiantsDomaine
             = creerGenerateurIdentifiantParCompteur(
-                code + "-" + "dom-");
+                cleAcces + "-" + "dom-");
         this.generateurIdentifiantsUtilisateur
             = creerGenerateurIdentifiantParCompteur(
-                code + "-" + "util-");
+                cleAcces + "-" + "util-");
         this.generateurIdentifiantsConsigne
             = creerGenerateurIdentifiantParCompteur(
-                code + "-" + "csg-");
+                cleAcces + "-" + "csg-");
 
         this.sommets = creerTableIdentificationMutableVide('sommet');
         this.adjacence
@@ -298,12 +328,12 @@ class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implem
 }
 
 export function creerGenerateurReseauDistribution<C extends CanalPersistantEcritureJSON>(
-    code: string,
+    cleAcces: string,
     nombreDomaines: number,
     effectifParDomaine: ReadonlyArray<number>)
     : GenerateurReseau<
         FormatSommetDistribution, C, ReseauMutableDistribution<C>> {
-    return new GenerateurReseauDistribution<C>(code, nombreDomaines, effectifParDomaine);
+    return new GenerateurReseauDistribution<C>(cleAcces, nombreDomaines, effectifParDomaine);
 }
 
 /**

@@ -2,17 +2,25 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/bibliotheque/validation/distribution/echanges.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bibliotheque/validation/tchat/echanges.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bibliotheque/validation/types/date.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bibliotheque/validation/types/identifiant.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bibliotheque/validation/types/tableau.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/distribution/serveur/echangesServeurDistribution.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/distribution/serveur/serviceDistribution.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bibliotheque/types/date.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/types/date.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/client/Accueil/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Accueil/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/commun/configurationJeux.ts" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/commun/configurationJeux.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/serveur/serveurPrincipal.ts" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/serveur/serveurPrincipal.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bibliotheque/applications/message.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/applications/message.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bibliotheque/applications/reseau.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/applications/reseau.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/corps.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tchat/commun/verificationFormat.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/protocole.md" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/protocole.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/serveur/reseauDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/serveur/reseauDistribution.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/serveur/serveurDistribution.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/commun/echangesTchat.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/commun/echangesTchat.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/serveur/echangesServeurTchat.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/serveur/echangesServeurTchat.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/serveur/reseauTchat.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/serveur/reseauTchat.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tchat/serveur/serviceTchat.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/serveur/serviceTchat.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/todoJuliana.md" beforeDir="false" afterPath="$PROJECT_DIR$/todoJuliana.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +88,7 @@
       <workItem from="1622453211164" duration="8482000" />
       <workItem from="1626702392068" duration="339000" />
       <workItem from="1626702780116" duration="1874000" />
-      <workItem from="1626770728252" duration="1931000" />
+      <workItem from="1626770728252" duration="10930000" />
     </task>
     <servers />
   </component>
