@@ -1,7 +1,8 @@
+import { FormatMessageAvertissement, FormatMessageErreur } from "../../bibliotheque/applications/message";
 import { dateMaintenant } from "../../bibliotheque/types/date";
 import { Identifiant } from "../../bibliotheque/types/identifiant";
 import { Tableau } from "../../bibliotheque/types/tableau";
-import { FormatMessageARTchat, FormatMessageAvertissementTchat, FormatMessageEnvoiTchat, FormatMessageErreurTchat, FormatMessageTransitTchat, FormatUtilisateurTchat } from "../commun/echangesTchat";
+import { FormatMessageARTchat, FormatMessageEnvoiTchat, FormatMessageTransitTchat } from "../commun/echangesTchat";
 
 export function traductionEnvoiEnAR(e : FormatMessageEnvoiTchat, 
     idsDestinatairesEffectifs : Tableau<Identifiant<'sommet'>>, ID_msg : Identifiant<'message'>) : FormatMessageARTchat {
@@ -30,24 +31,3 @@ export function traductionEnvoiEnTransit(e : FormatMessageEnvoiTchat, ID_msg : I
     };
 }
 
-export function erreurTchat(ID_msg : Identifiant<'message'>, description : string) : FormatMessageErreurTchat {
-    return {
-        ID: ID_msg,
-        type: 'erreur',
-        corps: {
-            erreur : description
-        },
-        date: dateMaintenant().toJSON()
-    };
-}
-
-export function avertissement(ID_msg : Identifiant<'message'>, description : string) : FormatMessageAvertissementTchat {
-    return {
-        ID: ID_msg,
-        type: 'avertissement',
-        corps: {
-            avertissement : description
-        },
-        date: dateMaintenant().toJSON()
-    };
-}

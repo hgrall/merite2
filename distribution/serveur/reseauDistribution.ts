@@ -162,19 +162,19 @@ class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implem
     private nomsUtil: TableIdentificationMutable<"sommet", FormatBinaire>;
 
     constructor(
-        code: string,
+        cleAcces: string,
         private nombreDomaines: number,
         private effectifParDomaine: ReadonlyArray<number>
     ) {
         this.generateurIdentifiantsDomaine
             = creerGenerateurIdentifiantParCompteur(
-                code + "-" + "dom-");
+                cleAcces + "-" + "dom-");
         this.generateurIdentifiantsUtilisateur
             = creerGenerateurIdentifiantParCompteur(
-                code + "-" + "util-");
+                cleAcces + "-" + "util-");
         this.generateurIdentifiantsConsigne
             = creerGenerateurIdentifiantParCompteur(
-                code + "-" + "csg-");
+                cleAcces + "-" + "csg-");
 
         this.sommets = creerTableIdentificationMutableVide('sommet');
         this.adjacence
@@ -277,12 +277,12 @@ class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implem
 }
 
 export function creerGenerateurReseauDistribution<C extends CanalPersistantEcritureJSON>(
-    code: string,
+    cleAcces: string,
     nombreDomaines: number,
     effectifParDomaine: ReadonlyArray<number>)
     : GenerateurReseau<
         FormatSommetDistribution, C, ReseauMutableDistribution<C>> {
-    return new GenerateurReseauDistribution<C>(code, nombreDomaines, effectifParDomaine);
+    return new GenerateurReseauDistribution<C>(cleAcces, nombreDomaines, effectifParDomaine);
 }
 
 /**

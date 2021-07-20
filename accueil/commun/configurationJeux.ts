@@ -13,6 +13,17 @@ export interface ConfigurationJeuTchat {
     pseudos: ReadonlyArray<string>;
 }
 
+export type TypeDistribution = 'anneau_etoile';
+
+export interface ConfigurationJeuDistribution {
+    prefixe: string;
+    suffixe: string;
+    type: TypeDistribution;
+    nombreDomaines: number;
+    effectifParDomaine: ReadonlyArray<number>
+}
+
+
 export interface ConfigurationJeux {
     tchat_etoile: ConfigurationJeuTchat;
     tchat_anneau: ConfigurationJeuTchat;

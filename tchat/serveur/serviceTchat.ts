@@ -1,14 +1,12 @@
 import * as express from 'express';
 import { isRight } from 'fp-ts/lib/Either'
 import { logger } from '../../bibliotheque/administration/log';
-import { ReseauMutable } from '../../bibliotheque/applications/reseau';
 import { ConnexionExpress, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
 
 import { ConfigurationJeuTchat } from '../../accueil/commun/configurationJeux';
 
 import {
     chemin,
-    creerServeurApplicationsExpress,
     ServeurApplications
 } from "../../bibliotheque/communication/serveurApplications";
 
@@ -18,13 +16,12 @@ import { tableau, Tableau } from '../../bibliotheque/types/tableau';
 import {
     FormatMessageARTchat,
     FormatMessageEnvoiTchat,
-    FormatMessageTransitTchat,
-    FormatUtilisateurTchat
-} from '../commun/echangesTchat';
+    FormatMessageTransitTchat} from '../commun/echangesTchat';
 
-import { avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
-import { creerGenerateurReseau } from './reseauTchat';
+import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
+import { creerGenerateurReseau, ReseauMutableTchat } from './reseauTchat';
 import { FormatMessageTchatValidator } from "../commun/verificationFormat";
+import { avertissement, erreur } from '../../bibliotheque/applications/message';
 
 /*
 * Service de l'application.
@@ -38,7 +35,7 @@ interface ReponseEnvoi {
 }
 
 class ServiceTchat {
-    private reseau: ReseauMutable<FormatUtilisateurTchat, ConnexionLongueExpress>;
+    private reseau: ReseauMutableTchat<ConnexionLongueExpress>;
     private generateurIdentifiantsMessages:
     GenerateurIdentifiants<'message'>;
     constructor(
@@ -48,7 +45,7 @@ class ServiceTchat {
         this.reseau =
             creerGenerateurReseau<ConnexionLongueExpress>(
                 config.type, cleAcces, config.taille, config.pseudos).engendrer();
-                this.generateurIdentifiantsMessages = creerGenerateurIdentifiantParCompteur(cleAcces + "-" + "tchat-" + config.type + "-");
+                this.generateurIdentifiantsMessages = creerGenerateurIdentifiantParCompteur(cleAcces + "-tchat-" + config.type + "-");
     }
 
     /*
@@ -73,15 +70,14 @@ class ServiceTchat {
         };
     }
     traductionEntreePost(canal: ConnexionExpress): Option<FormatMessageEnvoiTchat> {
-        const msg: FormatMessageEnvoiTchat = canal.lire();
-        const message = FormatMessageTchatValidator.decode(canal.lire());
-        if (isRight(message)) {
+        const msg: FormatMessageEnvoiTchat = canal.lire(); // TODO conversion ???
+        if (isRight(FormatMessageTchatValidator.decode(msg))) {
             // Le message reçu est supposé correct,
             // en première approximation.
             return option(msg);
         }
         const desc = "Le format JSON du message reçu n'est pas correct. Le type du message doit être 'envoi'. Erreur HTTP 400 : Bad Request.";
-        canal.envoyerJSONCodeErreur(400, erreurTchat(this.generateurIdentifiantsMessages.produire('message'), desc));
+        canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
         logger.error(desc);
         return rienOption<FormatMessageEnvoiTchat>();
     }
@@ -89,7 +85,7 @@ class ServiceTchat {
         if (reponseEnvoi.destinationsIncoherentes > 0) {
             const desc = `Le message ${reponseEnvoi.accuseReception.corps.ID_envoi} du client est incohérent : des destinataires (${reponseEnvoi.destinationsIncoherentes}) ne sont pas voisins. Erreur HTTP 400 : Bad Request.`;
             logger.error(desc);
-            canal.envoyerJSONCodeErreur(400, erreurTchat(this.generateurIdentifiantsMessages.produire('message'), desc));
+            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
         if (reponseEnvoi.destinationsDeconnectees > 0) {
