@@ -1,7 +1,8 @@
 import * as t from 'io-ts';
 import {IdentifiantMessage, IdentifiantSommet} from "../types/identifiant";
 import {FormatDateValidator} from "../types/date";
-import {Identifiant} from "../../types/identifiant";
+import {TypeMessageDistribution} from "../../../distribution/commun/echangesDistribution";
+import {DeuxFormat} from "../types/typesAtomiques";
 
 /**
  * Schema d'un message d'envoi à valider
@@ -10,7 +11,7 @@ const FormatMessageDistribution = t.type({
     ID_utilisateur_emetteur: IdentifiantSommet,
     ID_origine: IdentifiantSommet,
     ID_destination: IdentifiantSommet,
-    contenu: t.string,
+    contenu: t.array(DeuxFormat),
 })
 
 /**
@@ -18,7 +19,7 @@ const FormatMessageDistribution = t.type({
  */
 export const FormatMessageInitialDistributionValidator = t.type({
     ID: IdentifiantMessage,
-    type: t.literal("envoi"),
+    type: t.literal(TypeMessageDistribution.INIT),
     date: FormatDateValidator,
     corps: FormatMessageDistribution
 });

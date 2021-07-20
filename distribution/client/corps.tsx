@@ -121,6 +121,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             afficherAlerte: false,
             messageAlerte: "",
         };
+        this.modifierSelection = this.modifierSelection.bind(this);
         this.envoyerMessageInitial = this.envoyerMessageInitial.bind(this);
         this.mettreAJourInformation = this.mettreAJourInformation.bind(this);
         this.retirerInformation = this.retirerInformation.bind(this);
@@ -162,23 +163,24 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
             // TODO: TRAITER REPONSE COMME MESSAGE AR POUR L'AFFICHAGE revisar si ID destination es el domain o el usuario
             const message: FormatMessageTransitDistribution = reponse.data;
-                    if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
-                        || (!this.domainesVoisins.contient(message.corps.ID_origine))
-                    ) {
-                        console.log("- message incohérent");
-                    }
-                    this.mettreAJourInformation(
-                        messageInformant(
-                            message.ID,
-                            this.utilisateur,
-                            this.domaineUtilisateur,
-                            this.domainesVoisins.valeur(message.corps.ID_origine),
-                            this.domaineUtilisateur,
-                            message.corps.contenu,
-                            message.date,
-                            'transit'
-                        )
-                    );
+            console.log(message);
+            if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
+                || (!this.domainesVoisins.contient(message.corps.ID_origine))
+            ) {
+                console.log("- message incohérent");
+            }
+            this.mettreAJourInformation(
+                messageInformant(
+                    message.ID,
+                    this.utilisateur,
+                    this.domaineUtilisateur,
+                    this.domaineUtilisateur,
+                    this.domaineUtilisateur,
+                    message.corps.contenu,
+                    message.date,
+                    'AR_initial'
+                )
+            );
         };
         const traitementErreur = (raison: AxiosError) => {
             // TODO: TRAITER ERREUR
@@ -369,6 +371,8 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
      * @param nouvelle
      */
     mettreAJourInformation(nouvelle: MessageInformant): void {
+        console.log(nouvelle);
+        console.log(this.domainesVoisins);
         this.setState((etatAvant: EtatCorps) => {
             for (let j in etatAvant.informations) {
                 if (etatAvant.informations[j].ID.val === nouvelle.ID.val) {
@@ -471,7 +475,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         console.log("* Initialisation après montage du corps");
         this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
             const config: FormatConfigDistribution = JSON.parse(e.data);
-            console.log(config);
             const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
             this.utilisateur = config.utilisateur;
             this.generateur = creerGenerateurIdentifiantParCompteur(this.utilisateur.ID.val + "-MSG-");
@@ -482,7 +485,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 this.domainesVoisins.ajouter(identifiant("sommet", key), {
                     domaine: value,
                     encre: c.encre,
-                    fond: c.fond
+                    fond: c.fond,
                 })
             })
 
@@ -506,7 +509,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 formulaireMessage(this.utilisateur, this.domaineUtilisateur, domaineSelectionne, [], this.consigne));
         });
 
-        this.fluxDeEvenements.addEventListener('transit', (e: MessageEvent) => {
+        this.fluxDeEvenements.addEventListener('TRANSIT', (e: MessageEvent) => {
             const message: FormatMessageTransitDistribution = JSON.parse(e.data);
             if ((this.utilisateur.ID.val !== message.corps.ID_destination.val)
                 || (!this.domainesVoisins.contient(message.corps.ID_origine))
