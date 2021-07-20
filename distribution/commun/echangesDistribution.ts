@@ -237,7 +237,6 @@ export type FormatMessageInitialDistribution = FormatMessage<TypeMessageDistribu
 export interface FormatConfigDistribution {
     readonly utilisateur: FormatUtilisateurDistribution;
     readonly noeudDomaine: FormatNoeudDomaineDistribution;
-
     readonly utilisateursActifsDuDomaine: number;
     readonly tailleDomaine: number;
     readonly domainesVoisins: FormatTableIdentification<"sommet", FormatSommetDistribution>

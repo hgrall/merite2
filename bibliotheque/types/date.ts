@@ -31,7 +31,7 @@ export enum Mois {
 }
 
 /**
- * Schéma JSON pour les dates et les heures francaises.
+ * Schéma JSON pour les types et les heures francaises.
  */
 export interface FormatDateFr {
     readonly seconde: number;
@@ -87,7 +87,7 @@ export function conversionDate(d: Date): FormatDateFr {
 }
 
 /**
- * Classe enveloppe représentant les dates.
+ * Classe enveloppe représentant les types.
  */
 class DateFrEnveloppe extends Enveloppe<FormatDateFr, FormatDateFr, EtiquetteDateFr>
     implements DateFr {

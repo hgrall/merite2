@@ -24,7 +24,7 @@ import {
 
 import { avertissement, erreurTchat, traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseau } from './reseauTchat';
-import { FormatMessageTchatValidator } from "../commun/verificationFormat";
+import {FormatMessageTchatValidator} from "../../bibliotheque/validation/tchat/echanges";
 
 /*
 * Service de l'application.
