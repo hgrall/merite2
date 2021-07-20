@@ -1,5 +1,5 @@
 
-import {CADRE, FOND_TEXTE_INV, TEXTE_INV} from "../bibliotheque/interface/couleur";
+import {CADRE, FOND, FOND_TEXTE_INV, TEXTE_INV} from "../bibliotheque/interface/couleur";
 import styled from "styled-components";
 
 export const TexteInformation = styled.p`
@@ -12,13 +12,11 @@ export const TexteInformation = styled.p`
 
 export const TexteXLarge = styled.div`
     flex: initial;
-    color: ${CADRE};
+    color: ${FOND};
     text-align: center;
-    padding-top:20vh;
     padding-right: 1ex;
     padding-left: 1ex;
     font-size: xx-large;
-    height: 100vh;
     horiz-align: center;
 `;
 

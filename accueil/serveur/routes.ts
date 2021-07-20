@@ -13,3 +13,6 @@ export const SUFFIXE_ETOILE : string = "etoile";
 export const SUFFIXE_ANNEAU : string = "anneau";
 export const ENVOI : string = "envoi";
 export const RECEPTION : string = "reception";
+
+export const  PREFIXE_DISTRIBUTION : string = "distribution";
+export const  SUFFIXE_JEU1 : string = "jeu1";

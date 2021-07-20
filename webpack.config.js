@@ -8,6 +8,7 @@ var config = {
         tchatReact: "./build/tchat/client/renduTchat.js",
         accueilReact: "./build/accueil/client/Accueil/renduAccueil.js",
         connexionReact: "./build/accueil/client/Connexion/renduConnexion.js",
+        distributionReact:"./build/distribution/client/renduDistribution.js"
     }, // Les clés remplacent name ci-dessous.
     output: {
         path: __dirname + "/build",
@@ -63,6 +64,12 @@ var config = {
             template: 'site/interfaceTemplate.html',
             filename: "interfaceConnexion.html",
             chunks: ['connexionReact']
+        }),
+        new HtmlWebpackPlugin({
+            title: 'Distribution',
+            template: 'site/interfaceTemplate.html',
+            filename: "interfaceDistribution.html",
+            chunks: ['distributionReact']
         }),
         new CopyPlugin({
             patterns: [

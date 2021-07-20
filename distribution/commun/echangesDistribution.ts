@@ -6,17 +6,12 @@
  * (les clients, à connecter).
  */
 
-import {
-    Activable, Deux
-} from "../../bibliotheque/types/typesAtomiques";
-
-import {
-    Identifiant, FormatIdentifiable
-} from "../../bibliotheque/types/identifiant";
-
 import { FormatNoeud, Noeud } from "../../bibliotheque/applications/noeud";
 import { FormatBinaire } from "../../bibliotheque/types/binaire";
 import { FormatMessage } from "../../bibliotheque/applications/message";
+import {FormatTableIdentification} from "../../bibliotheque/types/tableIdentification";
+import {FormatIdentifiable, Identifiant} from "../../bibliotheque/types/identifiant";
+import {Activable, Deux} from "../../bibliotheque/types/typesAtomiques";
 
 /**
  * Nombre de bits inutiles dans la trame.
@@ -147,7 +142,7 @@ export type NoeudDomaineDistribution = Noeud<FormatDomaineDistribution>;
 /**
  * Format d'un noeud pour un domaine.
  */
-export type FormatNoeudDomaineDistribution = FormatNoeud<FormatUtilisateurDistribution>;
+export type FormatNoeudDomaineDistribution = FormatNoeud<FormatDomaineDistribution>;
 
 /**
  * Type des sommets pour la distribution.
@@ -230,3 +225,12 @@ export type FormatMessageInitialDistribution = FormatMessage<TypeMessageDistribu
  * - date : la date lors de l'émission.
 */
 export type FormatMessageTransitDistribution = FormatMessage<TypeMessageDistribution.TRANSIT, FormatMessageDistribution>;
+
+export interface FormatConfigDistribution {
+    readonly utilisateur: FormatUtilisateurDistribution;
+    readonly noeudDomaine: FormatNoeudDomaineDistribution;
+
+    readonly utilisateursActifsDuDomaine: number;
+    readonly tailleDomaine: number;
+    readonly domainesVoisins: FormatTableIdentification<"sommet", FormatSommetDistribution>
+}
