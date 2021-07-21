@@ -3,7 +3,7 @@ import { isRight } from 'fp-ts/lib/Either'
 import { logger } from '../../bibliotheque/administration/log';
 import { ConnexionExpress, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
 
-import { ConfigurationJeuTchat } from '../../accueil/commun/configurationJeux';
+import {ConfigurationJeuDistribution, ConfigurationJeuTchat} from '../../accueil/commun/configurationJeux';
 
 import {
     chemin,
@@ -20,8 +20,8 @@ import {
 
 import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseau, ReseauMutableTchat } from './reseauTchat';
-import { FormatMessageTchatValidator } from "../commun/verificationFormat";
 import { avertissement, erreur } from '../../bibliotheque/applications/message';
+import {FormatMessageTchatValidator} from "../../bibliotheque/validation/tchat/echanges";
 
 /*
 * Service de l'application.
@@ -115,11 +115,11 @@ class ServiceTchat {
         const noeud = this.reseau.noeud(ID_util);
         canal.envoyerJSON('config', noeud);
         // Envoi de la nouvelle configuration aux voisins actifs
-        this.reseau.diffuserConfigurationAuxVoisins(ID_util);
+        this.reseau.diffuserConfigurationAuxAutresUtilisateurs(ID_util);
         // Enregistrement du traitement lors de la déconnexion
         canal.enregistrerTraitementDeconnexion(() => {
             this.reseau.inactiverSommet(ID_util);
-            this.reseau.diffuserConfigurationAuxVoisins(ID_util);
+            this.reseau.diffuserConfigurationAuxAutresUtilisateurs(ID_util);
         });
     }
 

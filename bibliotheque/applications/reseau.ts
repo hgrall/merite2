@@ -84,7 +84,7 @@ export interface ReseauMutable<
      * Méthode appelée lors de la construction, 
      * à implémenter dans chaque réseau concret.
      */
-    initierFileDesInactifsDeconnectes(): void;
+    initialiserFileDesInactifsDeconnectes(): void;
     /**
      * Détermine si le  réseau possède le sommet identifié par l'argument.
      * @param ID_sommet identité de le sommet.
@@ -236,12 +236,12 @@ export abstract class ReseauMutableParEnveloppe<
             adjacence: adjacence,
             connexions: creerTableIdentificationMutableVide<'sommet', C>('sommet')
         });
-        this.initierFileDesInactifsDeconnectes();
+        this.initialiserFileDesInactifsDeconnectes();
     }
     /**
      * Initie la file des inactifs. Méthode appelée lors de la construction, à implémenter dans chaque réseau concret.
      */
-    abstract initierFileDesInactifsDeconnectes(): void;
+    abstract initialiserFileDesInactifsDeconnectes(): void;
     net(e: EtiquetteReseau): string {
         switch (e) {
             case "sommets":

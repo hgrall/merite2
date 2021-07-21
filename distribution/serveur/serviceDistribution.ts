@@ -7,18 +7,20 @@ import { ConfigurationJeuDistribution } from '../../accueil/commun/configuration
 
 import {
     chemin,
-    creerServeurApplicationsExpress,
     ServeurApplications
 } from "../../bibliotheque/communication/serveurApplications";
 
 import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants } from "../../bibliotheque/types/identifiant";
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
-import { tableau, Tableau } from '../../bibliotheque/types/tableau';
 import { creerGenerateurReseauDistribution, ReseauMutableDistribution } from './reseauDistribution';
-import { estUtilisateur, FormatMessageInitialDistribution, TypeMessageDistribution } from '../commun/echangesDistribution';
+import {
+    estUtilisateur, FormatConfigDistribution,
+    FormatMessageInitialDistribution,
+} from '../commun/echangesDistribution';
 import { avertissement, erreur } from '../../bibliotheque/applications/message';
 import { EnsembleIdentifiants } from '../../bibliotheque/types/ensembleIdentifiants';
 import { traductionInitEnTransit } from './echangesServeurDistribution';
+import { FormatMessageInitialDistributionValidator } from "../../bibliotheque/validation/distribution/echanges";
 
 
 /*
@@ -57,8 +59,7 @@ class ServiceDistribution {
     }
     traductionEntreePostInitial(canal: ConnexionExpress): Option<FormatMessageInitialDistribution> {
         const msg: FormatMessageInitialDistribution = canal.lire();
-        // TODO : isRight(FormatMessageTchatValidator.decode(msg)) !!!
-        if (!msg) {
+        if (!isRight(FormatMessageInitialDistributionValidator.decode(msg))) {
             const desc = "TODO Le format JSON du message reçu n'est pas correct. Le type du message doit être 'INIT'. Erreur HTTP 400 : Bad Request.";
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
@@ -85,21 +86,20 @@ class ServiceDistribution {
     }
 
     traduireSortiePOSTInitial(reponse: ReponsePOSTInitial, canal: ConnexionExpress): void {
-        
+
         canal.envoyerJSON(reponse.accuseReception);
         reponse.utilisateursDestinataires.iterer((ID) => {
             const canalDest = this.reseau.connexion(ID);
             canalDest.envoyerJSON(
-                'TRANSIT', 
-                traductionInitEnTransit(reponse.accuseReception, 
-                    ID, this.generateurIdentifiantsMessages.produire('message') ));
+                'TRANSIT',
+                traductionInitEnTransit(reponse.accuseReception,
+                    ID, this.generateurIdentifiantsMessages.produire('message')));
         });
     }
 
     /*
     * Service de connexion persistante pour permettre 
     * une communication du serveur vers chaque client connecté.
-    * TODO
     */
     traiterGETpersistant(canal: ConnexionLongueExpress): void {
         if (!this.reseau.aUnSommetInactifDeconnecte()) {
@@ -110,16 +110,20 @@ class ServiceDistribution {
                 avertissement(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
-        // Envoi de la configuration initiale
         const ID_util = this.reseau.activerSommet(canal);
-        const noeud = this.reseau.noeud(ID_util);
-        canal.envoyerJSON('config', noeud);
+        const config: FormatConfigDistribution = this.reseau.configurationUtilisateur(ID_util);
+
+        // Envoi de la configuration initiale
+        canal.envoyerJSON('config', config);
         // Envoi de la nouvelle configuration aux voisins actifs
-        this.reseau.diffuserConfigurationAuxVoisins(ID_util);
+        this.reseau.diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util);
+        this.reseau.diffuserConfigurationAuxUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
+
         // Enregistrement du traitement lors de la déconnexion
         canal.enregistrerTraitementDeconnexion(() => {
             this.reseau.inactiverSommet(ID_util);
-            this.reseau.diffuserConfigurationAuxVoisins(ID_util);
+            this.reseau.diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util);
+            this.reseau.diffuserConfigurationAuxUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
         });
     }
 

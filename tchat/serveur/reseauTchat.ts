@@ -29,10 +29,10 @@ interface GrapheReseauTchat {
     nombreVoisinsInactifs(ID_sommet: Identifiant<"sommet">): number;
     /**
      * Diffuse la configuration formée de la représentation JSON 
-     * du noeud. 
+     * du noeud aux autres utilisateurs du tchat. 
      * @param ID_sommet sommet au centre du noeud 
      */
-    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void;
+    diffuserConfigurationAuxAutresUtilisateurs(ID_sommet: Identifiant<'sommet'>): void;
 }
 
 /**
@@ -59,7 +59,7 @@ export class ReseauMutableTchat<
         return this.tailleCribleVoisins(ID_sommet, (ID, s) => !s.actif);
     }
 
-    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
+    diffuserConfigurationAuxAutresUtilisateurs(ID_sommet: Identifiant<'sommet'>): void {
         this.voisins(ID_sommet).iterer((id) => {
             if (this.sommet(id).actif) {
                 const canalVoisin = this.connexion(id);
@@ -67,10 +67,11 @@ export class ReseauMutableTchat<
             }
         });
     }
+
     /**
      * Initie la file des inactifs. La priorité est égale au nombre de voisins inactifs.
      */
-    initierFileDesInactifsDeconnectes(): void {
+    initialiserFileDesInactifsDeconnectes(): void {
         // Tous les utilisateurs sont initialement inactifs.
         this.itererSommets((id, s) => {
             const p = this.voisinsInactifs(id).taille();

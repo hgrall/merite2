@@ -229,8 +229,23 @@ export type FormatMessageTransitDistribution = FormatMessage<TypeMessageDistribu
 export interface FormatConfigDistribution {
     readonly utilisateur: FormatUtilisateurDistribution;
     readonly noeudDomaine: FormatNoeudDomaineDistribution;
-
     readonly utilisateursActifsDuDomaine: number;
     readonly tailleDomaine: number;
     readonly domainesVoisins: FormatTableIdentification<"sommet", FormatSommetDistribution>
+}
+
+export function configuration(
+    noeudDomaine: FormatNoeudDomaineDistribution,
+    utilisateur: FormatUtilisateurDistribution,
+    utilisateursActifsDuDomaine: number,
+    tailleDomain: number,
+    domainesVoisins:  FormatTableIdentification<"sommet", FormatSommetDistribution>
+): FormatConfigDistribution {
+    return {
+        noeudDomaine: noeudDomaine,
+        utilisateur: utilisateur,
+        utilisateursActifsDuDomaine: utilisateursActifsDuDomaine,
+        tailleDomaine: tailleDomain,
+        domainesVoisins: domainesVoisins
+    }
 }

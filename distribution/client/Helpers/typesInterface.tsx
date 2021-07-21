@@ -141,13 +141,3 @@ export interface Message {
     //readonly cachet: string;
     readonly contenu: ReadonlyArray<Deux>;
 }
-
-
-/**
- * readonly ID_utilisateur: Identifiant<'utilisateur'>;
- readonly ID_origine: Identifiant<'sommet'>;
- readonly ID_destination: Identifiant<'sommet'>;
- readonly type: TypeMessageDistribution;
- readonly contenu: ReadonlyArray<Deux>;
- readonly date: FormatDateFr;
- */

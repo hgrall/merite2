@@ -148,9 +148,9 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
         }
         return (
             <PanneauMessageContainer>
-                <MessagesContainer >
+                <MessagesContainer>
                     {this.AfficherAlerte()}
-                        {affichable.map((a: ActionAffichable) => this.baliseAction(a))}
+                    {affichable.map((a: ActionAffichable) => this.baliseAction(a))}
                 </MessagesContainer>
                 {this.afficherFormulaire()}
             </PanneauMessageContainer>

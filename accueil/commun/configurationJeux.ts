@@ -27,7 +27,7 @@ export interface ConfigurationJeuDistribution {
 export interface ConfigurationJeux {
     tchat_etoile: ConfigurationJeuTchat;
     tchat_anneau: ConfigurationJeuTchat;
-    distribution: string;
+    distribution: ConfigurationJeuDistribution;
 }
 
 
@@ -53,6 +53,12 @@ export function configurationClassiqueJeux(): ConfigurationJeux {
             taille: taille,
             pseudos: pseudos.slice(0, taille)
         },
-        distribution: "jeu de distribution"
+        distribution: {
+            effectifParDomaine: [3, 3, 3, 3, 3],
+            prefixe: 'jeu',
+            suffixe: 'distribution',
+            nombreDomaines: 5,
+            type: "anneau_etoile"
+        }
     };
 }

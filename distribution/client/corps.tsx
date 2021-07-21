@@ -32,9 +32,13 @@ import {AxiosError, AxiosResponse} from "axios";
 import {Map} from "immutable";
 import {
     FormatConfigDistribution,
-    FormatConsigne, FormatDomaineDistribution,
+    FormatConsigne,
+    FormatDomaineDistribution,
     FormatMessageDistribution,
-    FormatMessageInitialDistribution, FormatNoeudDomaineDistribution, FormatUtilisateurDistribution,
+    FormatMessageInitialDistribution,
+    FormatMessageTransitDistribution,
+    FormatNoeudDomaineDistribution,
+    FormatUtilisateurDistribution,
     TypeMessageDistribution
 } from "../commun/echangesDistribution";
 
@@ -117,6 +121,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             afficherAlerte: false,
             messageAlerte: "",
         };
+        this.modifierSelection = this.modifierSelection.bind(this);
         this.envoyerMessageInitial = this.envoyerMessageInitial.bind(this);
         this.mettreAJourInformation = this.mettreAJourInformation.bind(this);
         this.retirerInformation = this.retirerInformation.bind(this);
@@ -145,7 +150,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         this.mettreAJourApresEnvoiMessage(m);
         const message: FormatMessageDistribution = {
             ID_utilisateur_emetteur: m.emetteur.ID,
-            ID_origine:  m.domaineEmission.domaine.ID,
+            ID_origine: m.domaineEmission.domaine.ID,
             ID_destination: m.domaineDestin.domaine.ID,
             contenu: m.trame
         }
@@ -156,7 +161,26 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             ID: this.generateur.produire("message")
         };
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-            // TODO: TRAITER REPONSE COMME MESSAGE AR POUR L'AFFICHAGE
+            // TODO: TRAITER REPONSE COMME MESSAGE AR POUR L'AFFICHAGE revisar si ID destination es el domain o el usuario
+            const message: FormatMessageTransitDistribution = reponse.data;
+            console.log(message);
+            if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
+                || (!this.domainesVoisins.contient(message.corps.ID_origine))
+            ) {
+                console.log("- message incohérent");
+            }
+            this.mettreAJourInformation(
+                messageInformant(
+                    message.ID,
+                    this.utilisateur,
+                    this.domaineUtilisateur,
+                    this.domaineUtilisateur,
+                    this.domaineUtilisateur,
+                    message.corps.contenu,
+                    message.date,
+                    'AR_initial'
+                )
+            );
         };
         const traitementErreur = (raison: AxiosError) => {
             // TODO: TRAITER ERREUR
@@ -166,21 +190,21 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     // ok
     envoyerEssai(m: MessageInformant): void {
-    //     let msg: FormatMessageEssaiDistribution = {
-    //         type: 'essai',
-    //         date: m.date,
-    //         domaine_origine: m.domaineEmission.domaine.ID,
-    //         ID_emetteur: m.utilisateur.ID,
-    //         contenu: mot(m.trame),
-    //         ID: m.ID
-    //     }
-    //     const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-    //         // TODO: TRAITER REPONSE
-    //     };
-    //     const traitementErreur = (raison: AxiosError) => {
-    //         // TODO: TRAITER ERREUR
-    //     }
-    //     requetePOST<FormatMessageEssaiDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
+        //     let msg: FormatMessageEssaiDistribution = {
+        //         type: 'essai',
+        //         date: m.date,
+        //         domaine_origine: m.domaineEmission.domaine.ID,
+        //         ID_emetteur: m.utilisateur.ID,
+        //         contenu: mot(m.trame),
+        //         ID: m.ID
+        //     }
+        //     const traitementEnvoiMessage = (reponse: AxiosResponse) => {
+        //         // TODO: TRAITER REPONSE
+        //     };
+        //     const traitementErreur = (raison: AxiosError) => {
+        //         // TODO: TRAITER ERREUR
+        //     }
+        //     requetePOST<FormatMessageEssaiDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
     omettre(m: MessageInformant): void {
@@ -347,6 +371,8 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
      * @param nouvelle
      */
     mettreAJourInformation(nouvelle: MessageInformant): void {
+        console.log(nouvelle);
+        console.log(this.domainesVoisins);
         this.setState((etatAvant: EtatCorps) => {
             for (let j in etatAvant.informations) {
                 if (etatAvant.informations[j].ID.val === nouvelle.ID.val) {
@@ -448,18 +474,18 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
         this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
-            const config: FormatConfigDistribution = JSON.parse(e.data)
+            const config: FormatConfigDistribution = JSON.parse(e.data);
             const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
             this.utilisateur = config.utilisateur;
             this.generateur = creerGenerateurIdentifiantParCompteur(this.utilisateur.ID.val + "-MSG-");
             const formatVoisins = Map(config.domainesVoisins.identification);
             let suite = new SuiteCouplesFondEncre();
-            formatVoisins.forEach((value:FormatDomaineDistribution, key) => {
+            formatVoisins.forEach((value: FormatDomaineDistribution, key) => {
                 let c = suite.courant();
                 this.domainesVoisins.ajouter(identifiant("sommet", key), {
                     domaine: value,
                     encre: c.encre,
-                    fond: c.fond
+                    fond: c.fond,
                 })
             })
 
@@ -471,7 +497,10 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 encre: COUPLE_FOND_ENCRE_SUJET.encre
             };
             //TODO: A completer
-            this.setState({tailleDomain: config.tailleDomaine, utilisateursActifsDomain: config.utilisateursActifsDuDomaine});
+            this.setState({
+                tailleDomain: config.tailleDomaine,
+                utilisateursActifsDomain: config.utilisateursActifsDuDomaine
+            });
 
             let domaineSelectionne = this.domainesVoisins.selectionAssociation().valeur()[1];
             this.modifierSelection(domaineSelectionne);
@@ -479,6 +508,27 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             this.modifierFormulaireMessage(
                 formulaireMessage(this.utilisateur, this.domaineUtilisateur, domaineSelectionne, [], this.consigne));
         });
+
+        this.fluxDeEvenements.addEventListener('TRANSIT', (e: MessageEvent) => {
+            const message: FormatMessageTransitDistribution = JSON.parse(e.data);
+            if ((this.utilisateur.ID.val !== message.corps.ID_destination.val)
+                || (!this.domainesVoisins.contient(message.corps.ID_origine))
+            ) {
+                console.log("- message incohérent");
+            }
+            this.mettreAJourInformation(
+                messageInformant(
+                    message.ID,
+                    this.utilisateur,
+                    this.domaineUtilisateur,
+                    this.domainesVoisins.valeur(message.corps.ID_origine),
+                    this.domaineUtilisateur,
+                    message.corps.contenu,
+                    message.date,
+                    'transit'
+                )
+            );
+        })
 
         this.fluxDeEvenements.addEventListener('distribution', (e: MessageEvent) => {
             //TODO: REGARDER FORMAT TYPE DE MESSAGES

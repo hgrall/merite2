@@ -4,13 +4,13 @@ import {AxiosResponse} from "axios";
 import {requeteGET} from "../../../tchat/communication/communicationServeur";
 import {AccessPage} from "./connexion";
 import {PREFIXE_ACCES, PREFIXE_ACCUEIL} from "../../serveur/routes";
-import {ConfigurationJeuTchat, ConfigurationJeux} from "../../commun/configurationJeux";
+import {ConfigurationJeuDistribution, ConfigurationJeuTchat, ConfigurationJeux} from "../../commun/configurationJeux";
 
 interface JeuChoixPageProps {
     goBack: () => void,
     code: string,
     jeuxTchat: ConfigurationJeuTchat[],
-    jeuxDistribution: string[]
+    jeuxDistribution: ConfigurationJeuDistribution[]
 }
 
 function JeuChoixPage(props: JeuChoixPageProps) {
@@ -35,7 +35,8 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <AccueilButton> Jeux Distribution</AccueilButton>
                 <DropdownContent>
                     {props.jeuxDistribution.map(jeu => {
-                        return <a href={""}>{jeu}</a>
+                        const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
+                        return <a href={urlJeu}>{ jeu.suffixe }</a>
                     })}
                 </DropdownContent>
             </Dropdown>
@@ -51,7 +52,7 @@ interface AccueilState {
     hasCode: boolean,
     code: string,
     jeuxTchat: ConfigurationJeuTchat[],
-    jeuxDistribution: string[]
+    jeuxDistribution: ConfigurationJeuDistribution[]
 }
 
 export class Corps extends React.Component<{}, AccueilState> {
@@ -81,7 +82,13 @@ export class Corps extends React.Component<{}, AccueilState> {
             self.setState({
                 hasCode: true,
                 code: code,
-                jeuxDistribution: [config.distribution],
+                jeuxDistribution: [{
+                    type: config.distribution.type,
+                    prefixe: config.distribution.prefixe,
+                    nombreDomaines: config.distribution.nombreDomaines,
+                    suffixe: config.distribution.suffixe,
+                    effectifParDomaine: config.distribution.effectifParDomaine
+                }],
                 jeuxTchat: [
                     {
                         prefixe: config.tchat_etoile.prefixe,
