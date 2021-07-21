@@ -184,12 +184,7 @@ export interface ReseauMutable<
      * @returns noeud de centre le sommet identifié
      */
     noeud(ID_sommet: Identifiant<'sommet'>): Noeud<FS>;
-    /**
-     * Diffuse la configuration formée de la représentation JSON 
-     * du noeud. 
-     * @param ID_sommet sommet au centre du noeud 
-     */
-    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void;
+    
 
     /**
      * Itère sur tous les sommets en leur appliquant une fonction. 
@@ -356,15 +351,6 @@ export abstract class ReseauMutableParEnveloppe<
             voisins: tableVoisins.toJSON()
         }
         );
-    }
-    // TODO à vérifier - meilleure solution : une méthode abstraite sans doute - non générique
-    diffuserConfigurationAuxVoisins(ID_sommet: Identifiant<'sommet'>): void {
-        this.voisins(ID_sommet).iterer((id) => {
-            if (this.sommet(id).actif) {
-                const canalVoisin = this.connexion(id);
-                canalVoisin.envoyerJSON('config', this.noeud(id));
-            }
-        });
     }
 
     itererSommets(f: (ID_sommet: Identifiant<'sommet'>, s: FS) => void): void {
