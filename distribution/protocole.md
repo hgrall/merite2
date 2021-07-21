@@ -31,21 +31,29 @@ Formulation chimique
 - !X : signifie que X est persistant.
   - !X & A -> B équivalent à : X & A -> X & B
 
+## Hypothèses
+
+- aucune perte de messages
+- préservation à réception de l'ordre d'émission sur tout canal du serveur à un client 
+
 ## Client (un utilisateur dans un domaine)
 
 ### Canaux 
 
 Fournis
-- `accuserInitier[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` 
-- `recevoir[idUtilisateur](idMessage, idDomOrigine, idDomDestination, contenu)`
-- `activer[idUtilisateur](idMessage, idDomOrigine, idDomDestination, contenu)`
-- `detruire[idUtil](idMessage)`
+- `accuserEnvoyer[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` 
+- `recevoir[idUtilisateur](idMessage, idUtil, idDomOrigine, idDomDestination, contenu)`
+- `accuserVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` 
+- `accuserEchecVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)`
+- `inactiver[idUtil](idMessage)`
+- 
 - `gagner[idUtil](idMessage, idDom, contenu)`
 - `perdre[idUtil](idMessage, idDom, contenu)`
 
 Requis
-- `initier(idMsg, idUtil, idDomOrigine, idDomDest, contenu)` (message de type `INIT`)
+- `envoyer(idMsg, idUtil, idDomOrigine, idDomDest, contenu)` (message de type `INIT`)
 - `verrouiller(idMessage, idUtil, idDomOrigine, idDomDest, contenu)`
+
 - `transmettre(idMessage, idUtil, idDomOrigine, idDomDest, contenu)`
 - `verifier(id, idUtil, idDom, contenu)`
 - `deverrouiller(id, idUtil, idDomOrigine, idDomDest, contenu)`
@@ -64,10 +72,13 @@ Identité de l'utilisateur et de son domaine
 
 Ensemble de messages avec des statuts différents 
 - `Transit(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
+- `Attente(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
 - `Actif(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
-- `Gagné(id, idUtil, idDom, contenu)*`
-- `Perdu(id, idUtil, idDom, contenu)*`
-- `ARinitier(idMsg, idUtil, idDomOrigine, idDomDest, contenu)`
+- `Inactif(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
+- 
+- `Gagné(idMessage, idUtil, idDomOrigine, idDom, contenu)*`
+- `Perdu(idMessage, idUtil, idDomOrigine, idDom, contenu)*`
+- `ARenvoyer(idMessage, idUtil, idDomOrigine, idDomDest, contenu)`
 
 Messages
 - état Actif : trois actions possibles
@@ -93,40 +104,72 @@ interactions avec l'utilisateur
 
 Vérifié 
 ```
-  // L'utilisateur demande au serveur d'initier la transmission du message qu'il doit envoyer
+  // L'utilisateur demande au serveur de transmettre le message qu'il doit envoyer
   //   (a priori un unique message), après avoir indiqué le domaine voisin
   //   destinataire et le contenu.
-      !Utilisateur(idUtil, idDom) & EntreeInit(idDomDest, contenu) & ¬INITIE & Identifiant(n, idMsg)
-  ->  initier(idMsg, idUtil, idDom, idDomDest, contenu) & INITIE & Identifiant(n+1, idMsg')
+      !Utilisateur(idUtil, idDom) 
+    & EntreeInit(idDomDest, contenu) 
+    & ¬INITIE 
+    & Identifiant(n, idMsg)
+  ->  envoyer(idMsg, idUtil, idDom, idDomDest, contenu) 
+    & INITIE 
+    & Identifiant(n+1, idMsg')
 ```
 
 Vérifié
 ```
   // L'utilisateur affiche l'accusé de réception de son message initial.
-      accuserInitier[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)
-  ->  ARinitier(idMsg, idUtil, idDomOrigine, idDomDest, contenu)
+      accuserEnvoyer[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)
+  ->  ARenvoyer(idMsg, idUtil, idDomOrigine, idDomDest, contenu)
 ```
 
+Vérifié
 ```
   // L'utilisateur reçoit un message du serveur et le place en transit. Les autres
-  // utilisateurs du domaine 'dest' ont reçu le même message.
-      recevoir[idUtil](id, origine, dest, contenu) & !Utilisateur(idUtil, dest)
-  ->  Transit(id, idUtil, origine, dest, contenu)
+  // utilisateurs du domaine 'dom' ont reçu le même message.
+      recevoir[idUtil](idMsg, idUtil, origine, dom, contenu) 
+    & !Utilisateur(idUtil, dom)
+  ->  Transit(idMsg, idUtil, origine, dom, contenu)
 ```
 
+Vérifié
 ```
   // L'utilisateur demande au serveur de verrouiller un message en transit.
-      Transit(id, idUtil, origine, dest, contenu) & EntreeVerrou(id)
-      & !Utilisateur(idUtil, dest) // inutile car invariant de Transit
-  ->  verrouiller(id, idUtil, origine, dest, contenu)
+      Transit(idMsg, idUtil, origine, dom, contenu) 
+    & EntreeVerrou(idMsg)
+    & !Utilisateur(idUtil, dom) // inutile car invariant de Transit
+  ->  verrouiller(idMsg, idUtil, origine, dom, contenu)
+    & Attente(idMsg, idUtil, origine, dom, contenu) 
 ```
 
+Vérifié
 ```
   // L'utilisateur active un message après un verrouillage réussi côté serveur.
-      activer[idUtil](id, origine, dest, contenu)
-      & !Utilisateur(idUtil, dest)
-  ->  Actif(id, idUtil, origine, dest, contenu)
+      accuserVerrouiller[idUtil](idMsg, idUtil, origine, dom, contenu)
+      & !Utilisateur(idUtil, dom)
+      & Attente(idMsg, idUtil, origine, dom, contenu) 
+  ->  Actif(idMsg, idUtil, origine, dom, contenu)
 ```
+
+Vérifié
+```
+  // L'utilisateur reçoit un message d'inactivation, suite au verrouillage par un autre utilisateur.
+      inactiver[idUtil](idMsg, idUtil, origine, dom, contenu)
+      & !Utilisateur(idUtil, dom)
+      & (Transit(idMsg, idUtil, origine, dom, contenu) | Attente(idMsg, idUtil, origine, dom, contenu)) 
+  ->  Inactif(idMsg, idUtil, origine, dom, contenu) 
+```
+
+Vérifié
+```
+  // L'utilisateur reçoit un échec de verrouillage côté serveur. Nécessairement, le message est inactif.
+      accuserEchecVerrouiller[idUtil](idMsg, idUtil, origine, dom, contenu)
+      & !Utilisateur(idUtil, dom)
+      & Inactif(idMsg, idUtil, origine, dom, contenu) 
+  ->  Inactif(idMsg, idUtil, origine, dom, contenu) 
+```
+
+
 
 ```
   // L'utilisateur demande au serveur de transmettre le message à la destination
@@ -171,9 +214,9 @@ Vérifié
   // L'utilisateur détruit le message à la demande du serveur
   //   (après un verrouillage réussi) ou ne fait rien s'il a déjà été
   //   détruit par une demande de verrouillage qui a échoué.
-      detruire[idUtil](id) & Transit(id, idUtil, origine, dest, contenu)
+      inactiver[idUtil](id) & Transit(id, idUtil, origine, dest, contenu)
       & !Utilisateur(idUtil, dest)
-  ->  detruire[idUtil](id) ??? & ¬Transit(id, idUtil, _, _, _)
+  ->  inactiver[idUtil](id) ??? & ¬Transit(id, idUtil, _, _, _)
 ```
 
 ```
@@ -189,17 +232,22 @@ Vérifié
 ### Canaux 
 
 Fournis
-- `initier(idMsg, idUtil, idDomOrigine, idDomDest, contenu)`
+- `envoyer(idMsg, idUtil, idDomOrigine, idDomDest, contenu)`
 - `verrouiller(idMessage, idUtil, idDomOrigine, idDomDest, contenu)`
+  
 - `transmettre(idMessage, idUtil, idDomOrigine, idDomDest, contenu)`
 - `verifier(id, idUtil, idDom, contenu)`
 - `deverrouiller(id, idUtil, idDomOrigine, idDomDest, contenu)`
 
 
 Requis
-- `recevoir[idUtilisateur](idMessage, idDomOrigine, idDomDestination, contenu)`
-- `activer[idUtilisateur](idMessage, idDomOrigine, idDomDestination, contenu)`
-- `detruire[idUtil](idMessage)`
+- `accuserEnvoyer[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` 
+- `recevoir[idUtilisateur](idMessage, idUtil, idDomOrigine, idDomDestination, contenu)`
+- `accuserVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` 
+- `accuserEchecVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)`
+- `inactiver[idUtil](idMessage)`
+
+
 - `gagner[idUtil](idMessage, idDom, contenu)`
 - `perdre[idUtil](idMessage, idDom, contenu)`
 
@@ -234,11 +282,13 @@ Vérifié
   // A réception du message initial, le serveur accuse réception et initie la transmission
   // en autorisant le verrouillage pour le domaine destinataire puis
   // en démarrant la diffusion du message aux utilisateurs. 
-      initier(idMsg, idUtil, origine, dest, contenu)
-  ->  accuserInitier[idUtil](idMsg, idUtil, origine, dest, contenu) // AR : même message que celui envoyé.
-    & Verrou(dest, idMsg, PERSONNE) // verrouillage de 'idMsg' devenant possible pour
-                                 //   les utilisateurs du domaine 'dest'
-    & Diffusion(idMsg, idUtil, origine, dest, contenu) // diffusion vers 'dest'
+      envoyer(idMsgC, idUtil, origine, dest, contenu)
+    & IdentificationMsg(n, idMsgS)      // Nouvelle identification du message par le serveur
+  ->  accuserenvoyer[idUtil](idMsgC, idUtil, origine, dest, contenu) // AR : même message que celui envoyé.
+    & IdentificationMsg(n+1, idMsgS')   // Génération de idMsgS'
+    & Verrou(dest, idMsgS, PERSONNE)    // verrouillage de 'idMsgS' devenant possible pour
+                                        //   les utilisateurs du domaine 'dest'
+    & Diffusion(idMsgS, idUtil, origine, dest, contenu) // diffusion vers 'dest'
 ```
 
 Vérifié
@@ -250,50 +300,49 @@ Vérifié
 
   // Récurrence sur les utilisateurs de la liste lu. ok
       Diffusion(idMsg, idUtil, origine, dest, contenu, u::lu)
-    & IdentificationMsg(n, idMsg)
   ->  Diffusion(idMsg, idUtil, origine, dest, contenu, lu) 
-    & IdentificationMsg(n+1, idMsg')
-    & recevoir[u](idMsg', u, origine, dest, contenu) 
+    & recevoir[u](idMsg, u, origine, dest, contenu) 
 
       Diffusion(idMsg, idUtil, origine, dest, contenu, nil) 
   ->  vide
 ```
 
+Vérifié
 ```
   // Le serveur verrouille le message 'id' à la demande de l'utilisateur 'emetteur' du
-  //   domaine 'dest'. ok
-      verrouiller(id, emetteur, origine, dest, contenu) & Verrou(dest, id, PERSONNE)
-  ->  Verrou(dest, id, emetteur)
-    & MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu)
+  //   domaine 'dom' et accuse réception.
+      verrouiller(id, emetteur, origine, dom, contenu) & Verrou(dom, id, PERSONNE)
+  ->  accuserVerrouiller(id, emetteur, origine, dom, contenu)
+    & Verrou(dom, id, emetteur)
+    & MiseAJourAprèsVerrouillage(id, emetteur, origine, dom, contenu)
 ```
 
+Vérifié
 ```
   // Le serveur ne verrouille pas le message 'id' si un utilisateur du
-  //   domaine 'dest' verrouille déjà le message. ok
-      verrouiller(id, emetteur, origine, dest, contenu) & Verrou(dest, id, idUtil) 
+  //   domaine 'dom' verrouille déjà le message. 
+      verrouiller(idMsg, emetteur, origine, dom, contenu) & Verrou(dom, idMsg, idUtil) 
     & (idutil != PERSONNE)
-  ->  Verrou(dest, id, idUtil)
+  ->  accuserEchecVerrouiller(idMsg, emetteur, origine, dom, contenu)
+    & Verrou(dom, idMsg, idUtil)
 ```
 
+Vérifié
 ```
-  // Le serveur met à jour les autres utilisateurs du domaine 'dest', en
-  //   demandant la destruction du message 'id'. Il met à jour le
-  //   verrouilleur en demandant l'activation du message. ok
-      MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu) & !Population(dest, lu)
-  ->  MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu, lu)
+  // Le serveur met à jour les autres utilisateurs du domaine 'dom', en
+  //   demandant l'inactivation du message 'idMsg'.
+      MiseAJourAprèsVerrouillage(idMsg, emetteur, origine, dom, contenu) & !Population(dom, lu)
+  ->  MiseAJourAprèsVerrouillage(idMsg, emetteur, origine, dom, contenu, lu)
 
-  // Récurrence sur les utilisateurs de la liste 'lu' ok
-      MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu, u::lu) & (u != emetteur)
-  ->  MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu, lu)
-    & detruire[u](id)
+  // Récurrence sur les utilisateurs de la liste 'lu' 
+      MiseAJourAprèsVerrouillage(idMsg, emetteur, origine, dom, contenu, u::lu) & (u != emetteur)
+  ->  MiseAJourAprèsVerrouillage(idMsg, emetteur, origine, dom, contenu, lu)
+    & inactiver[u](idMsg, emetteur, origine, dom, contenu)
   
-      MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu, u::lu) & (u == emetteur)
-  ->  MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu, lu)
-    & activer[u](id, origine, dest, contenu)
-
-      MiseAJourAprèsVerrouillage(id, emetteur, origine, dest, contenu, nil)
+      MiseAJourAprèsVerrouillage(idMsg, emetteur, origine, dom, contenu, nil)
   ->  vide
 ```
+
 
 ```
   // Le serveur transmet le message reçu s'il est verrouillé par l'émetteur.
@@ -337,26 +386,21 @@ Vérifié
 ## Traduction des canaux
 
 Un canal se traduit pratiquement en
-- une liaison via Web Socket,
+- une liaison via une connexion http
 - un type de messages.
 
 - Canaux du serveur
-  - initier : INIT ok
-  - verrouiller : VERROU 
-  - transmettre : SUIVANT 
-  - verifier : ESSAI 
-  - deverrouiller : LIBE
+ - `envoyer(idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : INIT
+ - `verrouiller(idMessage, idUtil, idDomOrigine, idDomDest, contenu)` : VERROU
+  
 - Canaux du client
-  - accuserInitier : INIT ok
-  - recevoir : TRANSIT 
-  - activer : VERROU (avec discrimination suivant l'utilisateur)
-  - gagner : GAIN 
-  - perdre : PERTE 
-  - detruire : VERROU (avec discrimination suivant l'utilisateur)
+  - `accuserEnvoyer[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : INIT
+  - `recevoir[idUtilisateur](idMessage, idUtil, idDomOrigine, idDomDestination, contenu)` : TRANSIT
+  - `accuserVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : VERROU
+  - `accuserEchecVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : ECHEC_VERROU
+  - `inactiver[idUtil](idMessage)` : INACTIF
 
-Complément (non décrit) :
-- ECHEC_VERROU - inutile car implicite : une demande de verrouillage
-  suivie de la destruction du message signifie l'échec.
+
 
 # ??? Message (immutable)
 
@@ -373,7 +417,7 @@ Complément (non décrit) :
 
 ## ??? Traitements 
 
-- TODO initialisation (client vers serveur) - canal initier 
+- TODO initialisation (client vers serveur) - canal envoyer 
   - constructeur
   - INIT
   - identifiant du message inconnu
