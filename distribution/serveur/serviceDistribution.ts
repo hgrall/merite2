@@ -10,43 +10,27 @@ import {
     ServeurApplications
 } from "../../bibliotheque/communication/serveurApplications";
 
-import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant } from "../../bibliotheque/types/identifiant";
+import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant, sontIdentifiantsEgaux } from "../../bibliotheque/types/identifiant";
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
 import { creerGenerateurReseauDistribution, ReseauMutableDistribution } from './reseauDistribution';
 import {
     estDomaine,
     estUtilisateur, FormatConfigDistribution,
     FormatMessageEnvoiDistribution as FormatMessageEnvoiDistribution,
-    FormatMessageTransitDistribution,
+    FormatMessageVerrouDistribution,
+    traductionVerrouEnActif,
+    traductionVerrouEnInactif,
 } from '../commun/echangesDistribution';
 import { avertissement, erreur } from '../../bibliotheque/applications/message';
-import { EnsembleIdentifiants } from '../../bibliotheque/types/ensembleIdentifiants';
-import { traductionEnvoiEnTransit } from './echangesServeurDistribution';
+import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, traductionEnvoiEnTransit, verrouillage } from './echangesServeurDistribution';
 import { ValidateurFormatMessageEnvoiDistribution } from "./validation";
-import { creerTableIdentificationMutableVide, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
+import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
 
 
 /*
 * Service de l'application.
 */
 
-interface ReponsePOSTEnvoi {
-    accuseReception: FormatMessageEnvoiDistribution;
-    utilisateursDestinataires: EnsembleIdentifiants<"sommet">
-}
-
-interface FormatMessageAvecVerrou {
-    message: FormatMessageTransitDistribution;
-    verrou: Option<Identifiant<'sommet'>>;
-}
-
-function messageAvecVerrouInitial(idMsg: Identifiant<'message'>, msg: FormatMessageEnvoiDistribution): FormatMessageAvecVerrou {
-    return {
-        message: traductionEnvoiEnTransit(msg,
-            msg.corps.ID_utilisateur_emetteur, idMsg),
-        verrou: rienOption()
-    };
-}
 
 class ServiceDistribution {
     private reseau: ReseauMutableDistribution<ConnexionLongueExpress>;
@@ -60,7 +44,7 @@ class ServiceDistribution {
      * - une option indiquant l'identité de l'utilisateur
      *  verrouillant le message.
      */
-    private messagesTransitParDomaine: TableIdentificationMutable<
+    private messagesTransitParDomaine: TableIdentification<
         'sommet',
         TableIdentificationMutable<
             'message',
@@ -79,16 +63,22 @@ class ServiceDistribution {
         ).engendrer();
         this.generateurIdentifiantsMessages = creerGenerateurIdentifiantParCompteur(cleAcces + "-distribution-" + config.type + "-");
         this.messagesEnvoyesParUtilisateur = creerTableIdentificationMutableVide('sommet');
-        this.messagesTransitParDomaine = creerTableIdentificationMutableVide('sommet');
+        const tableMessages = 
+        creerTableIdentificationMutableVide<'sommet',
+        TableIdentificationMutable<
+            'message',
+            FormatMessageAvecVerrou
+        >>('sommet');
         this.reseau.itererSommets((ID, s) => {
             if (estDomaine(s)) {
-                this.messagesTransitParDomaine.ajouter(ID, creerTableIdentificationMutableVide('message'));
+                tableMessages.ajouter(ID, creerTableIdentificationMutableVide('message'));
             }
-        })
+        });
+        this.messagesTransitParDomaine = tableMessages;
     }
 
     /*
-    * Service de réception d'un message (POST).
+    * Service de réception d'un message ENVOI (POST).
     */
 
     traitementPOSTEnvoi(msg: FormatMessageEnvoiDistribution)
@@ -135,7 +125,7 @@ class ServiceDistribution {
         // Attention : l'utilisateur est l'émetteur, non le 
         // destinataire.
         const idMsg = this.generateurIdentifiantsMessages.produire('message');
-        this.messagesTransitParDomaine.valeur(reponse.accuseReception.corps.ID_destination).ajouter(idMsg, messageAvecVerrouInitial(idMsg,reponse.accuseReception));
+        this.messagesTransitParDomaine.valeur(reponse.accuseReception.corps.ID_destination).ajouter(idMsg, messageAvecVerrouInitial(idMsg, reponse.accuseReception));
         // Envoyer le message en transit aux utilisateurs 
         // du domaine destinataire. Dans chaque message, 
         // l'utilisateur est le destinataire.
@@ -147,6 +137,69 @@ class ServiceDistribution {
                     ID, idMsg));
         });
     }
+
+    /*
+    * Service de réception d'un message VERROU (POST).
+    */
+    verrouiller(ID_domaine : Identifiant<'sommet'>, ID_util : Identifiant<'sommet'>, ID_msg : Identifiant<'message'>) : void {
+        const table = this.messagesTransitParDomaine.valeur(ID_domaine);
+        let msgVerrou = table.valeur(ID_msg);
+        table.ajouter(ID_msg, verrouillage(msgVerrou, ID_util));
+    }
+    traitementPOSTVerrou(msg: FormatMessageVerrouDistribution)
+        : ReponsePOSTVerrou {
+        // Verrouiller côté serveur.
+        this.verrouiller(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur, msg.ID);
+        return {
+            accuseReception: msg,
+            utilisateursDestinataires: this.reseau.cribleVoisins(msg.corps.ID_destination, (ID, s) => estUtilisateur(s) && s.actif && !sontIdentifiantsEgaux(msg.corps.ID_utilisateur_emetteur, ID))
+        };
+    }
+    traductionEntreePostVerrou(canal: ConnexionExpress): Option<FormatMessageVerrouDistribution> {
+        const msg: FormatMessageVerrouDistribution = canal.lire();
+        // TODO
+        if (!isRight(ValidateurFormatMessageEnvoiDistribution.decode(msg))) {
+            const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
+            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
+            logger.error(desc);
+            return rienOption<FormatMessageVerrouDistribution>();
+        }
+        // Le message reçu est supposé correct,
+        // en première approximation.
+        const voisinageDomaines = this.reseau.sontVoisins(msg.corps.ID_origine, msg.corps.ID_destination);
+        const appartenanceUtilisateurDomaine = this.reseau.sontVoisins(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur);
+        if (!voisinageDomaines
+            || !appartenanceUtilisateurDomaine) {
+            const desc = `Le message reçu n'est pas cohérent. Les domaines d'origine et de destination doivent être voisins (ici ${voisinageDomaines}) et l'utilisateur émetteur doit appartenir au domaine de destination (ici ${appartenanceUtilisateurDomaine}). Erreur HTTP 400 : Bad Request.`;
+            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
+            logger.error(desc);
+            return rienOption<FormatMessageVerrouDistribution>();
+        }
+        // On suppose que les identifiants sont corrects. TODO 
+        // Quels contrôles réaliser finalement ? Toujours supposer la
+        // correction des données ?
+        // Contrôle du verrouillage
+        if (this.messagesTransitParDomaine.valeur(msg.corps.ID_destination).valeur(msg.ID).verrou.estPresent()) {
+            const desc = `Le messsage d'identifiant ${msg.ID} est déjà verrouillé. Erreur HTTP 403 : Forbidden Request.`;
+            canal.envoyerJSONCodeErreur(403, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
+            logger.error(desc);
+            return rienOption<FormatMessageVerrouDistribution>();
+        }
+        return option(msg);
+    }
+
+    traduireSortiePOSTVerrou(reponse: ReponsePOSTVerrou, canal: ConnexionExpress): void {
+        // Activer le message après le verrouillage.
+        canal.envoyerJSON(traductionVerrouEnActif(reponse.accuseReception));
+        // Inactiver le message pour les autres utilisateurs du domaine.
+        reponse.utilisateursDestinataires.iterer((ID) => {
+            const canalDest = this.reseau.connexion(ID);
+            canalDest.envoyerJSON(
+                'INACTIF',
+                traductionVerrouEnInactif(reponse.accuseReception));
+        });
+    }
+
 
     /*
     * Service de connexion persistante pour permettre 

@@ -1,10 +1,10 @@
-import {AccueilButton, BackButton, Dropdown, DropdownContent, FormTitle, Wrapper} from "../Shared/formStyle";
+import { AccueilButton, BackButton, Dropdown, DropdownContent, FormTitle, Wrapper } from "../Shared/formStyle";
 import * as React from "react";
-import {AxiosResponse} from "axios";
-import {requeteGET} from "../../../tchat/communication/communicationServeur";
-import {AccessPage} from "./connexion";
-import {PREFIXE_ACCES, PREFIXE_ACCUEIL} from "../../serveur/routes";
-import {ConfigurationJeuDistribution, ConfigurationJeuTchat, ConfigurationJeux} from "../../commun/configurationJeux";
+import { AxiosResponse } from "axios";
+import { requeteGET } from "../../../tchat/communication/communicationServeur";
+import { AccessPage } from "./connexion";
+import { PREFIXE_ACCES, PREFIXE_ACCUEIL } from "../../serveur/routes";
+import { ConfigurationJeuDistribution, ConfigurationJeuTchat, ConfigurationJeux } from "../../commun/configurationJeux";
 
 interface JeuChoixPageProps {
     goBack: () => void,
@@ -25,8 +25,8 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <DropdownContent>
                     {
                         props.jeuxTchat.map(jeu => {
-                        const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
-                        return <a href= {urlJeu} > Tchat {jeu.type} avec une taille de {jeu.taille} joueurs</a>
+                            const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
+                            return <a href={urlJeu} > Tchat {jeu.type} avec une taille de {jeu.taille} joueurs</a>
                         })
                     }
                 </DropdownContent>
@@ -36,7 +36,7 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <DropdownContent>
                     {props.jeuxDistribution.map(jeu => {
                         const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
-                        return <a href={urlJeu}>{ jeu.suffixe }</a>
+                        return <a href={urlJeu}>{jeu.suffixe}</a>
                     })}
                 </DropdownContent>
             </Dropdown>
@@ -62,7 +62,7 @@ export class Corps extends React.Component<{}, AccueilState> {
             hasCode: false, //aCode
             code: "",
             jeuxTchat: [],
-            jeuxDistribution:[]
+            jeuxDistribution: []
         };
         this.handleSubmit = this.handleSubmit.bind(this);
         this.goBackAccessPage = this.goBackAccessPage.bind(this);
@@ -85,28 +85,43 @@ export class Corps extends React.Component<{}, AccueilState> {
                 jeuxDistribution: [{
                     type: config.distribution.type,
                     prefixe: config.distribution.prefixe,
-                    nombreDomaines: config.distribution.nombreDomaines,
                     suffixe: config.distribution.suffixe,
+                    post: {
+                        envoi: config.distribution.post.envoi,
+                        verrou: config.distribution.post.verrou,
+                    },
+                    getPersistant: config.distribution.getPersistant,
+                    nombreDomaines: config.distribution.nombreDomaines,
+
                     effectifParDomaine: config.distribution.effectifParDomaine
                 }],
                 jeuxTchat: [
                     {
                         prefixe: config.tchat_etoile.prefixe,
-                        pseudos: config.tchat_etoile.pseudos,
                         suffixe: config.tchat_etoile.suffixe,
+                        post: {
+                            envoi: config.tchat_etoile.post.envoi
+                        },
+                        getPersistant: config.tchat_etoile.getPersistant,
+                        pseudos: config.tchat_etoile.pseudos,
                         taille: config.tchat_etoile.taille,
                         type: config.tchat_etoile.type
                     },
-                    {  prefixe: config.tchat_anneau.prefixe,
-                        pseudos: config.tchat_anneau.pseudos,
+                    {
+                        prefixe: config.tchat_anneau.prefixe,
                         suffixe: config.tchat_anneau.suffixe,
+                        post: {
+                            envoi: config.tchat_anneau.post.envoi
+                        },
+                        getPersistant: config.tchat_anneau.getPersistant,
+                        pseudos: config.tchat_anneau.pseudos,
                         taille: config.tchat_anneau.taille,
                         type: config.tchat_anneau.type
                     }
                 ]
             });
         }
-        const params = {cle: code};
+        const params = { cle: code };
         const domain = document.location.origin;
         const url = `${domain}/${PREFIXE_ACCUEIL}/${PREFIXE_ACCES}`;
 
@@ -114,13 +129,13 @@ export class Corps extends React.Component<{}, AccueilState> {
     }
 
     goBackAccessPage() {
-        this.setState({hasCode: false, code: ""});
+        this.setState({ hasCode: false, code: "" });
     }
 
     render() {
         if (!this.state.hasCode) // demander code d'accès
             return (
-                <AccessPage onClick={this.handleSubmit}/>
+                <AccessPage onClick={this.handleSubmit} />
             );
         else // code valide fourni, afficher les choix des jeux
             return (

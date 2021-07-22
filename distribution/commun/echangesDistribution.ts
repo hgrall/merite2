@@ -12,6 +12,7 @@ import { FormatMessage } from "../../bibliotheque/applications/message";
 import {FormatTableIdentification} from "../../bibliotheque/types/tableIdentification";
 import {FormatIdentifiable, Identifiant} from "../../bibliotheque/types/identifiant";
 import {Activable, Deux} from "../../bibliotheque/types/typesAtomiques";
+import { dateMaintenant } from "../../bibliotheque/types/date";
 
 /**
  * Nombre de bits inutiles dans la trame.
@@ -181,8 +182,10 @@ export function estDomaine(s: FormatSommetDistribution): s is FormatDomaineDistr
  */
 export enum TypeMessageDistribution {
     ENVOI, // ok - S - C (AR)
-    TRANSIT // ok - C
-    //VERROU, // ok - S
+    TRANSIT, // ok - C
+    VERROU, // ok - C - S 
+    ACTIF, // ok 
+    INACTIF, // ok
     //SUIVANT, // ok - S
     //AR_SUIVANT,
     //ESSAI, // ok - S
@@ -214,6 +217,7 @@ export interface FormatMessageDistribution {
  * - type : 'INIT',
  * - corps : l'envoi,
  * - date : la date lors de l'émission.
+ * TODO utilité de spécialiser ???
 */
 export type FormatMessageEnvoiDistribution = FormatMessage<TypeMessageDistribution.ENVOI, FormatMessageDistribution>;
 
@@ -221,10 +225,72 @@ export type FormatMessageEnvoiDistribution = FormatMessage<TypeMessageDistributi
  * Message au format JSON contenant un message en transit.
  * - ID : identifiant
  * - type : 'TRANSIT',
- * - corps : l'envoi,
+ * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
+ * l'utilisateur recevant le message en transit (le futur émetteur),
  * - date : la date lors de l'émission.
 */
 export type FormatMessageTransitDistribution = FormatMessage<TypeMessageDistribution.TRANSIT, FormatMessageDistribution>;
+
+/** 
+ * Message au format JSON contenant un message de verrouillage.
+ * - ID : identifiant
+ * - type : 'VERROU',
+ * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
+ * l'utilisateur voulant verrouiller,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageVerrouDistribution = FormatMessage<TypeMessageDistribution.VERROU, FormatMessageDistribution>;
+
+/** 
+ * Message au format JSON contenant un message actif.
+ * - ID : identifiant
+ * - type : 'ACTIF',
+ * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
+ * l'utilisateur voulant verrouiller,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageActifDistribution = FormatMessage<TypeMessageDistribution.ACTIF, FormatMessageDistribution>;
+
+/** 
+ * Message au format JSON contenant un message inactif.
+ * - ID : identifiant
+ * - type : 'INACTIF',
+ * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
+ * l'utilisateur voulant verrouiller,
+ * - date : la date lors de l'émission.
+*/
+export type FormatMessageInactifDistribution = FormatMessage<TypeMessageDistribution.INACTIF, FormatMessageDistribution>;
+
+export function traductionTransitEnVerrou(
+    msg: FormatMessageTransitDistribution): FormatMessageVerrouDistribution {
+    return {
+        ID: msg.ID,
+        type: TypeMessageDistribution.VERROU,
+        corps: msg.corps,
+        date: dateMaintenant().toJSON()
+    };
+}
+
+export function traductionVerrouEnActif(
+    msg: FormatMessageVerrouDistribution): FormatMessageActifDistribution {
+    return {
+        ID: msg.ID,
+        type: TypeMessageDistribution.ACTIF,
+        corps: msg.corps,
+        date: dateMaintenant().toJSON()
+    };
+}
+
+export function traductionVerrouEnInactif(
+    msg: FormatMessageVerrouDistribution): FormatMessageInactifDistribution {
+    return {
+        ID: msg.ID,
+        type: TypeMessageDistribution.INACTIF,
+        corps: msg.corps,
+        date: dateMaintenant().toJSON()
+    };
+}
+
 
 export interface FormatConfigDistribution {
     readonly utilisateur: FormatUtilisateurDistribution;

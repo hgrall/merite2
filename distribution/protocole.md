@@ -86,7 +86,7 @@ Identité de l'utilisateur et de son domaine
 
 Ensemble de messages avec des statuts différents 
 - `Transit(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
-- `Attente(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
+- `Verrou(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
 - `Actif(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
 - `Inactif(idMessage, idUtil, idDomOrigine, idDomDest, contenu)*`
 - 
@@ -116,7 +116,7 @@ interactions avec l'utilisateur
 
 ### Règles
 
-Vérifié 
+Vérifié - Envoi
 ```
   // L'utilisateur demande au serveur de transmettre le message qu'il doit envoyer
   //   (a priori un unique message), après avoir indiqué le domaine voisin
@@ -130,14 +130,14 @@ Vérifié
     & Identifiant(n+1, idMsg')
 ```
 
-Vérifié
+Vérifié - Envoi
 ```
   // L'utilisateur affiche l'accusé de réception de son message initial.
       accuserEnvoyer[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)
   ->  ARenvoyer(idMsg, idUtil, idDomOrigine, idDomDest, contenu)
 ```
 
-Vérifié
+Vérifié - Transit
 ```
   // L'utilisateur reçoit un message du serveur et le place en transit. Les autres
   // utilisateurs du domaine 'dom' ont reçu le même message.
@@ -146,35 +146,35 @@ Vérifié
   ->  Transit(idMsg, idUtil, origine, dom, contenu)
 ```
 
-Vérifié
+Vérifié - Verrou
 ```
   // L'utilisateur demande au serveur de verrouiller un message en transit.
       Transit(idMsg, idUtil, origine, dom, contenu) 
     & EntreeVerrou(idMsg)
     & !Utilisateur(idUtil, dom) // inutile car invariant de Transit
   ->  verrouiller(idMsg, idUtil, origine, dom, contenu)
-    & Attente(idMsg, idUtil, origine, dom, contenu) 
+    & Verrou(idMsg, idUtil, origine, dom, contenu) 
 ```
 
-Vérifié
+Vérifié - Verrou
 ```
   // L'utilisateur active un message après un verrouillage réussi côté serveur.
       accuserVerrouiller[idUtil](idMsg, idUtil, origine, dom, contenu)
       & !Utilisateur(idUtil, dom)
-      & Attente(idMsg, idUtil, origine, dom, contenu) 
+      & Verrou(idMsg, idUtil, origine, dom, contenu) 
   ->  Actif(idMsg, idUtil, origine, dom, contenu)
 ```
 
-Vérifié
+Vérifié - Verrou
 ```
   // L'utilisateur reçoit un message d'inactivation, suite au verrouillage par un autre utilisateur.
       inactiver[idUtil](idMsg, idUtil, origine, dom, contenu)
       & !Utilisateur(idUtil, dom)
-      & (Transit(idMsg, idUtil, origine, dom, contenu) | Attente(idMsg, idUtil, origine, dom, contenu)) 
+      & (Transit(idMsg, idUtil, origine, dom, contenu) | Verrou(idMsg, idUtil, origine, dom, contenu)) 
   ->  Inactif(idMsg, idUtil, origine, dom, contenu) 
 ```
 
-Vérifié
+Vérifié - Verrou
 ```
   // L'utilisateur reçoit un échec de verrouillage côté serveur. Nécessairement, le message est inactif.
       accuserEchecVerrouiller[idUtil](idMsg, idUtil, origine, dom, contenu)
@@ -321,7 +321,7 @@ Vérifié - Envoi 2
   ->  vide
 ```
 
-Vérifié - 
+Vérifié - Verrou
 ```
   // Le serveur verrouille le message 'id' à la demande de l'utilisateur 'emetteur' du
   //   domaine 'dom' et accuse réception.
@@ -331,7 +331,7 @@ Vérifié -
     & MiseAJourAprèsVerrouillage(id, emetteur, origine, dom, contenu)
 ```
 
-Vérifié
+Vérifié - Verrou
 ```
   // Le serveur ne verrouille pas le message 'id' si un utilisateur du
   //   domaine 'dom' verrouille déjà le message. 
@@ -341,7 +341,7 @@ Vérifié
     & Verrou(dom, idMsg, idUtil)
 ```
 
-Vérifié
+Vérifié - Verrou
 ```
   // Le serveur met à jour les autres utilisateurs du domaine 'dom', en
   //   demandant l'inactivation du message 'idMsg'.
@@ -411,7 +411,7 @@ Un canal se traduit pratiquement en
   - `accuserEnvoyer[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : INIT
   - `recevoir[idUtilisateur](idMessage, idUtil, idDomOrigine, idDomDestination, contenu)` : TRANSIT
   - `accuserVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : VERROU
-  - `accuserEchecVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : ECHEC_VERROU
+  - `accuserEchecVerrouiller[idUtil](idMsg, idUtil, idDomOrigine, idDomDest, contenu)` : 403 VERROU
   - `inactiver[idUtil](idMessage)` : INACTIF
 
 
