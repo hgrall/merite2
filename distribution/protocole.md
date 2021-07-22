@@ -174,7 +174,7 @@ Vérifié - Verrou
   ->  Inactif(idMsg, idUtil, origine, dom, contenu) 
 ```
 
-Vérifié - Verrou
+Vérifié - Verrou - TODO 403
 ```
   // L'utilisateur reçoit un échec de verrouillage côté serveur. Nécessairement, le message est inactif.
       accuserEchecVerrouiller[idUtil](idMsg, idUtil, origine, dom, contenu)

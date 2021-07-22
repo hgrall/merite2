@@ -1,6 +1,12 @@
 import { dateMaintenant, FormatDateFr } from "../types/date";
 import { Identifiant } from "../types/identifiant";
 
+export enum TypeMessage {
+    CONFIG = "config",
+    AVERTISSEMENT = "avertissement",
+    ERREUR = "erreur"
+}
+
 export interface FormatMessage<TypeMsg, CorpsMsg> {
     readonly ID: Identifiant<'message'>;
     readonly type: TypeMsg;
@@ -25,7 +31,7 @@ export interface FormatErreur {
  * - corps : l'erreur,
  * - date : la date lors de l'émission.
 */
-export type FormatMessageErreur = FormatMessage<'erreur', FormatErreur>;
+export type FormatMessageErreur = FormatMessage<TypeMessage.ERREUR, FormatErreur>;
 
 /**
  * Corps d'un message d'avertissement. Un avertissement 
@@ -44,12 +50,12 @@ export interface FormatAvertissement {
  * - corps : l'avertissement,
  * - date : la date lors de l'émission.
 */
-export type FormatMessageAvertissement = FormatMessage<'avertissement', FormatAvertissement>;
+export type FormatMessageAvertissement = FormatMessage<TypeMessage.AVERTISSEMENT, FormatAvertissement>;
 
 export function erreur(ID_msg : Identifiant<'message'>, description : string) : FormatMessageErreur {
     return {
         ID: ID_msg,
-        type: 'erreur',
+        type: TypeMessage.ERREUR,
         corps: {
             erreur : description
         },
@@ -60,7 +66,7 @@ export function erreur(ID_msg : Identifiant<'message'>, description : string) : 
 export function avertissement(ID_msg : Identifiant<'message'>, description : string) : FormatMessageAvertissement {
     return {
         ID: ID_msg,
-        type: 'avertissement',
+        type: TypeMessage.AVERTISSEMENT,
         corps: {
             avertissement : description
         },

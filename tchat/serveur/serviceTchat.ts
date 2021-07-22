@@ -16,11 +16,12 @@ import { tableau, Tableau } from '../../bibliotheque/types/tableau';
 import {
     FormatMessageARTchat,
     FormatMessageEnvoiTchat,
-    FormatMessageTransitTchat} from '../commun/echangesTchat';
+    FormatMessageTransitTchat,
+    TypeMessageTchat} from '../commun/echangesTchat';
 
 import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseau, ReseauMutableTchat } from './reseauTchat';
-import { avertissement, erreur } from '../../bibliotheque/applications/message';
+import { avertissement, erreur, TypeMessage } from '../../bibliotheque/applications/message';
 import {FormatMessageTchatValidator} from "./validation";
 
 /*
@@ -94,7 +95,7 @@ class ServiceTchat {
         canal.envoyerJSON(reponseEnvoi.accuseReception);
         reponseEnvoi.messagesEnTransit.iterer((i, msg) => {
             const canalDest = this.reseau.connexion(msg.corps.ID_destinataire);
-            canalDest.envoyerJSON('transit', msg);
+            canalDest.envoyerJSON(TypeMessageTchat.TRANSIT, msg);
         });
     }
 
@@ -106,14 +107,14 @@ class ServiceTchat {
             const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
             logger.warn(desc);
             canal.envoyerJSON(
-                'avertissement',
+                TypeMessage.AVERTISSEMENT,
                 avertissement(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
         // Envoi de la configuration initiale
         const ID_util = this.reseau.activerSommet(canal);
         const noeud = this.reseau.noeud(ID_util);
-        canal.envoyerJSON('config', noeud);
+        canal.envoyerJSON(TypeMessage.CONFIG, noeud);
         // Envoi de la nouvelle configuration aux voisins actifs
         this.reseau.diffuserConfigurationAuxAutresUtilisateurs(ID_util);
         // Enregistrement du traitement lors de la déconnexion

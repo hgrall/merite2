@@ -16,13 +16,14 @@ import { creerGenerateurReseauDistribution, ReseauMutableDistribution } from './
 import {
     estDomaine,
     estUtilisateur, FormatConfigDistribution,
-    FormatMessageEnvoiDistribution as FormatMessageEnvoiDistribution,
-    FormatMessageVerrouDistribution,
-    traductionVerrouEnActif,
-    traductionVerrouEnInactif,
+    FormatMessageDistribution,
+    messageActif,
+    messageInactif,
+    messageTransit,
+    TypeMessageDistribution
 } from '../commun/echangesDistribution';
-import { avertissement, erreur } from '../../bibliotheque/applications/message';
-import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, traductionEnvoiEnTransit, verrouillage } from './echangesServeurDistribution';
+import { avertissement, erreur, TypeMessage } from '../../bibliotheque/applications/message';
+import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, verrouillage } from './echangesServeurDistribution';
 import { ValidateurFormatMessageEnvoiDistribution } from "./validation";
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
 
@@ -53,7 +54,7 @@ class ServiceDistribution {
     >
     private messagesEnvoyesParUtilisateur: TableIdentificationMutable<
         'sommet',
-        FormatMessageEnvoiDistribution>;
+        FormatMessageDistribution>;
     constructor(
         private config: ConfigurationJeuDistribution,
         private cleAcces: string
@@ -63,12 +64,12 @@ class ServiceDistribution {
         ).engendrer();
         this.generateurIdentifiantsMessages = creerGenerateurIdentifiantParCompteur(cleAcces + "-distribution-" + config.type + "-");
         this.messagesEnvoyesParUtilisateur = creerTableIdentificationMutableVide('sommet');
-        const tableMessages = 
-        creerTableIdentificationMutableVide<'sommet',
-        TableIdentificationMutable<
-            'message',
-            FormatMessageAvecVerrou
-        >>('sommet');
+        const tableMessages =
+            creerTableIdentificationMutableVide<'sommet',
+                TableIdentificationMutable<
+                    'message',
+                    FormatMessageAvecVerrou
+                >>('sommet');
         this.reseau.itererSommets((ID, s) => {
             if (estDomaine(s)) {
                 tableMessages.ajouter(ID, creerTableIdentificationMutableVide('message'));
@@ -81,7 +82,7 @@ class ServiceDistribution {
     * Service de réception d'un message ENVOI (POST).
     */
 
-    traitementPOSTEnvoi(msg: FormatMessageEnvoiDistribution)
+    traitementPOSTEnvoi(msg: FormatMessageDistribution)
         : ReponsePOSTEnvoi {
         // Mettre à jour les messages envoyés côté serveur.
         this.messagesEnvoyesParUtilisateur.ajouter(msg.corps.ID_utilisateur_emetteur, msg);
@@ -90,13 +91,13 @@ class ServiceDistribution {
             utilisateursDestinataires: this.reseau.cribleVoisins(msg.corps.ID_destination, (ID, s) => estUtilisateur(s) && s.actif)
         };
     }
-    traductionEntreePostEnvoi(canal: ConnexionExpress): Option<FormatMessageEnvoiDistribution> {
-        const msg: FormatMessageEnvoiDistribution = canal.lire();
+    traductionEntreePostEnvoi(canal: ConnexionExpress): Option<FormatMessageDistribution> {
+        const msg: FormatMessageDistribution = canal.lire();
         if (!isRight(ValidateurFormatMessageEnvoiDistribution.decode(msg))) {
             const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
-            return rienOption<FormatMessageEnvoiDistribution>();
+            return rienOption<FormatMessageDistribution>();
         }
         // Le message reçu est supposé correct,
         // en première approximation.
@@ -107,13 +108,13 @@ class ServiceDistribution {
             const desc = `Le message reçu n'est pas cohérent. Les domaines d'origine et de destination doivent être voisins (ici ${voisinageDomaines}) et l'utilisateur émetteur doit appartenir au domaine d'origine (ici ${appartenanceUtilisateurDomaine}). Erreur HTTP 400 : Bad Request.`;
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
-            return rienOption<FormatMessageEnvoiDistribution>();
+            return rienOption<FormatMessageDistribution>();
         }
         if (!this.reseau.sommet(msg.corps.ID_destination).actif) {
             const desc = "Le domaine de destination n'est pas actif. La requête doit être renvoyée lorsque le domaine devient actif. Erreur HTTP 400 : Bad Request.";
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
-            return rienOption<FormatMessageEnvoiDistribution>();
+            return rienOption<FormatMessageDistribution>();
         }
         return option(msg);
     }
@@ -132,8 +133,8 @@ class ServiceDistribution {
         reponse.utilisateursDestinataires.iterer((ID) => {
             const canalDest = this.reseau.connexion(ID);
             canalDest.envoyerJSON(
-                'TRANSIT',
-                traductionEnvoiEnTransit(reponse.accuseReception,
+                TypeMessageDistribution.TRANSIT,
+                messageTransit(reponse.accuseReception,
                     ID, idMsg));
         });
     }
@@ -141,12 +142,12 @@ class ServiceDistribution {
     /*
     * Service de réception d'un message VERROU (POST).
     */
-    verrouiller(ID_domaine : Identifiant<'sommet'>, ID_util : Identifiant<'sommet'>, ID_msg : Identifiant<'message'>) : void {
+    verrouiller(ID_domaine: Identifiant<'sommet'>, ID_util: Identifiant<'sommet'>, ID_msg: Identifiant<'message'>): void {
         const table = this.messagesTransitParDomaine.valeur(ID_domaine);
         let msgVerrou = table.valeur(ID_msg);
         table.ajouter(ID_msg, verrouillage(msgVerrou, ID_util));
     }
-    traitementPOSTVerrou(msg: FormatMessageVerrouDistribution)
+    traitementPOSTVerrou(msg: FormatMessageDistribution)
         : ReponsePOSTVerrou {
         // Verrouiller côté serveur.
         this.verrouiller(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur, msg.ID);
@@ -155,14 +156,14 @@ class ServiceDistribution {
             utilisateursDestinataires: this.reseau.cribleVoisins(msg.corps.ID_destination, (ID, s) => estUtilisateur(s) && s.actif && !sontIdentifiantsEgaux(msg.corps.ID_utilisateur_emetteur, ID))
         };
     }
-    traductionEntreePostVerrou(canal: ConnexionExpress): Option<FormatMessageVerrouDistribution> {
-        const msg: FormatMessageVerrouDistribution = canal.lire();
+    traductionEntreePostVerrou(canal: ConnexionExpress): Option<FormatMessageDistribution> {
+        const msg: FormatMessageDistribution = canal.lire();
         // TODO
         if (!isRight(ValidateurFormatMessageEnvoiDistribution.decode(msg))) {
             const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
-            return rienOption<FormatMessageVerrouDistribution>();
+            return rienOption<FormatMessageDistribution>();
         }
         // Le message reçu est supposé correct,
         // en première approximation.
@@ -173,7 +174,7 @@ class ServiceDistribution {
             const desc = `Le message reçu n'est pas cohérent. Les domaines d'origine et de destination doivent être voisins (ici ${voisinageDomaines}) et l'utilisateur émetteur doit appartenir au domaine de destination (ici ${appartenanceUtilisateurDomaine}). Erreur HTTP 400 : Bad Request.`;
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
-            return rienOption<FormatMessageVerrouDistribution>();
+            return rienOption<FormatMessageDistribution>();
         }
         // On suppose que les identifiants sont corrects. TODO 
         // Quels contrôles réaliser finalement ? Toujours supposer la
@@ -183,20 +184,20 @@ class ServiceDistribution {
             const desc = `Le messsage d'identifiant ${msg.ID} est déjà verrouillé. Erreur HTTP 403 : Forbidden Request.`;
             canal.envoyerJSONCodeErreur(403, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
-            return rienOption<FormatMessageVerrouDistribution>();
+            return rienOption<FormatMessageDistribution>();
         }
         return option(msg);
     }
 
     traduireSortiePOSTVerrou(reponse: ReponsePOSTVerrou, canal: ConnexionExpress): void {
         // Activer le message après le verrouillage.
-        canal.envoyerJSON(traductionVerrouEnActif(reponse.accuseReception));
+        canal.envoyerJSON(messageActif(reponse.accuseReception));
         // Inactiver le message pour les autres utilisateurs du domaine.
         reponse.utilisateursDestinataires.iterer((ID) => {
             const canalDest = this.reseau.connexion(ID);
             canalDest.envoyerJSON(
-                'INACTIF',
-                traductionVerrouEnInactif(reponse.accuseReception));
+                TypeMessageDistribution.INACTIF,
+                messageInactif(reponse.accuseReception));
         });
     }
 
@@ -210,7 +211,7 @@ class ServiceDistribution {
             const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
             logger.warn(desc);
             canal.envoyerJSON(
-                'avertissement',
+                TypeMessage.AVERTISSEMENT,
                 avertissement(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
@@ -218,7 +219,7 @@ class ServiceDistribution {
         const config: FormatConfigDistribution = this.reseau.configurationUtilisateur(ID_util);
 
         // Envoi de la configuration initiale
-        canal.envoyerJSON('config', config);
+        canal.envoyerJSON(TypeMessage.CONFIG, config);
         // Envoi de la nouvelle configuration aux voisins actifs
         this.reseau.diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util);
         this.reseau.diffuserConfigurationAuxUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
@@ -241,7 +242,7 @@ class ServiceDistribution {
             repertoireHtml, fichierHtml);
 
         serveurApplications.specifierTraitementRequetePOST<
-            FormatMessageEnvoiDistribution,
+            FormatMessageDistribution,
             ReponsePOSTEnvoi
         >(
             this.config.prefixe,

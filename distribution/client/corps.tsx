@@ -34,13 +34,13 @@ import {
     FormatConfigDistribution,
     FormatConsigne,
     FormatDomaineDistribution,
+    FormatCorpsMessageDistribution,
     FormatMessageDistribution,
-    FormatMessageEnvoiDistribution,
-    FormatMessageTransitDistribution,
     FormatNoeudDomaineDistribution,
     FormatUtilisateurDistribution,
     TypeMessageDistribution
 } from "../commun/echangesDistribution";
+import { TypeMessage } from "../../bibliotheque/applications/message";
 
 
 interface ProprietesCorps {
@@ -148,13 +148,13 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     envoyerMessageInitial(m: FormulaireMessage, d: DateFr): void {
         this.mettreAJourApresEnvoiMessage(m);
-        const message: FormatMessageDistribution = {
+        const message: FormatCorpsMessageDistribution = {
             ID_utilisateur_emetteur: m.emetteur.ID,
             ID_origine: m.domaineEmission.domaine.ID,
             ID_destination: m.domaineDestin.domaine.ID,
             contenu: m.trame
         }
-        let msg: FormatMessageEnvoiDistribution = {
+        let msg: FormatMessageDistribution = {
             corps: message,
             type: TypeMessageDistribution.ENVOI,
             date: d.toJSON(),
@@ -162,7 +162,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         };
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
             // TODO: TRAITER REPONSE COMME MESSAGE AR POUR L'AFFICHAGE revisar si ID destination es el domain o el usuario
-            const message: FormatMessageTransitDistribution = reponse.data;
+            const message: FormatMessageDistribution = reponse.data;
             console.log(message);
             if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
                 || (!this.domainesVoisins.contient(message.corps.ID_origine))
@@ -185,7 +185,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         const traitementErreur = (raison: AxiosError) => {
             // TODO: TRAITER ERREUR
         }
-        requetePOST<FormatMessageEnvoiDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
+        requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     // ok
@@ -473,7 +473,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
-        this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
+        this.fluxDeEvenements.addEventListener(TypeMessage.CONFIG, (e: MessageEvent) => {
             const config: FormatConfigDistribution = JSON.parse(e.data);
             const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
             this.utilisateur = config.utilisateur;
@@ -509,8 +509,8 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 formulaireMessage(this.utilisateur, this.domaineUtilisateur, domaineSelectionne, [], this.consigne));
         });
 
-        this.fluxDeEvenements.addEventListener('TRANSIT', (e: MessageEvent) => {
-            const message: FormatMessageTransitDistribution = JSON.parse(e.data);
+        this.fluxDeEvenements.addEventListener(TypeMessageDistribution.TRANSIT, (e: MessageEvent) => {
+            const message: FormatMessageDistribution = JSON.parse(e.data);
             if ((this.utilisateur.ID.val !== message.corps.ID_destination.val)
                 || (!this.domainesVoisins.contient(message.corps.ID_origine))
             ) {

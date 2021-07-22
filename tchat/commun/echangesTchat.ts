@@ -41,7 +41,10 @@ export type FormatNoeudTchat = FormatNoeud<FormatUtilisateurTchat>;
 /**
  * Types de messages pour le tchat. TODO : actuellement inutile !
  */
-export type TypeMessageTchat = 'config' | 'envoi' | 'AR' | 'transit' | 'erreur';
+export enum TypeMessageTchat{
+    ENVOI = "envoi",
+    TRANSIT = "transit"
+}
 
 /** 
  * Message au format JSON contenant une configuration du tchat, soit un noeud du graphe.

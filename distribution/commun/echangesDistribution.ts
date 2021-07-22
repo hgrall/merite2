@@ -181,11 +181,11 @@ export function estDomaine(s: FormatSommetDistribution): s is FormatDomaineDistr
  *   - detruire : DESTRUCT
  */
 export enum TypeMessageDistribution {
-    ENVOI, // ok - S - C (AR)
-    TRANSIT, // ok - C
-    VERROU, // ok - C - S 
-    ACTIF, // ok 
-    INACTIF, // ok
+    ENVOI = "envoi", // ok - S - C (AR)
+    TRANSIT = "transit", // ok - C
+    VERROU = "verrou", // ok - C - S 
+    ACTIF = "actif", // ok 
+    INACTIF = "inactif", // ok
     //SUIVANT, // ok - S
     //AR_SUIVANT,
     //ESSAI, // ok - S
@@ -199,11 +199,13 @@ export enum TypeMessageDistribution {
     //INFO
 }
 
+
+
 /**
  * Corps d'un message pour la distribution.
  * TODO   
  */
-export interface FormatMessageDistribution {
+export interface FormatCorpsMessageDistribution {
     readonly ID_utilisateur_emetteur: Identifiant<'sommet'>;
     readonly ID_origine: Identifiant<'sommet'>; // domaine
     readonly ID_destination: Identifiant<'sommet'>; // domaine
@@ -211,58 +213,34 @@ export interface FormatMessageDistribution {
 }
 
 /** 
- * Message au format JSON contenant l'envoi initial d'un client 
- * du jeu de distribution.
+ * Message au format JSON du jeu de distribution.
  * - ID : identifiant
- * - type : 'INIT',
- * - corps : l'envoi,
- * - date : la date lors de l'émission.
- * TODO utilité de spécialiser ???
-*/
-export type FormatMessageEnvoiDistribution = FormatMessage<TypeMessageDistribution.ENVOI, FormatMessageDistribution>;
-
-/** 
- * Message au format JSON contenant un message en transit.
- * - ID : identifiant
- * - type : 'TRANSIT',
- * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
- * l'utilisateur recevant le message en transit (le futur émetteur),
+ * - type : un des types des messages de distribution,
+ * - corps : le message,
  * - date : la date lors de l'émission.
 */
-export type FormatMessageTransitDistribution = FormatMessage<TypeMessageDistribution.TRANSIT, FormatMessageDistribution>;
+export type FormatMessageDistribution = FormatMessage<TypeMessageDistribution, FormatCorpsMessageDistribution>;
 
-/** 
- * Message au format JSON contenant un message de verrouillage.
- * - ID : identifiant
- * - type : 'VERROU',
- * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
- * l'utilisateur voulant verrouiller,
- * - date : la date lors de l'émission.
-*/
-export type FormatMessageVerrouDistribution = FormatMessage<TypeMessageDistribution.VERROU, FormatMessageDistribution>;
+export function messageTransit(
+    e: FormatMessageDistribution,
+    ID_util_dest: Identifiant<'sommet'>,
+    ID_msg: Identifiant<'message'>): FormatMessageDistribution {
+    return {
+        ID: ID_msg,
+        type: TypeMessageDistribution.TRANSIT,
+        corps: {
+            ID_utilisateur_emetteur: ID_util_dest,
+            ID_origine: e.corps.ID_origine,
+            ID_destination: e.corps.ID_destination,
+            contenu: e.corps.contenu
+        },
+        date: dateMaintenant().toJSON()
+    };
+}
 
-/** 
- * Message au format JSON contenant un message actif.
- * - ID : identifiant
- * - type : 'ACTIF',
- * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
- * l'utilisateur voulant verrouiller,
- * - date : la date lors de l'émission.
-*/
-export type FormatMessageActifDistribution = FormatMessage<TypeMessageDistribution.ACTIF, FormatMessageDistribution>;
 
-/** 
- * Message au format JSON contenant un message inactif.
- * - ID : identifiant
- * - type : 'INACTIF',
- * - corps : l'envoi, avec l'utilisateur émetteur indiquant 
- * l'utilisateur voulant verrouiller,
- * - date : la date lors de l'émission.
-*/
-export type FormatMessageInactifDistribution = FormatMessage<TypeMessageDistribution.INACTIF, FormatMessageDistribution>;
-
-export function traductionTransitEnVerrou(
-    msg: FormatMessageTransitDistribution): FormatMessageVerrouDistribution {
+export function messageVerrou(
+    msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
         ID: msg.ID,
         type: TypeMessageDistribution.VERROU,
@@ -271,8 +249,8 @@ export function traductionTransitEnVerrou(
     };
 }
 
-export function traductionVerrouEnActif(
-    msg: FormatMessageVerrouDistribution): FormatMessageActifDistribution {
+export function messageActif(
+    msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
         ID: msg.ID,
         type: TypeMessageDistribution.ACTIF,
@@ -281,8 +259,8 @@ export function traductionVerrouEnActif(
     };
 }
 
-export function traductionVerrouEnInactif(
-    msg: FormatMessageVerrouDistribution): FormatMessageInactifDistribution {
+export function messageInactif(
+    msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
         ID: msg.ID,
         type: TypeMessageDistribution.INACTIF,
