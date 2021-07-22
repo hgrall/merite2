@@ -33,8 +33,22 @@ Formulation chimique
 
 ## Hypothèses
 
+Pannes envisagées
+- perte de message
+- non préservation de l'ordre d'émission à réception, lors de la communication du serveur à un client
+
+Hypothèses pour la définition du protocole
 - aucune perte de messages
-- préservation à réception de l'ordre d'émission sur tout canal du serveur à un client 
+- préservation à réception de l'ordre d'émission pour les communications du serveur à un client 
+
+Le protocole http ne garantit aucune de ces propriétés. Cependant, la plupart du temps, ces propriétés sont vérifiées.
+
+Détection des pannes 
+- Si une panne est observée, elle doit être signalée au serveur.
+
+Tolérance aux pannes - Actuellement non implémentée.
+- Lorsqu'une panne est signalée, le serveur doit restaurer l'état de chaque utilisateur du domaine de l'utilisateur ayant signalé la panne.
+- Etat du serveur : pour chaque domaine, la liste des messages présents, et pour chaque utilisateur, l'envoi et les tentatives d'interprétations, réussies ou non. 
 
 ## Client (un utilisateur dans un domaine)
 
@@ -277,21 +291,21 @@ Table donnant le message à recevoir par utilisateur
 
 *** Règles
 
-Vérifié
+Vérifié - Envoi 1
 ```
   // A réception du message initial, le serveur accuse réception et initie la transmission
   // en autorisant le verrouillage pour le domaine destinataire puis
   // en démarrant la diffusion du message aux utilisateurs. 
       envoyer(idMsgC, idUtil, origine, dest, contenu)
     & IdentificationMsg(n, idMsgS)      // Nouvelle identification du message par le serveur
-  ->  accuserenvoyer[idUtil](idMsgC, idUtil, origine, dest, contenu) // AR : même message que celui envoyé.
+  ->  accuserEnvoyer[idUtil](idMsgC, idUtil, origine, dest, contenu) // AR : même message que celui envoyé.
     & IdentificationMsg(n+1, idMsgS')   // Génération de idMsgS'
     & Verrou(dest, idMsgS, PERSONNE)    // verrouillage de 'idMsgS' devenant possible pour
                                         //   les utilisateurs du domaine 'dest'
     & Diffusion(idMsgS, idUtil, origine, dest, contenu) // diffusion vers 'dest'
 ```
 
-Vérifié
+Vérifié - Envoi 2
 ```
   // Le serveur diffuse le message à tous les utilisateurs d'un domaine,
   //   qui le reçoivent. ok
@@ -307,12 +321,12 @@ Vérifié
   ->  vide
 ```
 
-Vérifié
+Vérifié - 
 ```
   // Le serveur verrouille le message 'id' à la demande de l'utilisateur 'emetteur' du
   //   domaine 'dom' et accuse réception.
       verrouiller(id, emetteur, origine, dom, contenu) & Verrou(dom, id, PERSONNE)
-  ->  accuserVerrouiller(id, emetteur, origine, dom, contenu)
+  ->  accuserVerrouiller[emetteur](id, emetteur, origine, dom, contenu)
     & Verrou(dom, id, emetteur)
     & MiseAJourAprèsVerrouillage(id, emetteur, origine, dom, contenu)
 ```

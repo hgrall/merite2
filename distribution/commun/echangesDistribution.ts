@@ -180,7 +180,7 @@ export function estDomaine(s: FormatSommetDistribution): s is FormatDomaineDistr
  *   - detruire : DESTRUCT
  */
 export enum TypeMessageDistribution {
-    INIT, // ok - S - C (AR)
+    ENVOI, // ok - S - C (AR)
     TRANSIT // ok - C
     //VERROU, // ok - S
     //SUIVANT, // ok - S
@@ -215,7 +215,7 @@ export interface FormatMessageDistribution {
  * - corps : l'envoi,
  * - date : la date lors de l'émission.
 */
-export type FormatMessageInitialDistribution = FormatMessage<TypeMessageDistribution.INIT, FormatMessageDistribution>;
+export type FormatMessageEnvoiDistribution = FormatMessage<TypeMessageDistribution.ENVOI, FormatMessageDistribution>;
 
 /** 
  * Message au format JSON contenant un message en transit.

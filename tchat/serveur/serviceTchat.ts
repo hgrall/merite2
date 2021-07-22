@@ -21,7 +21,7 @@ import {
 import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseau, ReseauMutableTchat } from './reseauTchat';
 import { avertissement, erreur } from '../../bibliotheque/applications/message';
-import {FormatMessageTchatValidator} from "../../bibliotheque/validation/tchat/echanges";
+import {FormatMessageTchatValidator} from "./validation";
 
 /*
 * Service de l'application.
@@ -127,8 +127,6 @@ class ServiceTchat {
         serveurApplications: ServeurApplications<express.Request, express.Response>,
         repertoireHtml: string,
         fichierHtml: string,
-        sousCheminPost: string,
-        sousCheminGetPersistant: string
     ) : void {
         serveurApplications.specifierApplicationAServir(
             this.config.prefixe, this.cleAcces, this.config.suffixe,
@@ -140,7 +138,7 @@ class ServiceTchat {
         >(
             this.config.prefixe,
             this.cleAcces,
-            chemin(this.config.suffixe, sousCheminPost),
+            chemin(this.config.suffixe, this.config.post.envoi),
             (entree) => this.traitementPOST(entree),
             (canal) => this.traductionEntreePost(canal),
             (s, canal) => this.traduireSortiePOST(s, canal)
@@ -150,7 +148,7 @@ class ServiceTchat {
             .specifierTraitementRequeteGETLongue(
                 this.config.prefixe,
                 this.cleAcces,
-                chemin(this.config.suffixe, sousCheminGetPersistant), (canal) => this.traiterGETpersistant(canal)
+                chemin(this.config.suffixe, this.config.getPersistant), (canal) => this.traiterGETpersistant(canal)
             );
 
     }

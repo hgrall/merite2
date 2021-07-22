@@ -1,5 +1,5 @@
 import * as t from "io-ts";
-import {Mois, Semaine} from "../../types/date";
+import {Mois, Semaine} from "../types/date";
 
 /**
  * Union de tous les jours de la semaine à partir de l'enum Semaine

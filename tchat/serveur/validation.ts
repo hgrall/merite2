@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
-import {IdentifiantMessage, IdentifiantSommet} from "../types/identifiant";
-import {FormatTableau} from "../types/tableau";
-import {FormatDateValidator} from "../types/date";
+import {IdentifiantMessage, IdentifiantSommet} from "../../bibliotheque/validation/identifiant";
+import {FormatTableau} from "../../bibliotheque/validation/tableau";
+import {FormatDateValidator} from "../../bibliotheque/validation/date";
 
 /**
  * Schema d'un message d'envoi à valider

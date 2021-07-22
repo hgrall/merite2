@@ -35,7 +35,7 @@ import {
     FormatConsigne,
     FormatDomaineDistribution,
     FormatMessageDistribution,
-    FormatMessageInitialDistribution,
+    FormatMessageEnvoiDistribution,
     FormatMessageTransitDistribution,
     FormatNoeudDomaineDistribution,
     FormatUtilisateurDistribution,
@@ -154,9 +154,9 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             ID_destination: m.domaineDestin.domaine.ID,
             contenu: m.trame
         }
-        let msg: FormatMessageInitialDistribution = {
+        let msg: FormatMessageEnvoiDistribution = {
             corps: message,
-            type: TypeMessageDistribution.INIT,
+            type: TypeMessageDistribution.ENVOI,
             date: d.toJSON(),
             ID: this.generateur.produire("message")
         };
@@ -185,7 +185,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         const traitementErreur = (raison: AxiosError) => {
             // TODO: TRAITER ERREUR
         }
-        requetePOST<FormatMessageInitialDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
+        requetePOST<FormatMessageEnvoiDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     // ok

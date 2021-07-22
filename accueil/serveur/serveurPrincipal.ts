@@ -9,7 +9,7 @@ import {
 } from "../../bibliotheque/communication/serveurApplications";
 
 import { option, Option, rienOption } from '../../bibliotheque/types/option';
-import { ENVOI, PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION, RECEPTION } from './routes';
+import { ENVOI_DISTRIB, PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION, RECEPTION_DISTRIB, RECEPTION_TCHAT } from './routes';
 import { ConfigurationJeux } from '../commun/configurationJeux';
 import { cleAccesAleatoire, configurationJeuxParNom, nomConfigurationJeuxParCodeAcces } from './acces';
 import { creerServiceTchat } from '../../tchat/serveur/serviceTchat';
@@ -56,9 +56,9 @@ function initialiserJeux(codeAcces: string, cleAcces: string) {
     };
     // TODO suivant la configuration associée à codeAcces, 
     // initialiser les jeux.
-    creerServiceTchat(config.tchat_anneau, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html", ENVOI, RECEPTION);
-    creerServiceTchat(config.tchat_etoile, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html", ENVOI, RECEPTION);
-    creerServiceDistribution(config.distribution, cleAcces).servirDistribution(serveurApplications, repertoireHtml, "interfaceDistribution.html", ENVOI, RECEPTION);
+    creerServiceTchat(config.tchat_anneau, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html");
+    creerServiceTchat(config.tchat_etoile, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html");
+    creerServiceDistribution(config.distribution, cleAcces).servirDistribution(serveurApplications, repertoireHtml, "interfaceDistribution.html");
 }
 
 function traitementConnexion(codeAcces: string)

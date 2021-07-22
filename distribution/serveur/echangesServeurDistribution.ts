@@ -1,11 +1,10 @@
 import { dateMaintenant } from "../../bibliotheque/types/date";
 import { Identifiant } from "../../bibliotheque/types/identifiant";
-import { Tableau } from "../../bibliotheque/types/tableau";
-import { FormatMessageInitialDistribution, FormatMessageTransitDistribution, TypeMessageDistribution } from "../commun/echangesDistribution";
+import { FormatMessageEnvoiDistribution, FormatMessageTransitDistribution, TypeMessageDistribution } from "../commun/echangesDistribution";
 
 
-export function traductionInitEnTransit(
-    e: FormatMessageInitialDistribution,
+export function traductionEnvoiEnTransit(
+    e: FormatMessageEnvoiDistribution,
     ID_util_dest: Identifiant<'sommet'>,
     ID_msg: Identifiant<'message'>): FormatMessageTransitDistribution {
     return {

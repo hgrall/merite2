@@ -1,5 +1,5 @@
 import * as t from "io-ts";
-import {Deux} from "../../types/typesAtomiques";
+import {Deux} from "../types/typesAtomiques";
 
 /**
  * Union de tous les mois à partir de l'enum Mois

@@ -1,13 +1,17 @@
 /**
  * TODO à compléter.
  */
-import {pseudos} from "../../tchat/serveur/pseudos";
+import { pseudos } from "../../tchat/serveur/pseudos";
 
 export type TypeTchat = 'etoile' | 'anneau';
 
 export interface ConfigurationJeuTchat {
     prefixe: string;
     suffixe: string;
+    post: {
+        envoi: string;
+    };
+    getPersistant: string;
     type: TypeTchat;
     taille: number;
     pseudos: ReadonlyArray<string>;
@@ -18,6 +22,11 @@ export type TypeDistribution = 'anneau_etoile';
 export interface ConfigurationJeuDistribution {
     prefixe: string;
     suffixe: string;
+    post: {
+        envoi: string;
+        verrou : string;
+    };
+    getPersistant: string;
     type: TypeDistribution;
     nombreDomaines: number;
     effectifParDomaine: ReadonlyArray<number>
@@ -42,6 +51,10 @@ export function configurationClassiqueJeux(): ConfigurationJeux {
         tchat_etoile: {
             prefixe: "tchat",
             suffixe: "etoile",
+            post: {
+                envoi: "envoi"
+            },
+            getPersistant: "reception",
             type: "etoile",
             taille: taille,
             pseudos: pseudos.slice(0, taille)
@@ -49,16 +62,25 @@ export function configurationClassiqueJeux(): ConfigurationJeux {
         tchat_anneau: {
             prefixe: "tchat",
             suffixe: "anneau",
+            post: {
+                envoi: "envoi"
+            },
+            getPersistant: "reception",
             type: "anneau",
             taille: taille,
             pseudos: pseudos.slice(0, taille)
         },
         distribution: {
-            effectifParDomaine: [3, 3, 3, 3, 3],
             prefixe: 'jeu',
             suffixe: 'distribution',
+            post: {
+                envoi: "envoi",
+                verrou : "verrou"
+            },
+            getPersistant: "reception",
+            type: "anneau_etoile",
             nombreDomaines: 5,
-            type: "anneau_etoile"
+            effectifParDomaine: [3, 3, 3, 3, 3]
         }
     };
 }
