@@ -253,6 +253,18 @@ class ServiceDistribution {
             (s, canal) => this.traduireSortiePOSTEnvoi(s, canal)
         );
 
+        serveurApplications.specifierTraitementRequetePOST<
+            FormatMessageDistribution,
+            ReponsePOSTVerrou
+        >(
+            this.config.prefixe,
+            this.cleAcces,
+            chemin(this.config.suffixe, this.config.post.verrouillage),
+            (entree) => this.traitementPOSTVerrou(entree),
+            (canal) => this.traductionEntreePostVerrou(canal),
+            (s, canal) => this.traduireSortiePOSTVerrou(s, canal)
+        );
+
         serveurApplications
             .specifierTraitementRequeteGETLongue(
                 this.config.prefixe,

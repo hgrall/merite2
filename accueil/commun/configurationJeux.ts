@@ -24,7 +24,8 @@ export interface ConfigurationJeuDistribution {
     suffixe: string;
     post: {
         envoi: string;
-        verrou : string;
+        verrouillage: string;
+        deverrouillage: string;
     };
     getPersistant: string;
     type: TypeDistribution;
@@ -74,13 +75,14 @@ export function configurationClassiqueJeux(): ConfigurationJeux {
             prefixe: 'jeu',
             suffixe: 'distribution',
             post: {
-                envoi: "envoi",
-                verrou : "verrou"
+                envoi: "envoyer",
+                verrouillage: "verrouiller",
+                deverrouillage: "deverrouiller",
             },
             getPersistant: "reception",
             type: "anneau_etoile",
             nombreDomaines: 5,
             effectifParDomaine: [3, 3, 3, 3, 3]
         }
-    };
+    }
 }
