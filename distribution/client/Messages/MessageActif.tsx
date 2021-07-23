@@ -24,12 +24,12 @@ interface ProprietesMessageVerrouille {
     interpretation: (m: MessageInformant) => void;
 }
 
-class ContainerMessageVerrouilleBrut extends React.Component<ProprietesMessageVerrouille, {}> {
+class ContainerMessageActifBrut extends React.Component<ProprietesMessageVerrouille, {}> {
     render() {
         let id = this.props.message.ID.val;
-        let n = id.split("MSG-")[1];
+        let n = id.split("anneau_etoile-")[1];
         return (
-            <div className={this.props.className} style={{ background: FOND_SELECTION }} >
+            <div className={this.props.className} >
                 <InterlocuteurMessage fond={this.props.message.domaineEmission.fond}
                                encre={this.props.message.domaineEmission.encre}
                                nom={mot(this.props.message.domaineEmission.domaine.domaine).representation()}
@@ -38,12 +38,14 @@ class ContainerMessageVerrouilleBrut extends React.Component<ProprietesMessageVe
                     {"message numéro " + n + " : "
                     + mot(this.props.message.trame).representation()}
                 </MessageFixe>
+                <br/>
                 <Action fond={this.props.message.domaineDestination.fond}
                         encre={this.props.message.domaineDestination.encre}
                         nom={"Interpréter"}
                         onClick={() => {
                             this.props.interpretation(this.props.message);
                         }}
+                        disabled={false}
                 />
                 <Action fond={this.props.message.domaineDestination.fond}
                         encre={this.props.message.domaineDestination.encre}
@@ -55,6 +57,7 @@ class ContainerMessageVerrouilleBrut extends React.Component<ProprietesMessageVe
                                 d
                             );
                         }}
+                        disabled={false}
                 />
                 <Action fond={this.props.message.domaineDestination.fond}
                         encre={this.props.message.domaineDestination.encre}
@@ -64,6 +67,7 @@ class ContainerMessageVerrouilleBrut extends React.Component<ProprietesMessageVe
                                 this.props.message
                             );
                         }}
+                        disabled={false}
                 />
 
 
@@ -72,9 +76,9 @@ class ContainerMessageVerrouilleBrut extends React.Component<ProprietesMessageVe
     }
 }
 
-export const ContainerMessageVerrouille = styled(ContainerMessageVerrouilleBrut)`
+export const ContainerMessageActif = styled(ContainerMessageActifBrut)`
     flex: initial;
-    background: ${FOND_TEXTE};
+    background-color:${FOND_TEXTE};
     box-shadow: 1ex 1ex 3ex -1ex ${COUPLE_FOND_ENCRE_SUJET.fond};
     border-radius: 1ex;
     margin: 1ex 1ex 1ex 1em;

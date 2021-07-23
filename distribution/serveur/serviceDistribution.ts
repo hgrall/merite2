@@ -24,7 +24,7 @@ import {
 } from '../commun/echangesDistribution';
 import { avertissement, erreur, TypeMessage } from '../../bibliotheque/applications/message';
 import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, verrouillage } from './echangesServeurDistribution';
-import { ValidateurFormatMessageEnvoiDistribution } from "./validation";
+import {ValidateurFormatMessageEnvoiDistribution, ValidateurFormatMessageVerrouillageDistribution} from "./validation";
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
 
 
@@ -158,8 +158,7 @@ class ServiceDistribution {
     }
     traductionEntreePostVerrou(canal: ConnexionExpress): Option<FormatMessageDistribution> {
         const msg: FormatMessageDistribution = canal.lire();
-        // TODO
-        if (!isRight(ValidateurFormatMessageEnvoiDistribution.decode(msg))) {
+        if (!isRight(ValidateurFormatMessageVerrouillageDistribution.decode(msg))) {
             const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
             canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
             logger.error(desc);
@@ -251,6 +250,18 @@ class ServiceDistribution {
             (entree) => this.traitementPOSTEnvoi(entree),
             (canal) => this.traductionEntreePostEnvoi(canal),
             (s, canal) => this.traduireSortiePOSTEnvoi(s, canal)
+        );
+
+        serveurApplications.specifierTraitementRequetePOST<
+            FormatMessageDistribution,
+            ReponsePOSTVerrou
+            >(
+            this.config.prefixe,
+            this.cleAcces,
+            chemin(this.config.suffixe, this.config.post.verrou),
+            (entree) => this.traitementPOSTVerrou(entree),
+            (canal) => this.traductionEntreePostVerrou(canal),
+            (s, canal) => this.traduireSortiePOSTVerrou(s, canal)
         );
 
         serveurApplications

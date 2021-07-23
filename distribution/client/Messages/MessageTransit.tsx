@@ -13,12 +13,13 @@ interface ProprietesMessageTransit {
     key: string;
     message: MessageInformant;
     demandeVerrouillage: (m: MessageInformant) => void;
+    verrouillageActif: boolean
 }
 
 class ContainerMessageTransitBrut extends React.Component<ProprietesMessageTransit, {}> {
     render() {
         let id = this.props.message.ID.val;
-        let n = id.split("MSG-")[1];
+        let n = id.split("anneau_etoile-")[1];
         return (
             <div className={this.props.className}>
                 <InterlocuteurMessage fond={this.props.message.domaineEmission.fond}
@@ -39,6 +40,7 @@ class ContainerMessageTransitBrut extends React.Component<ProprietesMessageTrans
                                 this.props.message
                             );
                         }}
+                        disabled={!this.props.verrouillageActif}
                 />
 
             </div>

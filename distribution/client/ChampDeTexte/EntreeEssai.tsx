@@ -15,7 +15,7 @@ interface ProprietesEntreeEssai {
     key: string;
     formulaire: FormulaireEssai;
     envoiEssai: (m: MessageInformant) => void;
-    annulation: (m: FormulaireEssai) => void;
+    //annulation: (m: FormulaireEssai) => void;
 }
 
 interface EtatEntreeEssai {

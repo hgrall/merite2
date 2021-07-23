@@ -9,13 +9,16 @@ interface ProprietesAction {
     encre: Couleur;
     nom: string;
     onClick: () => void;
+    disabled:boolean
 }
 
 class ActionBrut extends React.Component<ProprietesAction, {}> {
     render() {
         return (
             <button className={this.props.className}
-                    onClick={this.props.onClick} >
+                    onClick={this.props.onClick}
+                    disabled={this.props.disabled}
+            >
                 {this.props.nom}
             </button>
         );

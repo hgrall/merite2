@@ -17,10 +17,11 @@ class ContainerARMessageInitialBrut extends React.Component<ProprietesARMessageI
     render() {
         let id = this.props.message.ID.val;
         let n = id.split("MSG-")[1];
+        console.log(this.props.message)
         return (
             <div className={this.props.className} key={id}>
                 <InterlocuteurMessage fond={this.props.message.domaineEmission.fond}
-                                      encre={this.props.message.domaineEmission.encre}
+                                       encre={this.props.message.domaineEmission.encre}
                                       nom={mot(this.props.message.utilisateur.utilisateur).representation()
                                       + "@"
                                       + mot(this.props.message.domaineEmission.domaine.domaine).representation()}

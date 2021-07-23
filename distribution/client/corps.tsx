@@ -3,17 +3,25 @@ import * as React from "react";
 import styled from "styled-components";
 
 import {
-    COUPLE_FOND_ENCRE_INCONNU, COUPLE_FOND_ENCRE_SUJET, FOND, SuiteCouplesFondEncre, TEXTE_ERREUR
+    COUPLE_FOND_ENCRE_INCONNU,
+    COUPLE_FOND_ENCRE_SUJET,
+    FOND,
+    SuiteCouplesFondEncre,
+    TEXTE_ERREUR
 } from "../../bibliotheque/interface/couleur";
 
 
 import {
-    DomaineInterface, FormulaireMessage,
-    messageInformant, MessageInformant, FormulaireEssai, formulaireEssai, formulaireMessage,
-
+    DomaineInterface,
+    FormulaireEssai,
+    formulaireEssai,
+    FormulaireMessage,
+    formulaireMessage,
+    MessageInformant,
+    messageInformant, TypeMessageInformant,
 } from "./Helpers/typesInterface";
 import {
-    creerTableIdentificationMutableVide,
+    creerTableIdentificationMutableVide, TableIdentification,
     TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
@@ -22,7 +30,7 @@ import {
     identifiant,
     Identifiant
 } from "../../bibliotheque/types/identifiant";
-import {rienOption, option, Option} from "../../bibliotheque/types/option";
+import {option, Option, rienOption} from "../../bibliotheque/types/option";
 import {DateFr, dateMaintenant} from "../../bibliotheque/types/date";
 import {PanneauMessages} from "./Panneau/PanneauMessages";
 import {PanneauAdmin} from "./Panneau/PanneauAdmin";
@@ -32,15 +40,14 @@ import {AxiosError, AxiosResponse} from "axios";
 import {Map} from "immutable";
 import {
     FormatConfigDistribution,
-    FormatConsigne,
+    FormatConsigne, FormatCorpsMessageDistribution,
     FormatDomaineDistribution,
-    FormatCorpsMessageDistribution,
     FormatMessageDistribution,
     FormatNoeudDomaineDistribution,
     FormatUtilisateurDistribution,
     TypeMessageDistribution
 } from "../commun/echangesDistribution";
-import { TypeMessage } from "../../bibliotheque/applications/message";
+import {TypeMessage} from "../../bibliotheque/applications/message";
 
 
 interface ProprietesCorps {
@@ -52,7 +59,7 @@ enum EtatInterfaceJeu1 {
     INITIAL,
     NORMAL,
     ERRONE
-};
+}
 
 /*
   Etat contenant
@@ -70,6 +77,7 @@ interface EtatCorps {
     utilisateursActifsDomain: number;
     afficherAlerte: boolean;
     messageAlerte: string;
+    domainesVoisins: TableIdentificationMutable<"sommet", DomaineInterface>
 }
 
 const ID_INCONNU: string = "?";
@@ -79,26 +87,27 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     private fluxDeEvenements: EventSource;
 
     private utilisateur: FormatUtilisateurDistribution;
-    private populationDomaine: TableIdentificationMutable<"sommet", FormatUtilisateurDistribution>;
     private consigne: FormatConsigne;
     private domaineUtilisateur: DomaineInterface;
-    private domainesVoisins: TableIdentificationMutable<'sommet', DomaineInterface>; // TODO : intile ?
 
     private domaineInconnu: DomaineInterface;
 
     private messageErreur: string;
     private generateur: GenerateurIdentifiants<'message'>;
     private urlEnvoi: string;
+    private urlVerrou: string;
+
+    populationDomaine: TableIdentification<"sommet", FormatUtilisateurDistribution>;
 
     constructor(props: ProprietesCorps) {
         super(props);
 
-        this.domainesVoisins = creerTableIdentificationMutableVide("sommet");
         this.populationDomaine = creerTableIdentificationMutableVide("sommet");
 
         const url = window.location.href;
         this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
         this.urlEnvoi = `${url}/envoi`
+        this.urlVerrou = `${url}/verrou`
 
         this.domaineInconnu = {
             domaine: {
@@ -120,6 +129,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             utilisateursActifsDomain: 0,
             afficherAlerte: false,
             messageAlerte: "",
+            domainesVoisins: creerTableIdentificationMutableVide("sommet")
         };
         this.modifierSelection = this.modifierSelection.bind(this);
         this.envoyerMessageInitial = this.envoyerMessageInitial.bind(this);
@@ -130,7 +140,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             = this.envoyerDemandeDeverrouillage.bind(this);
         this.transmettreMessage = this.transmettreMessage.bind(this);
         this.interpreter = this.interpreter.bind(this);
-        this.annuler = this.annuler.bind(this);
+        //this.annuler = this.annuler.bind(this);
         this.envoyerEssai = this.envoyerEssai.bind(this);
         this.omettre = this.omettre.bind(this);
         this.annulerOmission = this.annulerOmission.bind(this);
@@ -165,25 +175,15 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             const message: FormatMessageDistribution = reponse.data;
             console.log(message);
             if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
-                || (!this.domainesVoisins.contient(message.corps.ID_origine))
+                || (!this.state.domainesVoisins.contient(message.corps.ID_origine))
             ) {
                 console.log("- message incohérent");
             }
-            this.mettreAJourInformation(
-                messageInformant(
-                    message.ID,
-                    this.utilisateur,
-                    this.domaineUtilisateur,
-                    this.domaineUtilisateur,
-                    this.domaineUtilisateur,
-                    message.corps.contenu,
-                    message.date,
-                    'AR_initial'
-                )
-            );
+            this.mettreAJourInformation(msg,  'AR_initial');
         };
         const traitementErreur = (raison: AxiosError) => {
             // TODO: TRAITER ERREUR
+            console.log('- erreur')
         }
         requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
@@ -207,68 +207,87 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         //     requetePOST<FormatMessageEssaiDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
+    //TODO: REVISAR PARA QUE SE USA
     omettre(m: MessageInformant): void {
-        this.mettreAJourInformation(m);
+        let msg: FormatMessageDistribution = {
+            type: TypeMessageDistribution.VERROU,
+            date: m.date,
+            corps: {
+                ID_utilisateur_emetteur: m.utilisateur.ID,
+                ID_destination: m.domaineDestination.domaine.ID,
+                ID_origine: m.domaineEmission.domaine.ID,
+                contenu: m.trame,
+            },
+            ID: m.ID
+        }
+        this.mettreAJourInformation(msg, 'transit');
     }
 
     annulerOmission(m: MessageInformant): void {
-        this.mettreAJourInformation(m);
+        let msg: FormatMessageDistribution = {
+            type: TypeMessageDistribution.VERROU,
+            date: m.date,
+            corps: {
+                ID_utilisateur_emetteur: m.utilisateur.ID,
+                ID_destination: m.domaineDestination.domaine.ID,
+                ID_origine: m.domaineEmission.domaine.ID,
+                contenu: m.trame,
+            },
+            ID: m.ID
+        }
+        this.mettreAJourInformation(msg, 'transit');
     }
 
     confirmerOmission(i: Identifiant<'message'>): void {
         this.retirerInformation(i);
     }
 
-    mettreAJourApresDemandeVerrouillage(m: MessageInformant): void {
-        this.retirerInformation(m.ID);
-    }
-
     envoyerDemandeVerrouillage(m: MessageInformant): void {
-        // this.mettreAJourApresDemandeVerrouillage(m);
-        //
-        // let msg: FormatMessageDemandeVerrouillageDistribution = {
-        //     type: 'verrou',
-        //     date: m.date,
-        //     domaine_origine: m.domaineEmission.domaine.ID,
-        //     ID_emetteur: m.utilisateur.ID,
-        //     contenu: mot(m.trame),
-        //     ID: m.ID
-        // }
-        // const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-        //     // TODO: TRAITER REPONSE
-        // };
-        // const traitementErreur = (raison: AxiosError) => {
-        //     // TODO: TRAITER ERREUR
-        // }
-        // requetePOST<FormatMessageDemandeVerrouillageDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
-    }
+        let msg: FormatMessageDistribution = {
+            type: TypeMessageDistribution.VERROU,
+            date: m.date,
+            corps: {
+                ID_utilisateur_emetteur: m.utilisateur.ID,
+                ID_destination: m.domaineDestination.domaine.ID,
+                ID_origine: m.domaineEmission.domaine.ID,
+                contenu: m.trame,
+            },
+            ID: m.ID
+        }
 
-    mettreAJourApresDemandeDeverrouillage(m: MessageInformant): void {
-        this.retirerInformation(m.ID);
+        this.mettreAJourInformation(msg, 'verrou');
+        const traitementEnvoiMessage = (reponse: AxiosResponse) => {
+            const message = reponse.data
+            this.mettreAJourInformation( message,  'actif');
+
+        };
+        const traitementErreur = (raison: AxiosError) => {
+            console.log("- échec du verrouillage");
+        }
+        requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlVerrou);
     }
 
     envoyerDemandeDeverrouillage(m: MessageInformant): void {
-        // this.mettreAJourApresDemandeDeverrouillage(m);
-        //
-        // let msg: FormatMessageDemandeDeverrouillageDistribution = {
-        //     type: 'libe',
-        //     date: m.date,
-        //     domaine_origine: m.domaineEmission.domaine.ID,
-        //     ID_emetteur: m.utilisateur.ID,
-        //     contenu: mot(m.trame),
-        //     ID: m.ID
-        // };
-        // const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-        //     // TODO: TRAITER REPONSE
-        // };
-        // const traitementErreur = (raison: AxiosError) => {
-        //     // TODO: TRAITER ERREUR
-        // }
-        // requetePOST<FormatMessageDemandeDeverrouillageDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
-    }
-
-    mettreAJourApresTransmission(m: MessageInformant): void {
-        this.mettreAJourInformation(m);
+        let msg: FormatMessageDistribution = {
+            type: TypeMessageDistribution.LIBE,
+            date: m.date,
+            corps: {
+                ID_utilisateur_emetteur: m.utilisateur.ID,
+                ID_destination: m.domaineDestination.domaine.ID,
+                ID_origine: m.domaineEmission.domaine.ID,
+                contenu: m.trame,
+            },
+            ID: m.ID
+        };
+        const traitementEnvoiMessage = (reponse: AxiosResponse) => {
+            const message = reponse.data;
+            this.mettreAJourInformation( message, 'transit');
+            // TODO: Verifier si le resultat c'est un message de transit
+        };
+        const traitementErreur = (raison: AxiosError) => {
+            // TODO: TRAITER ERREUR
+        }
+        requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     transmettreMessage(m: MessageInformant, domaineDestination: DomaineInterface, d: DateFr): void {
@@ -308,24 +327,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 m.utilisateur, m.domaineEmission, m.trame, this.consigne));
     }
 
-    annuler(f: FormulaireEssai): void {
-        this.retirerFormulaireEssai();
-        let d = dateMaintenant();
-        this.ajouterInformation(
-            messageInformant(
-                f.ID,
-                this.utilisateur,
-                this.domaineUtilisateur,
-                f.domaineEmetteur,
-                this.domaineUtilisateur,
-                f.trame,
-                d.toJSON(),
-                "verrouillage"
-            )
-        )
-    }
-
-
     modifierSelection(dom: DomaineInterface): void {
         this.setState({selection: dom});
     }
@@ -360,19 +361,29 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         });
     }
 
-    ajouterInformation(i: MessageInformant): void {
-        this.setState((etatAvant: EtatCorps) => ({
-            informations: [...etatAvant.informations, i]
-        }));
-    }
-
     /**
      * Met à jour ou étend avec une nouvelle information.
-     * @param nouvelle
+     * @param message
+     * @param nouveauType nouveau type du message
      */
-    mettreAJourInformation(nouvelle: MessageInformant): void {
-        console.log(nouvelle);
-        console.log(this.domainesVoisins);
+    mettreAJourInformation(message: FormatMessageDistribution, nouveauType: TypeMessageInformant): void {
+        let domaineEmission =  this.state.domainesVoisins.valeur(message.corps.ID_origine);
+        let domainDestination = this.domaineUtilisateur
+        if(nouveauType==="AR_initial"){
+            domaineEmission = this.domaineUtilisateur;
+            domainDestination = this.state.domainesVoisins.valeur(message.corps.ID_destination);
+        }
+        const nouvelle = messageInformant(
+            message.ID,
+            this.utilisateur,
+            this.domaineUtilisateur,
+            domaineEmission,
+            domainDestination,
+            message.corps.contenu,
+            message.date,
+            nouveauType
+        )
+        console.log(nouvelle)
         this.setState((etatAvant: EtatCorps) => {
             for (let j in etatAvant.informations) {
                 if (etatAvant.informations[j].ID.val === nouvelle.ID.val) {
@@ -428,7 +439,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                                     populationDomaine={this.populationDomaine}
                                     domaine={this.domaineUtilisateur}
                                     consigne={this.consigne}
-                                    domainesVoisins={this.domainesVoisins.image()}
+                                    domainesVoisins={this.state.domainesVoisins.image()}
                                     selection={this.state.selection}
                                     modifSelection={this.modifierSelection}
                                     tailleDomain={this.state.tailleDomain}
@@ -450,7 +461,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                                     demandeDeverrouillage={this.envoyerDemandeDeverrouillage}
                                     transmissionMessage={this.transmettreMessage}
                                     interpretation={this.interpreter}
-                                    annulation={this.annuler}
                                     afficherAlerte={this.state.afficherAlerte}
                                     messageAlerte={this.state.messageAlerte}
                                     masquerAlerte={this.masquerAlerte}
@@ -479,10 +489,12 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             this.utilisateur = config.utilisateur;
             this.generateur = creerGenerateurIdentifiantParCompteur(this.utilisateur.ID.val + "-MSG-");
             const formatVoisins = Map(config.domainesVoisins.identification);
-            let suite = new SuiteCouplesFondEncre();
+            const suite = new SuiteCouplesFondEncre();
+            const nouveauxVoisins = creerTableIdentificationMutableVide<'sommet', DomaineInterface>("sommet");
+
             formatVoisins.forEach((value: FormatDomaineDistribution, key) => {
                 let c = suite.courant();
-                this.domainesVoisins.ajouter(identifiant("sommet", key), {
+                nouveauxVoisins.ajouter(identifiant("sommet", key), {
                     domaine: value,
                     encre: c.encre,
                     fond: c.fond,
@@ -490,7 +502,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             })
 
             this.consigne = this.utilisateur.consigne;
-            let dom = noeudDomaine.centre;
+            const dom = noeudDomaine.centre;
             this.domaineUtilisateur = {
                 domaine: dom,
                 fond: COUPLE_FOND_ENCRE_SUJET.fond,
@@ -499,140 +511,42 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             //TODO: A completer
             this.setState({
                 tailleDomain: config.tailleDomaine,
-                utilisateursActifsDomain: config.utilisateursActifsDuDomaine
+                utilisateursActifsDomain: config.utilisateursActifsDuDomaine,
+                domainesVoisins: nouveauxVoisins
             });
-
-            let domaineSelectionne = this.domainesVoisins.selectionAssociation().valeur()[1];
-            this.modifierSelection(domaineSelectionne);
+            const voisinSelection = this.state.domainesVoisins.selectionAssociationSuivantCritere((ID_sorte, x) => x.domaine.actif)
+            if (voisinSelection.estPresent()){
+                const domaineSelection = voisinSelection.valeur()[1];
+                this.modifierSelection(domaineSelection);
+            }
             this.modifierEtatInterface(EtatInterfaceJeu1.NORMAL);
             this.modifierFormulaireMessage(
-                formulaireMessage(this.utilisateur, this.domaineUtilisateur, domaineSelectionne, [], this.consigne));
+                formulaireMessage(this.utilisateur, this.domaineUtilisateur, this.state.selection, [], this.consigne));
         });
 
         this.fluxDeEvenements.addEventListener(TypeMessageDistribution.TRANSIT, (e: MessageEvent) => {
             const message: FormatMessageDistribution = JSON.parse(e.data);
-            if ((this.utilisateur.ID.val !== message.corps.ID_destination.val)
-                || (!this.domainesVoisins.contient(message.corps.ID_origine))
+            if ((this.domaineUtilisateur.domaine.ID !== message.corps.ID_destination)
+                || (!this.state.domainesVoisins.contient(message.corps.ID_origine))
             ) {
                 console.log("- message incohérent");
             }
-            this.mettreAJourInformation(
-                messageInformant(
-                    message.ID,
-                    this.utilisateur,
-                    this.domaineUtilisateur,
-                    this.domainesVoisins.valeur(message.corps.ID_origine),
-                    this.domaineUtilisateur,
-                    message.corps.contenu,
-                    message.date,
-                    'transit'
-                )
-            );
+            this.mettreAJourInformation(message, 'transit');
+        })
+
+        this.fluxDeEvenements.addEventListener('INACTIF', (e: MessageEvent) => {
+            const message: FormatMessageDistribution = JSON.parse(e.data);
+            if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
+                || (!this.state.domainesVoisins.contient(message.corps.ID_origine))
+            ) {
+                console.log("- message incohérent");
+                return;
+            }
+            this.mettreAJourInformation(message, 'inactif');
         })
 
         this.fluxDeEvenements.addEventListener('distribution', (e: MessageEvent) => {
-            //TODO: REGARDER FORMAT TYPE DE MESSAGES
-            //let msg = messageDistribution(m);
-            // console.log("* Traitement d'un message");
-            // console.log("- brut : " + msg.brut());
-            // console.log("- net : " + msg.representation());
-            // switch (m.type) {
-            //     case TypeMessageDistribution.AR_INIT:
-            //         if (
-            //             (this.utilisateur.ID.val !== m.ID_utilisateur.val)
-            //             || (this.domaineUtilisateur.domaine.ID.val !== m.ID_origine.val)
-            //             || (!this.domainesVoisins.contient(m.ID_destination))
-            //         ) {
-            //             console.log("- message incohérent");
-            //             break;
-            //         }
-            //         this.ajouterInformation(
-            //             messageInformant(
-            //                 m.ID,
-            //                 this.utilisateur,
-            //                 this.domaineUtilisateur,
-            //                 this.domaineUtilisateur,
-            //                 this.domainesVoisins.valeur(m.ID_destination),
-            //                 m.contenu, m.date,
-            //                 'AR_initial'
-            //             )
-            //         );
-            //         break;
-            //     case TypeMessageDistribution.TRANSIT:
-            //         if (
-            //             (this.utilisateur.ID.val !== m.ID_utilisateur.val)
-            //             || (this.domaineUtilisateur.domaine.ID.val !== m.ID_destination.val)
-            //             || (!this.domainesVoisins.contient(m.ID_origine))
-            //         ) {
-            //             console.log("- message incohérent");
-            //             break;
-            //         }
-            //         this.mettreAJourInformation(
-            //             messageInformant(
-            //                 m.ID,
-            //                 this.utilisateur,
-            //                 this.domaineUtilisateur,
-            //                 this.domainesVoisins.valeur(m.ID_origine),
-            //                 this.domaineUtilisateur,
-            //                 m.contenu, m.date,
-            //                 'transit'
-            //             )
-            //         );
-            //         break;
-            //     case TypeMessageDistribution.ECHEC_VERROU:
-            //         if (
-            //             (this.utilisateur.ID.val === m.ID_utilisateur.val)
-            //             || (!populationLocale(this.population)
-            //                 .possedeUtilisateur(m.ID_utilisateur))
-            //             || (this.domaineUtilisateur.domaine.ID.val !== m.ID_destination.val)
-            //             || (!this.domainesVoisins.contient(m.ID_origine))
-            //         ) {
-            //             console.log("- message incohérent");
-            //             break;
-            //         }
-            //         console.log("- échec du verrouillage");
-            //         break;
-            //     case TypeMessageDistribution.VERROU:
-            //         if (
-            //             (!populationLocale(this.population)
-            //                 .possedeUtilisateur(m.ID_utilisateur))
-            //             || (this.domaineUtilisateur.domaine.ID.val !== m.ID_destination.val)
-            //             || (!this.domainesVoisins.contient(m.ID_origine))
-            //         ) {
-            //             console.log("- message incohérent");
-            //             return;
-            //         }
-            //         if (this.utilisateur.ID.val === m.ID_utilisateur.val) {
-            //             // cet utilisateur a verrouillé le message.
-            //             this.ajouterInformation(
-            //                 messageInformant(
-            //                     m.ID,
-            //                     this.utilisateur,
-            //                     this.domaineUtilisateur,
-            //                     this.domainesVoisins.valeur(m.ID_origine),
-            //                     this.domaineUtilisateur,
-            //                     m.contenu, m.date,
-            //                     'verrouillage'
-            //                 )
-            //             );
-            //         } else {
-            //             // cet utilisateur n'a pas verrouillé le message.
-            //             const u
-            //                 = populationLocale(this.population).utilisateur(m.ID_utilisateur);
-            //             this.retirerInformation(m.ID);
-            //             this.mettreAJourInformation(
-            //                 messageInformant(
-            //                     m.ID,
-            //                     u,
-            //                     this.domaineUtilisateur,
-            //                     this.domainesVoisins.valeur(m.ID_origine),
-            //                     this.domaineUtilisateur,
-            //                     m.contenu, m.date,
-            //                     'verrouillage_autrui'
-            //                 )
-            //             );
-            //         }
-            //         break;
+
             //     case TypeMessageDistribution.AR_SUIVANT:
             //         if (
             //             (!populationLocale(this.population)
