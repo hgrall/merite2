@@ -25,7 +25,7 @@ import { avertissement, erreur, TYPE_CANAL } from '../../bibliotheque/applicatio
 import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, verrouillage } from './echangesServeurDistribution';
 import { ValidateurFormatMessageEnvoiDistribution, ValidateurFormatMessageVerrouillageDistribution } from "./validation";
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
-import { Envoyer, traitementPOSTEnvoyer } from './traitementsPOST';
+import { Envoyer, traitementPOSTEnvoyer, traitementPOSTVerrouiller, Verrouiller } from './traitementsPOST';
 
 
 /*
@@ -56,6 +56,7 @@ class ServiceDistribution {
         'sommet',
         FormatMessageDistribution>;
     private traitementPOSTEnvoyer: Envoyer;
+    private traitementPOSTVerrouiller: Verrouiller;
     constructor(
         private config: ConfigurationJeuDistribution,
         private cleAcces: string
@@ -84,69 +85,18 @@ class ServiceDistribution {
                 this.messagesEnvoyesParUtilisateur,
                 this.messagesTransitParDomaine,
                 this.generateurIdentifiantsMessages);
+        this.traitementPOSTVerrouiller
+            = traitementPOSTVerrouiller(
+                this.config,
+                this.reseau,
+                this.messagesEnvoyesParUtilisateur,
+                this.messagesTransitParDomaine,
+                this.generateurIdentifiantsMessages);
+
     }
 
 
-    /*
-    * Service de réception d'un message VERROU (POST).
-    */
-    verrouiller(ID_domaine: Identifiant<'sommet'>, ID_util: Identifiant<'sommet'>, ID_msg: Identifiant<'message'>): void {
-        const table = this.messagesTransitParDomaine.valeur(ID_domaine);
-        let msgVerrou = table.valeur(ID_msg);
-        table.ajouter(ID_msg, verrouillage(msgVerrou, ID_util));
-    }
-    traitementPOSTVerrou(msg: FormatMessageDistribution)
-        : ReponsePOSTVerrou {
-        // Verrouiller côté serveur.
-        this.verrouiller(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur, msg.ID);
-        return {
-            accuseReception: msg,
-            utilisateursDestinataires: this.reseau.cribleVoisins(msg.corps.ID_destination, (ID, s) => estUtilisateur(s) && s.actif && !sontIdentifiantsEgaux(msg.corps.ID_utilisateur_emetteur, ID))
-        };
-    }
-    traductionEntreePostVerrou(canal: ConnexionExpress): Option<FormatMessageDistribution> {
-        const msg: FormatMessageDistribution = canal.lire();
-        if (!isRight(ValidateurFormatMessageVerrouillageDistribution.decode(msg))) {
-            const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        // Le message reçu est supposé correct,
-        // en première approximation.
-        const voisinageDomaines = this.reseau.sontVoisins(msg.corps.ID_origine, msg.corps.ID_destination);
-        const appartenanceUtilisateurDomaine = this.reseau.sontVoisins(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur);
-        if (!voisinageDomaines
-            || !appartenanceUtilisateurDomaine) {
-            const desc = `Le message reçu n'est pas cohérent. Les domaines d'origine et de destination doivent être voisins (ici ${voisinageDomaines}) et l'utilisateur émetteur doit appartenir au domaine de destination (ici ${appartenanceUtilisateurDomaine}). Erreur HTTP 400 : Bad Request.`;
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        // On suppose que les identifiants sont corrects. TODO 
-        // Quels contrôles réaliser finalement ? Toujours supposer la
-        // correction des données ?
-        // Contrôle du verrouillage
-        if (this.messagesTransitParDomaine.valeur(msg.corps.ID_destination).valeur(msg.ID).verrou.estPresent()) {
-            const desc = `Le messsage d'identifiant ${msg.ID} est déjà verrouillé. Erreur HTTP 403 : Forbidden Request.`;
-            canal.envoyerJSONCodeErreur(403, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        return option(msg);
-    }
 
-    traduireSortiePOSTVerrou(reponse: ReponsePOSTVerrou, canal: ConnexionExpress): void {
-        // Activer le message après le verrouillage.
-        canal.envoyerJSON(messageActif(reponse.accuseReception));
-        // Inactiver le message pour les autres utilisateurs du domaine.
-        reponse.utilisateursDestinataires.iterer((ID) => {
-            const canalDest = this.reseau.connexion(ID);
-            canalDest.envoyerJSON(
-                this.config.getPersistant.inactiver,
-                messageInactif(reponse.accuseReception));
-        });
-    }
 
 
     /*
@@ -207,9 +157,9 @@ class ServiceDistribution {
             this.config.prefixe,
             this.cleAcces,
             chemin(this.config.suffixe, this.config.post.verrouiller),
-            (entree) => this.traitementPOSTVerrou(entree),
-            (canal) => this.traductionEntreePostVerrou(canal),
-            (s, canal) => this.traduireSortiePOSTVerrou(s, canal)
+            (entree) => this.traitementPOSTVerrouiller.traitementPOSTVerrou(entree),
+            (canal) => this.traitementPOSTVerrouiller.traductionEntreePostVerrou(canal),
+            (s, canal) => this.traitementPOSTVerrouiller.traduireSortiePOSTVerrou(s, canal)
         );
 
         serveurApplications
