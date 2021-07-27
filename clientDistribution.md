@@ -6,6 +6,13 @@ Le client est divisé avec deux panneaux principaux. D'abord on peut trouver le 
 
 L'autre panneau principal est le panneau messages. Ce panneau est divisé en deux zones, d'abord il y un container qui affiche tous les messages reçus et envoyés et puis il y a le formulaire qui est le champ de texte duquel on peut s'appuyer pour écrire les messages à envoyer.
 
+De plus, il y a d'autres dossiers avec le reste des composants du client, parmi ces dossiers on trouve :
+    - Avis : Ce sont des alertes qui peuvent être utilisés pendant le jeu, comme l'avis de gain ou de perte.
+    - Button : Dossier avec tous les buttons utilisés dans les autres composants.
+    - ChampeDeTexte : Champ de text ou l'utilisateur peut écrire la trame binaire utilisé dans le jeu.
+    - Helpers : Dossier qui a des methodes utiles ou des definitions des types utilisés dans le client.
+    - Messages : Dossier avec les composants pour tous les états des messages possibles dans le jeu.
+
 ##Connexion avec le serveur :
 L'échange des messages avec le serveur se fait via des requêtes http. 
 
@@ -32,3 +39,5 @@ Pour ajouter une nouvelle information il faut :
 2. Une fois l'information est reçu il faut l'ajouter a la liste d'informations du 'Corps' via la methode `mettreAJourInformation(message: FormatMessageDistribution, nouveauType: TypeMessageInformant): void`
 
 3. Pour afficher la nouvelle information il faut ajouter le nouveau composant de ce information dans le dossier `Messages`, puis dans PanneauMessages.tsx il faut gérer ce nouveau type d'information dans la fonction `baliseAction(a: ActionAffichable): JSX.Element {}` pour afficher le composant crée auparavant. 
+
+4. Si le composant avec la nouvelle information a un button qui est utilisé pour envoyer une information au serveur, il faut définir une fonction dans `Corps` qui fait l'appelle POST pour se communiquer avec le serveur, puis il faut ajouter ce mthode dans le props de `PanneauMessages` et puis faut l'ajouter dans le props du nouveau composant.   

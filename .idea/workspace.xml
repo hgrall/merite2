@@ -2,23 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/accueil.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisTransmission.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Avis/AvisTransmission.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisVerrouillage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageInactif.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Button/ButtonAction.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Button/ButtonAction.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/ChampDeTexte/EntreeEssai.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/ChampDeTexte/EntreeEssai.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/ARMessageInitial.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/ARMessageInitial.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageAOmettre.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageAOmettre.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageFixe.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageFixe.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageTransit.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageTransit.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageVerrouille.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageActif.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/corps.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/serveur/serviceDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/serveur/serviceDistribution.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distribution/serveur/validation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/serveur/validation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/InterlocuteurMessage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/shared/InterlocuteurMessage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/client/Accueil/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Accueil/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/client/Connexion/connexionAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Connexion/connexionAdmin.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil/client/Connexion/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Connexion/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client.md" beforeDir="false" afterPath="$PROJECT_DIR$/clientDistribution.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -89,6 +78,7 @@
       <workItem from="1626770728252" duration="23683000" />
       <workItem from="1626942081902" duration="17293000" />
       <workItem from="1627033800178" duration="644000" />
+      <workItem from="1627393519473" duration="3449000" />
     </task>
     <servers />
   </component>

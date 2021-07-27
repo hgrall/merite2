@@ -2,11 +2,11 @@ import {useState} from "react";
 import * as React from "react";
 import {Button, Form, FormTitle, Input, Wrapper} from "../Shared/formStyle";
 
-interface AccessPageProps {
+interface connexionAdminProps {
     onClick: (code: string | undefined) => void | undefined,
 }
 
-export function AccessPageAdmin(props: AccessPageProps) {
+export function ConnexionAdmin(props: connexionAdminProps) {
     const [code, setCode] = useState<string>();
     return (
         <div>
