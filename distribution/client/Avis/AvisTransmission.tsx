@@ -50,6 +50,7 @@ class ContainerAvisTransmissionBrut
                             this.props.omission(
                                 messageInformantAvecNouveauType(this.props.message, 'omission'));
                         }}
+                        disabled={false}
                 />
             </div>
         );

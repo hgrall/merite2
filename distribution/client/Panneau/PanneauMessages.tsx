@@ -7,18 +7,19 @@ import {
 } from "../Helpers/typesInterface";
 import {EntreeMessage} from "../ChampDeTexte/EntreeMessage";
 import {EntreeEssai} from "../ChampDeTexte/EntreeEssai";
-import {Option, option, rienOption} from "../../../bibliotheque/types/option";
+import {Option, option } from "../../../bibliotheque/types/option";
 import {Identifiant} from "../../../bibliotheque/types/identifiant";
 import {ContainerARMessageInitial} from "../Messages/ARMessageInitial";
 import {ContainerMessageTransit} from "../Messages/MessageTransit";
 import {ContainerMessageAOmettre} from "../Messages/MessageAOmettre";
-import {ContainerAvisVerrouillage} from "../Avis/AvisVerrouillage";
 import {ContainerAvisTransmission} from "../Avis/AvisTransmission";
-import {ContainerMessageVerrouille} from "../Messages/MessageVerrouille";
 import {ContainerAvisGainPerte} from "../Avis/AvisGainPerte";
 import {Alert} from "react-bootstrap";
 import {StyledAlert} from "../../../shared/MessageAlert";
 import {MessagesContainer, PanneauMessageContainer} from "../../../shared/MessagesContainer";
+import {ContainerMessageInactif} from "../Messages/MessageInactif";
+import {ContainerMessageActif} from "../Messages/MessageActif";
+
 
 interface ProprietesPanneauMessages {
     // see https://github.com/Microsoft/TypeScript/issues/8588
@@ -36,7 +37,6 @@ interface ProprietesPanneauMessages {
     demandeDeverrouillage: (m: MessageInformant) => void;
     transmissionMessage: (m: MessageInformant, dom: DomaineInterface, d: DateFr) => void;
     interpretation: (m: MessageInformant) => void;
-    annulation: (m: FormulaireEssai) => void;
     afficherAlerte: boolean;
     messageAlerte: string
     masquerAlerte: () => void
@@ -58,6 +58,14 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
                         message={a}
                         demandeVerrouillage={this.props.demandeVerrouillage}
                         key={a.ID.val}
+                        verrouillageActif = {true}
+                    />;
+                case 'verrou':
+                    return <ContainerMessageTransit
+                        message={a}
+                        demandeVerrouillage={this.props.demandeVerrouillage}
+                        key={a.ID.val}
+                        verrouillageActif = {false}
                     />;
                 case 'omission':
                     return <ContainerMessageAOmettre
@@ -66,8 +74,8 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
                         confirmationOmission={this.props.confirmationOmission}
                         key={a.ID.val}
                     />;
-                case 'verrouillage_autrui':
-                    return <ContainerAvisVerrouillage
+                case 'inactif':
+                    return <ContainerMessageInactif
                         message={a}
                         key={a.ID.val}
                     />;
@@ -77,8 +85,8 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
                         omission={this.props.omission}
                         key={a.ID.val}
                     />;
-                case 'verrouillage':
-                    return <ContainerMessageVerrouille
+                case 'actif':
+                    return <ContainerMessageActif
                         message={a}
                         domaineSelectionne={this.props.domaineSelectionne}
                         demandeDeverrouillage={this.props.demandeDeverrouillage}
@@ -123,7 +131,6 @@ export class PanneauMessages extends React.Component<ProprietesPanneauMessages, 
                 return <EntreeEssai
                     formulaire={formulaireEssaie}
                     envoiEssai={this.props.envoiEssai}
-                    annulation={this.props.annulation}
                     key={"entreeEssai"}
                 />;
             }

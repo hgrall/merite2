@@ -86,10 +86,7 @@ export class Corps extends React.Component<{}, AccueilState> {
                     type: config.distribution.type,
                     prefixe: config.distribution.prefixe,
                     suffixe: config.distribution.suffixe,
-                    post: {
-                        envoi: config.distribution.post.envoi,
-                        verrou: config.distribution.post.verrou,
-                    },
+                    post: config.distribution.post,
                     getPersistant: config.distribution.getPersistant,
                     nombreDomaines: config.distribution.nombreDomaines,
 

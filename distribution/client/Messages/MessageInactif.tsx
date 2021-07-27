@@ -2,9 +2,9 @@ import {MessageInformant} from "../Helpers/typesInterface";
 import * as React from "react";
 import {mot} from "../../../bibliotheque/types/binaire";
 import {COUPLE_FOND_ENCRE_SUJET, FOND_TEXTE, TEXTE} from "../../../bibliotheque/interface/couleur";
-import {MessageFixe} from "../Messages/MessageFixe";
+import {MessageFixe} from "./MessageFixe";
 import styled from "styled-components";
-import {Avis} from "./Avis";
+import {Avis} from "../Avis/Avis";
 import {InterlocuteurMessage, Role} from "../../../shared/InterlocuteurMessage";
 
 interface ProprietesAvisVerrouillage {
@@ -14,7 +14,7 @@ interface ProprietesAvisVerrouillage {
     message: MessageInformant;
 }
 
-class ContainerAvisVerrouillageBrut
+class ContainerMessageInactifBrut
     extends React.Component<ProprietesAvisVerrouillage, {}> {
     render() {
         let id = this.props.message.ID.val;
@@ -41,7 +41,7 @@ class ContainerAvisVerrouillageBrut
     }
 }
 
-export const ContainerAvisVerrouillage = styled(ContainerAvisVerrouillageBrut)`
+export const ContainerMessageInactif= styled(ContainerMessageInactifBrut)`
     flex: initial;
     background: ${FOND_TEXTE};
     box-shadow: 1ex 1ex 3ex -1ex ${COUPLE_FOND_ENCRE_SUJET.fond};

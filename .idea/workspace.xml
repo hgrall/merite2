@@ -2,12 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/bibliotheque/validation/types/typesAtomiques.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bibliotheque/validation/distribution/echanges.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/validation/distribution/echanges.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisTransmission.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Avis/AvisTransmission.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Avis/AvisVerrouillage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageInactif.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Button/ButtonAction.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Button/ButtonAction.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/ChampDeTexte/EntreeEssai.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/ChampDeTexte/EntreeEssai.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/ARMessageInitial.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/ARMessageInitial.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageAOmettre.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageAOmettre.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageFixe.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageFixe.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageTransit.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageTransit.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Messages/MessageVerrouille.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Messages/MessageActif.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/distribution/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/commun/echangesDistribution.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/serveur/serviceDistribution.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/serveur/serviceDistribution.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/serveur/validation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/serveur/validation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/InterlocuteurMessage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/shared/InterlocuteurMessage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,11 +68,11 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/distribution/client/Messages" />
       <recent name="$PROJECT_DIR$/distribution" />
       <recent name="$PROJECT_DIR$/distribution/serveur" />
       <recent name="$PROJECT_DIR$/tchat" />
       <recent name="$PROJECT_DIR$" />
-      <recent name="$PROJECT_DIR$/tchat/serveur" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -75,7 +86,9 @@
       <workItem from="1622453211164" duration="8482000" />
       <workItem from="1626702392068" duration="339000" />
       <workItem from="1626702780116" duration="1874000" />
-      <workItem from="1626770728252" duration="14128000" />
+      <workItem from="1626770728252" duration="23683000" />
+      <workItem from="1626942081902" duration="17293000" />
+      <workItem from="1627033800178" duration="644000" />
     </task>
     <servers />
   </component>
@@ -101,6 +114,11 @@
           <url>file://$PROJECT_DIR$/webpack.config.js</url>
           <line>30</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/distribution/client/Messages/MessageFixe.tsx</url>
+          <line>9</line>
+          <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

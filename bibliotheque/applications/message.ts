@@ -1,6 +1,16 @@
 import { dateMaintenant, FormatDateFr } from "../types/date";
 import { Identifiant } from "../types/identifiant";
 
+export const TYPE_CANAL : {
+    configurer : string;
+    avertir : string;
+    alerter : string;
+} = {
+    configurer : "config",
+    avertir : "avertissement",
+    alerter : "erreur"
+};
+
 export enum TypeMessage {
     CONFIG = "config",
     AVERTISSEMENT = "avertissement",

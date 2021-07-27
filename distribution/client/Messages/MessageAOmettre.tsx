@@ -42,6 +42,7 @@ class ContainerMessageAOmettreBrut extends React.Component<ProprietesMessageAOme
                             this.props.annulationOmission(
                                 messageInformantAvecNouveauType(this.props.message, 'transmission'));
                         }}
+                        disabled={false}
                 />
                 <Action fond={this.props.message.domaineDestination.fond}
                         encre={this.props.message.domaineDestination.encre}
@@ -51,6 +52,7 @@ class ContainerMessageAOmettreBrut extends React.Component<ProprietesMessageAOme
                                 this.props.message.ID
                             );
                         }}
+                        disabled={false}
                 />
             </div>
         );

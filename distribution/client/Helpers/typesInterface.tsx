@@ -66,8 +66,8 @@ export function formulaireEssai(
 
 export type TypeMessageInformant
     = 'AR_initial' | 'transit' | 'omission'
-    | 'verrouillage' | 'verrouillage_autrui'
-    | 'transmission' | 'gain' | 'perte' | 'essai';
+    | 'actif' | 'inactif'
+    | 'transmission' | 'gain' | 'perte' | 'essai'| 'verrou';
 
 // utilisateur = emetteur vs recepteur vs recepteur
 

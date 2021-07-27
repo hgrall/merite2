@@ -5,7 +5,6 @@ export const MessageFixe = styled.div`
     flex: auto;
     background: ${FOND_TEXTE};
     color: ${TEXTE};
-    text-align: justify;
     padding: 1ex;
 
     min-width: 24ex;

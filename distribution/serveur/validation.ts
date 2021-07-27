@@ -23,3 +23,14 @@ export const ValidateurFormatMessageEnvoiDistribution = t.type({
     date: FormatDateValidator,
     corps: FormatMessageDistribution
 });
+
+
+/**
+ * Schema d'un message provenant du client de type verrou
+ */
+export const ValidateurFormatMessageVerrouillageDistribution = t.type({
+    ID: IdentifiantMessage,
+    type: t.literal(TypeMessageDistribution.VERROUILLABLE),
+    date: FormatDateValidator,
+    corps: FormatMessageDistribution
+});

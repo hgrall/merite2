@@ -6,6 +6,7 @@ export const PanneauMessageContainer = styled.div`
   margin-bottom: 20px;
   border-left: 5px solid ${CADRE};
   height:100%;
+  width: 100%;
   @media (max-width: 768px) {
     border-left: 0;
   }

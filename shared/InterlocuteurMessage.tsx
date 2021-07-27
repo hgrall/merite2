@@ -17,7 +17,7 @@ class InterlocuteurBrut extends React.Component<ProprietesInterlocuteur, {}> {
     render() {
         return (
             <p className={this.props.className}>
-                {((this.props.role === Role.Emetteur) ? "De : " : "A : ") + this.props.nom}
+                {((this.props.role === Role.Emetteur) ? "De : " : "À : ") + this.props.nom}
             </p>
         );
     }

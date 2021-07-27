@@ -182,14 +182,15 @@ export function estDomaine(s: FormatSommetDistribution): s is FormatDomaineDistr
  */
 export enum TypeMessageDistribution {
     ENVOI = "envoi", // ok - S - C (AR)
+    AREnvoi = "AREnvoi",
     TRANSIT = "transit", // ok - C
-    VERROU = "verrou", // ok - C - S 
-    ACTIF = "actif", // ok 
+    VERROUILLABLE = "verrouillable", // ok - C - S
+    ACTIF = "actif", // ok
     INACTIF = "inactif", // ok
     //SUIVANT, // ok - S
     //AR_SUIVANT,
     //ESSAI, // ok - S
-    //LIBE, // ok - S
+    LIBE= 'libe', // ok - S
 
     //ACTIF, // ok - C
     //GAIN, // ok - C
@@ -198,8 +199,6 @@ export enum TypeMessageDistribution {
     //ECHEC_VERROU, // ok - C
     //INFO
 }
-
-
 
 /**
  * Corps d'un message pour la distribution.
@@ -243,7 +242,7 @@ export function messageVerrou(
     msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
         ID: msg.ID,
-        type: TypeMessageDistribution.VERROU,
+        type: TypeMessageDistribution.VERROUILLABLE,
         corps: msg.corps,
         date: dateMaintenant().toJSON()
     };

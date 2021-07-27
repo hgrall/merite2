@@ -6,38 +6,45 @@ import { pseudos } from "../../tchat/serveur/pseudos";
 export type TypeTchat = 'etoile' | 'anneau';
 
 export interface ConfigurationJeuTchat {
-    prefixe: string;
-    suffixe: string;
-    post: {
-        envoi: string;
+    readonly prefixe: string;
+    readonly suffixe: string;
+    readonly post: {
+        readonly envoi: string;
     };
-    getPersistant: string;
-    type: TypeTchat;
-    taille: number;
-    pseudos: ReadonlyArray<string>;
+    readonly getPersistant: string;
+    readonly type: TypeTchat;
+    readonly taille: number;
+    readonly pseudos: ReadonlyArray<string>;
 }
 
 export type TypeDistribution = 'anneau_etoile';
 
 export interface ConfigurationJeuDistribution {
-    prefixe: string;
-    suffixe: string;
-    post: {
-        envoi: string;
-        verrouillage: string;
-        deverrouillage: string;
+    readonly prefixe: string;
+    readonly suffixe: string;
+    readonly post: {
+        readonly envoyer: string;
+        readonly verrouiller: string;
+        readonly deverrouillageTODO: string;
     };
-    getPersistant: string;
-    type: TypeDistribution;
-    nombreDomaines: number;
-    effectifParDomaine: ReadonlyArray<number>
+    readonly getPersistant: {
+        readonly chemin : string;
+        readonly accuserEnvoi : string;
+        readonly recevoir : string;
+        readonly accuserSuccesVerrouiller : string;
+        readonly accuserEchecVerrouiller : string;
+        readonly inactiver : string;
+    };
+    readonly type: TypeDistribution;
+    readonly nombreDomaines: number;
+    readonly effectifParDomaine: ReadonlyArray<number>
 }
 
 
 export interface ConfigurationJeux {
-    tchat_etoile: ConfigurationJeuTchat;
-    tchat_anneau: ConfigurationJeuTchat;
-    distribution: ConfigurationJeuDistribution;
+    readonly tchat_etoile: ConfigurationJeuTchat;
+    readonly tchat_anneau: ConfigurationJeuTchat;
+    readonly distribution: ConfigurationJeuDistribution;
 }
 
 
@@ -75,11 +82,18 @@ export function configurationClassiqueJeux(): ConfigurationJeux {
             prefixe: 'jeu',
             suffixe: 'distribution',
             post: {
-                envoi: "envoyer",
-                verrouillage: "verrouiller",
-                deverrouillage: "deverrouiller",
+                envoyer: "envoi",
+                verrouiller: "verrou",
+                deverrouillageTODO: "deverrouiller",
             },
-            getPersistant: "reception",
+            getPersistant:  {
+                chemin : "reception",
+                accuserEnvoi : "arenvoi",
+                recevoir : "transit",
+                accuserSuccesVerrouiller : "succesVerrou",
+                accuserEchecVerrouiller : "echecVerrou",
+                inactiver : "verrou"
+            },
             type: "anneau_etoile",
             nombreDomaines: 5,
             effectifParDomaine: [3, 3, 3, 3, 3]
