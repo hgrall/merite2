@@ -30,7 +30,7 @@ export const ValidateurFormatMessageEnvoiDistribution = t.type({
  */
 export const ValidateurFormatMessageVerrouillageDistribution = t.type({
     ID: IdentifiantMessage,
-    type: t.literal(TypeMessageDistribution.VERROU),
+    type: t.literal(TypeMessageDistribution.VERROUILLABLE),
     date: FormatDateValidator,
     corps: FormatMessageDistribution
 });

@@ -208,7 +208,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     omettre(m: MessageInformant): void {
         let msg: FormatMessageDistribution = {
-            type: TypeMessageDistribution.VERROU,
+            type: TypeMessageDistribution.VERROUILLABLE,
             date: m.date,
             corps: {
                 ID_utilisateur_emetteur: m.utilisateur.ID,
@@ -223,7 +223,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     annulerOmission(m: MessageInformant): void {
         let msg: FormatMessageDistribution = {
-            type: TypeMessageDistribution.VERROU,
+            type: TypeMessageDistribution.VERROUILLABLE,
             date: m.date,
             corps: {
                 ID_utilisateur_emetteur: m.utilisateur.ID,
@@ -243,7 +243,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     envoyerDemandeVerrouillage(m: MessageInformant): void {
         console.log("- Envoi demande verrouillage");
         let msg: FormatMessageDistribution = {
-            type: TypeMessageDistribution.VERROU,
+            type: TypeMessageDistribution.VERROUILLABLE,
             date: m.date,
             corps: {
                 ID_utilisateur_emetteur: m.utilisateur.ID,

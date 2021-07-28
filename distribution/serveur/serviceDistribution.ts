@@ -19,13 +19,13 @@ import {
     FormatMessageDistribution,
     messageActif,
     messageInactif,
-    messageTransit,
-    TypeMessageDistribution
+    messageTransit
 } from '../commun/echangesDistribution';
-import { avertissement, erreur, TypeMessage } from '../../bibliotheque/applications/message';
+import { avertissement, erreur, TYPE_CANAL } from '../../bibliotheque/applications/message';
 import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, verrouillage } from './echangesServeurDistribution';
-import {ValidateurFormatMessageEnvoiDistribution, ValidateurFormatMessageVerrouillageDistribution} from "./validation";
+import { ValidateurFormatMessageEnvoiDistribution, ValidateurFormatMessageVerrouillageDistribution } from "./validation";
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
+import { Envoyer, traitementPOSTEnvoyer, traitementPOSTVerrouiller, Verrouiller } from './traitementsPOST';
 
 
 /*
@@ -51,10 +51,12 @@ class ServiceDistribution {
             'message',
             FormatMessageAvecVerrou
         >
-    >
+    >;
     private messagesEnvoyesParUtilisateur: TableIdentificationMutable<
         'sommet',
         FormatMessageDistribution>;
+    private traitementPOSTEnvoyer: Envoyer;
+    private traitementPOSTVerrouiller: Verrouiller;
     constructor(
         private config: ConfigurationJeuDistribution,
         private cleAcces: string
@@ -76,129 +78,25 @@ class ServiceDistribution {
             }
         });
         this.messagesTransitParDomaine = tableMessages;
+        this.traitementPOSTEnvoyer
+            = traitementPOSTEnvoyer(
+                this.config,
+                this.reseau,
+                this.messagesEnvoyesParUtilisateur,
+                this.messagesTransitParDomaine,
+                this.generateurIdentifiantsMessages);
+        this.traitementPOSTVerrouiller
+            = traitementPOSTVerrouiller(
+                this.config,
+                this.reseau,
+                this.messagesEnvoyesParUtilisateur,
+                this.messagesTransitParDomaine,
+                this.generateurIdentifiantsMessages);
+
     }
 
-    /*
-    * Service de réception d'un message ENVOI (POST).
-    */
 
-    traitementPOSTEnvoi(msg: FormatMessageDistribution)
-        : ReponsePOSTEnvoi {
-        // Mettre à jour les messages envoyés côté serveur.
-        this.messagesEnvoyesParUtilisateur.ajouter(msg.corps.ID_utilisateur_emetteur, msg);
-        return {
-            accuseReception: msg,
-            utilisateursDestinataires: this.reseau.cribleVoisins(msg.corps.ID_destination, (ID, s) => estUtilisateur(s) && s.actif)
-        };
-    }
-    traductionEntreePostEnvoi(canal: ConnexionExpress): Option<FormatMessageDistribution> {
-        const msg: FormatMessageDistribution = canal.lire();
-        if (!isRight(ValidateurFormatMessageEnvoiDistribution.decode(msg))) {
-            const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        // Le message reçu est supposé correct,
-        // en première approximation.
-        const voisinageDomaines = this.reseau.sontVoisins(msg.corps.ID_origine, msg.corps.ID_destination);
-        const appartenanceUtilisateurDomaine = this.reseau.sontVoisins(msg.corps.ID_origine, msg.corps.ID_utilisateur_emetteur);
-        if (!voisinageDomaines
-            || !appartenanceUtilisateurDomaine) {
-            const desc = `Le message reçu n'est pas cohérent. Les domaines d'origine et de destination doivent être voisins (ici ${voisinageDomaines}) et l'utilisateur émetteur doit appartenir au domaine d'origine (ici ${appartenanceUtilisateurDomaine}). Erreur HTTP 400 : Bad Request.`;
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        if (!this.reseau.sommet(msg.corps.ID_destination).actif) {
-            const desc = "Le domaine de destination n'est pas actif. La requête doit être renvoyée lorsque le domaine devient actif. Erreur HTTP 400 : Bad Request.";
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        return option(msg);
-    }
 
-    traduireSortiePOSTEnvoi(reponse: ReponsePOSTEnvoi, canal: ConnexionExpress): void {
-        // Accuser réception du message envoyé.
-        canal.envoyerJSON(reponse.accuseReception);
-        // Mettre à jour les messages en transit côté serveur. 
-        // Attention : l'utilisateur est l'émetteur, non le 
-        // destinataire.
-        const idMsg = this.generateurIdentifiantsMessages.produire('message');
-        this.messagesTransitParDomaine.valeur(reponse.accuseReception.corps.ID_destination).ajouter(idMsg, messageAvecVerrouInitial(idMsg, reponse.accuseReception));
-        // Envoyer le message en transit aux utilisateurs 
-        // du domaine destinataire. Dans chaque message, 
-        // l'utilisateur est le destinataire.
-        reponse.utilisateursDestinataires.iterer((ID) => {
-            const canalDest = this.reseau.connexion(ID);
-            canalDest.envoyerJSON(
-                TypeMessageDistribution.TRANSIT,
-                messageTransit(reponse.accuseReception,
-                    ID, idMsg));
-        });
-    }
-
-    /*
-    * Service de réception d'un message VERROU (POST).
-    */
-    verrouiller(ID_domaine: Identifiant<'sommet'>, ID_util: Identifiant<'sommet'>, ID_msg: Identifiant<'message'>): void {
-        const table = this.messagesTransitParDomaine.valeur(ID_domaine);
-        let msgVerrou = table.valeur(ID_msg);
-        table.ajouter(ID_msg, verrouillage(msgVerrou, ID_util));
-    }
-    traitementPOSTVerrou(msg: FormatMessageDistribution)
-        : ReponsePOSTVerrou {
-        // Verrouiller côté serveur.
-        this.verrouiller(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur, msg.ID);
-        return {
-            accuseReception: msg,
-            utilisateursDestinataires: this.reseau.cribleVoisins(msg.corps.ID_destination, (ID, s) => estUtilisateur(s) && s.actif && !sontIdentifiantsEgaux(msg.corps.ID_utilisateur_emetteur, ID))
-        };
-    }
-    traductionEntreePostVerrou(canal: ConnexionExpress): Option<FormatMessageDistribution> {
-        const msg: FormatMessageDistribution = canal.lire();
-        if (!isRight(ValidateurFormatMessageVerrouillageDistribution.decode(msg))) {
-            const desc = "Le format JSON du message reçu n'est pas correct. Erreur HTTP 400 : Bad Request.";
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        // Le message reçu est supposé correct,
-        // en première approximation.
-        const voisinageDomaines = this.reseau.sontVoisins(msg.corps.ID_origine, msg.corps.ID_destination);
-        const appartenanceUtilisateurDomaine = this.reseau.sontVoisins(msg.corps.ID_destination, msg.corps.ID_utilisateur_emetteur);
-        if (!voisinageDomaines
-            || !appartenanceUtilisateurDomaine) {
-            const desc = `Le message reçu n'est pas cohérent. Les domaines d'origine et de destination doivent être voisins (ici ${voisinageDomaines}) et l'utilisateur émetteur doit appartenir au domaine de destination (ici ${appartenanceUtilisateurDomaine}). Erreur HTTP 400 : Bad Request.`;
-            canal.envoyerJSONCodeErreur(400, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        // On suppose que les identifiants sont corrects. TODO 
-        // Quels contrôles réaliser finalement ? Toujours supposer la
-        // correction des données ?
-        // Contrôle du verrouillage
-        if (this.messagesTransitParDomaine.valeur(msg.corps.ID_destination).valeur(msg.ID).verrou.estPresent()) {
-            const desc = `Le messsage d'identifiant ${msg.ID} est déjà verrouillé. Erreur HTTP 403 : Forbidden Request.`;
-            canal.envoyerJSONCodeErreur(403, erreur(this.generateurIdentifiantsMessages.produire('message'), desc));
-            logger.error(desc);
-            return rienOption<FormatMessageDistribution>();
-        }
-        return option(msg);
-    }
-
-    traduireSortiePOSTVerrou(reponse: ReponsePOSTVerrou, canal: ConnexionExpress): void {
-        // Activer le message après le verrouillage.
-        canal.envoyerJSON(messageActif(reponse.accuseReception));
-        // Inactiver le message pour les autres utilisateurs du domaine.
-        reponse.utilisateursDestinataires.iterer((ID) => {
-            const canalDest = this.reseau.connexion(ID);
-            canalDest.envoyerJSON(
-                TypeMessageDistribution.INACTIF,
-                messageInactif(reponse.accuseReception));
-        });
-    }
 
 
     /*
@@ -210,7 +108,7 @@ class ServiceDistribution {
             const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
             logger.warn(desc);
             canal.envoyerJSON(
-                TypeMessage.AVERTISSEMENT,
+                TYPE_CANAL.avertir,
                 avertissement(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
@@ -218,7 +116,7 @@ class ServiceDistribution {
         const config: FormatConfigDistribution = this.reseau.configurationUtilisateur(ID_util);
 
         // Envoi de la configuration initiale
-        canal.envoyerJSON(TypeMessage.CONFIG, config);
+        canal.envoyerJSON(TYPE_CANAL.configurer, config);
         // Envoi de la nouvelle configuration aux voisins actifs
         this.reseau.diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util);
         this.reseau.diffuserConfigurationAuxUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
@@ -246,29 +144,29 @@ class ServiceDistribution {
         >(
             this.config.prefixe,
             this.cleAcces,
-            chemin(this.config.suffixe, this.config.post.envoi),
-            (entree) => this.traitementPOSTEnvoi(entree),
-            (canal) => this.traductionEntreePostEnvoi(canal),
-            (s, canal) => this.traduireSortiePOSTEnvoi(s, canal)
+            chemin(this.config.suffixe, this.config.post.envoyer),
+            (entree) => this.traitementPOSTEnvoyer.traitementPOSTEnvoi(entree),
+            (canal) => this.traitementPOSTEnvoyer.traductionEntreePostEnvoi(canal),
+            (s, canal) => this.traitementPOSTEnvoyer.traduireSortiePOSTEnvoi(s, canal)
         );
 
         serveurApplications.specifierTraitementRequetePOST<
             FormatMessageDistribution,
             ReponsePOSTVerrou
-            >(
+        >(
             this.config.prefixe,
             this.cleAcces,
-            chemin(this.config.suffixe, this.config.post.verrou),
-            (entree) => this.traitementPOSTVerrou(entree),
-            (canal) => this.traductionEntreePostVerrou(canal),
-            (s, canal) => this.traduireSortiePOSTVerrou(s, canal)
+            chemin(this.config.suffixe, this.config.post.verrouiller),
+            (entree) => this.traitementPOSTVerrouiller.traitementPOSTVerrou(entree),
+            (canal) => this.traitementPOSTVerrouiller.traductionEntreePostVerrou(canal),
+            (s, canal) => this.traitementPOSTVerrouiller.traduireSortiePOSTVerrou(s, canal)
         );
 
         serveurApplications
             .specifierTraitementRequeteGETLongue(
                 this.config.prefixe,
                 this.cleAcces,
-                chemin(this.config.suffixe, this.config.getPersistant), (canal) => this.traiterGETpersistant(canal)
+                chemin(this.config.suffixe, this.config.getPersistant.chemin), (canal) => this.traiterGETpersistant(canal)
             );
 
     }
