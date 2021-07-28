@@ -1,7 +1,7 @@
 import { AccueilButton, BackButton, Dropdown, DropdownContent, FormTitle, Wrapper } from "../Shared/formStyle";
 import * as React from "react";
 import { AxiosResponse } from "axios";
-import { requeteGET } from "../../../tchat/communication/communicationServeur";
+import { requeteGET } from "../../../bibliotheque/communication/communicationServeur";
 import { AccessPage } from "./connexion";
 import { PREFIXE_ACCES, PREFIXE_ACCUEIL } from "../../serveur/routes";
 import { ConfigurationJeuDistribution, ConfigurationJeuTchat, ConfigurationJeux } from "../../commun/configurationJeux";
@@ -36,7 +36,7 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <DropdownContent>
                     {props.jeuxDistribution.map(jeu => {
                         const urlJeu = `${domain}/${jeu.prefixe}/${props.cle}/${jeu.suffixe}`
-                        return <a href={urlJeu}>Jeu de {jeu.suffixe} de type {jeu.type} avec {jeu.nombreDomaines} domains et {jeu.effectifParDomaine} utilisateurs par domaine</a>
+                        return <a href={urlJeu}>Jeu de {jeu.suffixe} de type {jeu.type} avec {jeu.nombreDomaines} domaines</a>
                     })}
                 </DropdownContent>
             </Dropdown>

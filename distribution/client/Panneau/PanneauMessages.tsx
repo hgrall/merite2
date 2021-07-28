@@ -19,6 +19,7 @@ import {StyledAlert} from "../../../shared/MessageAlert";
 import {MessagesContainer, PanneauMessageContainer} from "../../../shared/MessagesContainer";
 import {ContainerMessageInactif} from "../Messages/MessageInactif";
 import {ContainerMessageActif} from "../Messages/MessageActif";
+import {TypeMessageDistribution} from "../../commun/echangesDistribution";
 
 
 interface ProprietesPanneauMessages {

@@ -15,10 +15,10 @@ import {
     Identifiant
 } from "../../bibliotheque/types/identifiant";
 import {dateEnveloppe, dateMaintenant} from "../../bibliotheque/types/date";
-import {creerFluxDeEvenements, requetePOST} from "../communication/communicationServeur";
+import {creerFluxDeEvenements, requetePOST} from "../../bibliotheque/communication/communicationServeur";
 import {Col, Row} from "react-bootstrap";
-import {PanneauAdmin} from "./Paneau/PanneauAdmin";
-import {PanneauMessages} from "./Paneau/PaneauMessages";
+import {PanneauAdmin} from "./Panneau/PanneauAdmin";
+import {PanneauMessages} from "./Panneau/PanneauMessages";
 import styled from "styled-components";
 import {tableauDeNatif} from "../../bibliotheque/types/tableau";
 import {Noeud, noeud} from "../../bibliotheque/applications/noeud";

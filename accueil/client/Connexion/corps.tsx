@@ -1,5 +1,5 @@
 import * as React from "react";
-import {requeteGET} from "../../../tchat/communication/communicationServeur";
+import {requeteGET} from "../../../bibliotheque/communication/communicationServeur";
 import {AxiosResponse} from "axios";
 import {BackButton, Wrapper} from "../Shared/formStyle";
 import {PREFIXE_ACCES, PREFIXE_CONNEXION} from "../../serveur/routes";

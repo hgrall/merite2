@@ -21,7 +21,8 @@ import {
     messageInformant, TypeMessageInformant,
 } from "./Helpers/typesInterface";
 import {
-    creerTableIdentificationMutableVide, TableIdentification,
+    creerTableIdentificationMutableVide,
+    TableIdentification,
     TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
@@ -31,16 +32,17 @@ import {
     Identifiant
 } from "../../bibliotheque/types/identifiant";
 import {option, Option, rienOption} from "../../bibliotheque/types/option";
-import {DateFr, dateMaintenant} from "../../bibliotheque/types/date";
+import {DateFr} from "../../bibliotheque/types/date";
 import {PanneauMessages} from "./Panneau/PanneauMessages";
 import {PanneauAdmin} from "./Panneau/PanneauAdmin";
 import {Col, Row} from "react-bootstrap";
-import {creerFluxDeEvenements, requetePOST} from "../../tchat/communication/communicationServeur";
+import {creerFluxDeEvenements, requetePOST} from "../../bibliotheque/communication/communicationServeur";
 import {AxiosError, AxiosResponse} from "axios";
 import {Map} from "immutable";
 import {
     FormatConfigDistribution,
-    FormatConsigne, FormatCorpsMessageDistribution,
+    FormatConsigne,
+    FormatCorpsMessageDistribution,
     FormatDomaineDistribution,
     FormatMessageDistribution,
     FormatNoeudDomaineDistribution,
@@ -171,9 +173,8 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             ID: this.generateur.produire("message")
         };
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
-            // TODO: TRAITER REPONSE COMME MESSAGE AR POUR L'AFFICHAGE revisar si ID destination es el domain o el usuario
             const message: FormatMessageDistribution = reponse.data;
-            console.log(message);
+            console.log("- Reception du message");
             if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
                 || (!this.state.domainesVoisins.contient(message.corps.ID_origine))
             ) {
@@ -182,13 +183,11 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             this.mettreAJourInformation(msg,  'AR_initial');
         };
         const traitementErreur = (raison: AxiosError) => {
-            // TODO: TRAITER ERREUR
-            console.log('- erreur')
+            console.log('- erreur POST message intial')
         }
         requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
-    // ok
     envoyerEssai(m: MessageInformant): void {
         //     let msg: FormatMessageEssaiDistribution = {
         //         type: 'essai',
@@ -207,7 +206,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         //     requetePOST<FormatMessageEssaiDistribution>(msg, traitementEnvoiMessage, traitementErreur, `http://localhost:8080/tchat/code/etoile/envoi`);
     }
 
-    //TODO: REVISAR PARA QUE SE USA
     omettre(m: MessageInformant): void {
         let msg: FormatMessageDistribution = {
             type: TypeMessageDistribution.VERROU,
@@ -220,7 +218,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             },
             ID: m.ID
         }
-        this.mettreAJourInformation(msg, 'transit');
+        this.mettreAJourInformation(msg, TypeMessageDistribution.TRANSIT);
     }
 
     annulerOmission(m: MessageInformant): void {
@@ -235,7 +233,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             },
             ID: m.ID
         }
-        this.mettreAJourInformation(msg, 'transit');
+        this.mettreAJourInformation(msg, TypeMessageDistribution.TRANSIT);
     }
 
     confirmerOmission(i: Identifiant<'message'>): void {
@@ -243,6 +241,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     }
 
     envoyerDemandeVerrouillage(m: MessageInformant): void {
+        console.log("- Envoi demande verrouillage");
         let msg: FormatMessageDistribution = {
             type: TypeMessageDistribution.VERROU,
             date: m.date,
@@ -255,10 +254,10 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             ID: m.ID
         }
 
-        this.mettreAJourInformation(msg, 'verrou');
+        this.mettreAJourInformation(msg, TypeMessageDistribution.VERROU);
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
             const message = reponse.data
-            this.mettreAJourInformation( message,  'actif');
+            this.mettreAJourInformation( message,  TypeMessageDistribution.ACTIF);
 
         };
         const traitementErreur = (raison: AxiosError) => {
@@ -281,11 +280,10 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         };
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
             const message = reponse.data;
-            this.mettreAJourInformation( message, 'transit');
-            // TODO: Verifier si le resultat c'est un message de transit
+            this.mettreAJourInformation( message, TypeMessageDistribution.TRANSIT);
         };
         const traitementErreur = (raison: AxiosError) => {
-            // TODO: TRAITER ERREUR
+            console.log("- échec du deverrouillage");
         }
         requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
@@ -383,7 +381,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             message.date,
             nouveauType
         )
-        console.log(nouvelle)
         this.setState((etatAvant: EtatCorps) => {
             for (let j in etatAvant.informations) {
                 if (etatAvant.informations[j].ID.val === nouvelle.ID.val) {
@@ -484,6 +481,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
         this.fluxDeEvenements.addEventListener(TypeMessage.CONFIG, (e: MessageEvent) => {
+            console.log("- reception de la configuration");
             const config: FormatConfigDistribution = JSON.parse(e.data);
             const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
             this.utilisateur = config.utilisateur;
@@ -508,7 +506,6 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 fond: COUPLE_FOND_ENCRE_SUJET.fond,
                 encre: COUPLE_FOND_ENCRE_SUJET.encre
             };
-            //TODO: A completer
             this.setState({
                 tailleDomain: config.tailleDomaine,
                 utilisateursActifsDomain: config.utilisateursActifsDuDomaine,
@@ -525,6 +522,8 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         });
 
         this.fluxDeEvenements.addEventListener(TypeMessageDistribution.TRANSIT, (e: MessageEvent) => {
+            console.log("- reception d'un message de transit");
+
             const message: FormatMessageDistribution = JSON.parse(e.data);
             if ((this.domaineUtilisateur.domaine.ID !== message.corps.ID_destination)
                 || (!this.state.domainesVoisins.contient(message.corps.ID_origine))

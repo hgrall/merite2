@@ -5,7 +5,7 @@ import {Deux} from "../../../bibliotheque/types/typesAtomiques";
 import {FormatDateFr} from "../../../bibliotheque/types/date";
 import {
     FormatConsigne, FormatDomaineDistribution,
-    FormatUtilisateurDistribution
+    FormatUtilisateurDistribution, TypeMessageDistribution
 } from "../../commun/echangesDistribution";
 
 export interface DomaineInterface {
@@ -133,11 +133,9 @@ export function messageInformantAvecNouveauType(
 }
 
 
-// TODO inutile ?
 export interface Message {
     readonly ID: Identifiant<'message'>;
     readonly domaineEmission: DomaineInterface;
     readonly domaineDestination: DomaineInterface;
-    //readonly cachet: string;
     readonly contenu: ReadonlyArray<Deux>;
 }

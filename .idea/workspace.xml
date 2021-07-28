@@ -2,12 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c356ef17-2051-4bc2-bd07-5301081790b1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/accueil.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accueil.md" beforeDir="false" afterPath="$PROJECT_DIR$/accueil.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/accueil/client/Accueil/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Accueil/corps.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accueil/client/Connexion/connexionAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Connexion/connexionAdmin.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/accueil/client/Connexion/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/accueil/client/Connexion/corps.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client.md" beforeDir="false" afterPath="$PROJECT_DIR$/clientDistribution.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/clientDistribution.md" beforeDir="false" afterPath="$PROJECT_DIR$/clientDistribution.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Helpers/typesInterface.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distribution/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/distribution/client/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/client/Paneau/PaneauMessages.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Panneau/PanneauMessages.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/client/Paneau/PanneauAdmin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/Panneau/PanneauAdmin.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/client/corps.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/tchat/client/corps.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tchat/communication/communicationServeur.ts" beforeDir="false" afterPath="$PROJECT_DIR$/bibliotheque/communication/communicationServeur.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,11 +63,11 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/bibliotheque/communication" />
+      <recent name="$PROJECT_DIR$/bibliotheque" />
       <recent name="$PROJECT_DIR$/distribution/client/Messages" />
       <recent name="$PROJECT_DIR$/distribution" />
       <recent name="$PROJECT_DIR$/distribution/serveur" />
-      <recent name="$PROJECT_DIR$/tchat" />
-      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -78,7 +84,7 @@
       <workItem from="1626770728252" duration="23683000" />
       <workItem from="1626942081902" duration="17293000" />
       <workItem from="1627033800178" duration="644000" />
-      <workItem from="1627393519473" duration="3449000" />
+      <workItem from="1627393519473" duration="9823000" />
     </task>
     <servers />
   </component>
@@ -109,6 +115,12 @@
           <url>file://$PROJECT_DIR$/distribution/client/Messages/MessageFixe.tsx</url>
           <line>9</line>
           <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/distribution/client/Panneau/PanneauMessages.tsx</url>
+          <line>51</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
