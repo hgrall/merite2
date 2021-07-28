@@ -254,7 +254,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             ID: m.ID
         }
 
-        this.mettreAJourInformation(msg, TypeMessageDistribution.VERROU);
+        this.mettreAJourInformation(msg, "verrou");
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
             const message = reponse.data
             this.mettreAJourInformation( message,  TypeMessageDistribution.ACTIF);
