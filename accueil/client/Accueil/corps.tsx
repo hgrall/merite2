@@ -1,14 +1,14 @@
 import { AccueilButton, BackButton, Dropdown, DropdownContent, FormTitle, Wrapper } from "../Shared/formStyle";
 import * as React from "react";
 import { AxiosResponse } from "axios";
-import { requeteGET } from "../../../tchat/communication/communicationServeur";
+import { requeteGET } from "../../../bibliotheque/communication/communicationServeur";
 import { AccessPage } from "./connexion";
 import { PREFIXE_ACCES, PREFIXE_ACCUEIL } from "../../serveur/routes";
 import { ConfigurationJeuDistribution, ConfigurationJeuTchat, ConfigurationJeux } from "../../commun/configurationJeux";
 
 interface JeuChoixPageProps {
     goBack: () => void,
-    code: string,
+    cle: string,
     jeuxTchat: ConfigurationJeuTchat[],
     jeuxDistribution: ConfigurationJeuDistribution[]
 }
@@ -25,7 +25,7 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <DropdownContent>
                     {
                         props.jeuxTchat.map(jeu => {
-                            const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
+                            const urlJeu = `${domain}/${jeu.prefixe}/${props.cle}/${jeu.suffixe}`
                             return <a href={urlJeu} > Tchat {jeu.type} avec une taille de {jeu.taille} joueurs</a>
                         })
                     }
@@ -35,8 +35,8 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <AccueilButton> Jeux Distribution</AccueilButton>
                 <DropdownContent>
                     {props.jeuxDistribution.map(jeu => {
-                        const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
-                        return <a href={urlJeu}>{jeu.suffixe} TODO </a>
+                        const urlJeu = `${domain}/${jeu.prefixe}/${props.cle}/${jeu.suffixe}`
+                        return <a href={urlJeu}>Jeu de {jeu.suffixe} de type {jeu.type} avec {jeu.nombreDomaines} domaines</a>
                     })}
                 </DropdownContent>
             </Dropdown>
@@ -50,7 +50,7 @@ function JeuChoixPage(props: JeuChoixPageProps) {
 
 interface AccueilState {
     hasCode: boolean,
-    code: string,
+    cle: string,
     jeuxTchat: ConfigurationJeuTchat[],
     jeuxDistribution: ConfigurationJeuDistribution[]
 }
@@ -60,7 +60,7 @@ export class Corps extends React.Component<{}, AccueilState> {
         super(props);
         this.state = {
             hasCode: false, //aCode
-            code: "",
+            cle: "",
             jeuxTchat: [],
             jeuxDistribution: []
         };
@@ -68,7 +68,7 @@ export class Corps extends React.Component<{}, AccueilState> {
         this.goBackAccessPage = this.goBackAccessPage.bind(this);
     }
 
-    handleSubmit(code: string) {
+    handleSubmit(cle: string) {
         // Empêche la page de se rafraîchir après d'utiliser le button du forme qui par default a ce comportement
         //https://es.reactjs.org/docs/forms.html
         event?.preventDefault()
@@ -81,7 +81,7 @@ export class Corps extends React.Component<{}, AccueilState> {
             const config: ConfigurationJeux = reponse.data;
             self.setState({
                 hasCode: true,
-                code: code,
+                cle: cle,
                 jeuxDistribution: [{
                     type: config.distribution.type,
                     prefixe: config.distribution.prefixe,
@@ -118,7 +118,7 @@ export class Corps extends React.Component<{}, AccueilState> {
                 ]
             });
         }
-        const params = { cle: code };
+        const params = { cle: cle };
         const domain = document.location.origin;
         const url = `${domain}/${PREFIXE_ACCUEIL}/${PREFIXE_ACCES}`;
 
@@ -126,11 +126,11 @@ export class Corps extends React.Component<{}, AccueilState> {
     }
 
     goBackAccessPage() {
-        this.setState({ hasCode: false, code: "" });
+        this.setState({ hasCode: false, cle: "" });
     }
 
     render() {
-        if (!this.state.hasCode) // demander code d'accès
+        if (!this.state.hasCode) // demander cle d'accès
             return (
                 <AccessPage onClick={this.handleSubmit} />
             );
@@ -138,7 +138,7 @@ export class Corps extends React.Component<{}, AccueilState> {
             return (
                 <JeuChoixPage
                     goBack={this.goBackAccessPage}
-                    code={this.state.code}
+                    cle={this.state.cle}
                     jeuxDistribution={this.state.jeuxDistribution}
                     jeuxTchat={this.state.jeuxTchat}
                 />

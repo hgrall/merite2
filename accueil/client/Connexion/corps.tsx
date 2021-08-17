@@ -1,10 +1,10 @@
 import * as React from "react";
-import {requeteGET} from "../../../tchat/communication/communicationServeur";
+import {requeteGET} from "../../../bibliotheque/communication/communicationServeur";
 import {AxiosResponse} from "axios";
 import {BackButton, Wrapper} from "../Shared/formStyle";
 import {PREFIXE_ACCES, PREFIXE_CONNEXION} from "../../serveur/routes";
-import {AccessPageAdmin} from "./connexionAdmin";
 import styled from "styled-components";
+import {ConnexionAdmin} from "./connexionAdmin";
 
 interface JeuChoixPageProps {
     code: string,
@@ -75,10 +75,10 @@ export class Corps extends React.Component<{}, AccueilState> {
                     <AlerteCode code={this.state.code} goBack= {this.goBackAccessPage} />
                 </Wrapper>
             );
-        else // code valide fourni, afficher les choix des jeux
+        else // code valide fourni, afficher la clé d'accès
             return (
                 <Wrapper>
-                    <AccessPageAdmin onClick={this.handleSubmit}/>
+                    <ConnexionAdmin onClick={this.handleSubmit}/>
                 </Wrapper>
             );
     }
