@@ -36,7 +36,7 @@ function JeuChoixPage(props: JeuChoixPageProps) {
                 <DropdownContent>
                     {props.jeuxDistribution.map(jeu => {
                         const urlJeu = `${domain}/${jeu.prefixe}/${props.code}/${jeu.suffixe}`
-                        return <a href={urlJeu}>{jeu.suffixe}</a>
+                        return <a href={urlJeu}>{jeu.suffixe} TODO </a>
                     })}
                 </DropdownContent>
             </Dropdown>

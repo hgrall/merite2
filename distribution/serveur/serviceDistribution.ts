@@ -1,7 +1,6 @@
 import * as express from 'express';
-import { isRight } from 'fp-ts/lib/Either'
 import { logger } from '../../bibliotheque/administration/log';
-import { ConnexionExpress, ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
+import { ConnexionLongueExpress } from '../../bibliotheque/communication/connexion';
 
 import { ConfigurationJeuDistribution } from '../../accueil/commun/configurationJeux';
 
@@ -10,20 +9,14 @@ import {
     ServeurApplications
 } from "../../bibliotheque/communication/serveurApplications";
 
-import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants, Identifiant, sontIdentifiantsEgaux } from "../../bibliotheque/types/identifiant";
-import { option, Option, rienOption } from '../../bibliotheque/types/option';
+import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants } from "../../bibliotheque/types/identifiant";
 import { creerGenerateurReseauDistribution, ReseauMutableDistribution } from './reseauDistribution';
 import {
     estDomaine,
-    estUtilisateur, FormatConfigDistribution,
-    FormatMessageDistribution,
-    messageActif,
-    messageInactif,
-    messageTransit
-} from '../commun/echangesDistribution';
-import { avertissement, erreur, TYPE_CANAL } from '../../bibliotheque/applications/message';
-import { FormatMessageAvecVerrou, messageAvecVerrouInitial, ReponsePOSTEnvoi, ReponsePOSTVerrou, verrouillage } from './echangesServeurDistribution';
-import { ValidateurFormatMessageEnvoiDistribution, ValidateurFormatMessageVerrouillageDistribution } from "./validation";
+    FormatConfigDistribution,
+    FormatMessageDistribution} from '../commun/echangesDistribution';
+import { avertissement, TYPE_CANAL } from '../../bibliotheque/applications/message';
+import { FormatMessageAvecVerrou, ReponsePOSTEnvoi, ReponsePOSTVerrou } from './echangesServeurDistribution';
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
 import { Envoyer, traitementPOSTEnvoyer, traitementPOSTVerrouiller, Verrouiller } from './traitementsPOST';
 

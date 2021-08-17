@@ -47,7 +47,7 @@ import {
     FormatUtilisateurDistribution,
     TypeMessageDistribution
 } from "../commun/echangesDistribution";
-import {TypeMessage} from "../../bibliotheque/applications/message";
+import {TypeMessage, TYPE_CANAL} from "../../bibliotheque/applications/message";
 
 
 interface ProprietesCorps {
@@ -483,7 +483,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
-        this.fluxDeEvenements.addEventListener(TypeMessage.CONFIG, (e: MessageEvent) => {
+        this.fluxDeEvenements.addEventListener(TYPE_CANAL.configurer, (e: MessageEvent) => {
             const config: FormatConfigDistribution = JSON.parse(e.data);
             const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
             this.utilisateur = config.utilisateur;
