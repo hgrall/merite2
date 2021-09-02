@@ -15,13 +15,16 @@ import { EnsembleIdentifiants } from "../types/ensembleIdentifiants";
 
 /**
  * Etat d'un réseau composé
- * - d'un table mutable d'identification de sommets,
- * - d'un file mutable de sommets inactifs déconnectés,
+ * - d'une table mutable d'identification de sommets,
+ * - d'une file mutable de sommets inactifs déconnectés,
  *  munis d'une priorité,
  * - d'une table d'adjacence, associant à un identifiant 
  * de sommet un ensemble d'identifiants de sommets voisins,
  * - d'une table de connexions, 
  *   associant à un identifiant de sommet un canal.
+ * Un sommet peut être actif ou non, connecté ou non. 
+ * Un sommet déconnecté est nécessairement inactif. 
+ * Un sommet connecté peut être actif ou non. 
  * @param FS format des sommets identifiables et activables.
  * @param C canal en écriture du serveur vers un client hôte d'un sommet actif.
  */
@@ -58,7 +61,7 @@ export interface FormatReseau<
 export type EtiquetteReseau = 'sommets' | 'inactifs' | 'adjacence';
 
 /**
- * Interface pour un réseau, paramétrée par le type des sommetss.
+ * Interface pour un réseau, paramétrée par le type des sommets et le type des canaux de communication.
  * Le réseau contient :
  * - une table d'identification pour les sommets,
  * identifiables et activables,
@@ -80,8 +83,8 @@ export interface ReseauMutable<
     C extends CanalPersistantEcritureJSON> extends TypeEnveloppe<EtatReseau<FS, C>,
     FormatReseau<FS>, EtiquetteReseau> {
     /**
-     * Initie la file des inactifs avec leur priorité. 
-     * Méthode appelée lors de la construction, 
+     * Initie la file des déconnectés inactifs avec leur priorité. 
+     * Méthode abstraite appelée lors de la construction, 
      * à implémenter dans chaque réseau concret.
      */
     initialiserFileDesInactifsDeconnectes(): void;
@@ -102,8 +105,8 @@ export interface ReseauMutable<
         ID_sommet2: Identifiant<'sommet'>): boolean;
 
     /**
-     * Sommet actif identifié par l'argument.
-     * Précondition : le sommet est présent.
+     * Sommet identifié par l'argument.
+     * Précondition : le sommet est présent dans le réseau.
      * @param ID_sommet identité de le sommet.
      * @returns la description de le sommet.
      */
@@ -111,48 +114,51 @@ export interface ReseauMutable<
 
     /**
      * Connexion associée au sommet identifié par l'argument.
-     * Précondition : le sommet est actif.
+     * Précondition : le sommet est connecté.
      * @param ID_sommet 
      */
     connexion(ID_sommet: Identifiant<'sommet'>): C;
 
     /**
-     * Active un sommet inactif déconnecté.
-     * C'est le sommet le plus prioritaire qui est activé.
-     * Précondition : le réseau possède un sommet inactif déconnecté.
-     * @returns identifiant du sommet activé.
+     * Connecte un sommet inactif déconnecté.
+     * C'est le sommet le plus prioritaire qui est connecté. 
+     * Cette méthode a pour effet :
+     * - de retirer le sommet prioritaire de la file des sommets inactifs déconnectés,
+     * - d'ajouter à la table des connexions une nouvelle 
+     * association (identifiant du sommet, connexion associée
+     * au sommet).
+     * Le sommet peut devenir actif ou non : voir l'implémentation 
+     * du retrait de la file.
+     * Précondition : le réseau possède au moins un sommet inactif déconnecté.
+     * @param connexion canal de communication qui sera associé au sommet.
+     * @returns identifiant du sommet connecté.
      */
-    activerSommet(connexion: C): Identifiant<'sommet'>;
+    connecterSommet(connexion: C): Identifiant<'sommet'>;
 
     /**
      * Retire le sommet de la file. Méthode abstraite à implémenter 
      * dans chaque classe concrète suivant les règles de priorité.
-     * Attention : 
-     * le retrait de la file se fait alors que le sommet est encore
-     * considéré comme inactif. Tout calcul de priorités dépendant 
-     * de la table d'adjacence et de la description des sommets 
-     * donne donc la priorité avant l'activation de le sommet. 
-     * @returns identifiant de le sommet à retirer de la file
+     * Cette méthode a aussi pour effet de modifier les priorités et 
+     * l'activité des sommets, d'une manière propre à chaque réseau.
+     * @returns identifiant du sommet à retirer de la file
      */
     retirerSommetDeFile(): Identifiant<'sommet'>;
 
     /**
-     * Inactive le sommet identifié par l'argument, 
-     * après une déconnexion.
-     * Précondition : le réseau possède ce sommet actif. 
+     * Déconnecte le sommet identifié par l'argument. 
+     * Le sommet devient inactif et est ajouté à la file des inactifs * déconnectés. La table des connexions est aussi mise à jour.
+     * Précondition : le sommet est connecté dans le réseau. 
      * @param ID_sommet identité de le sommet à inactiver.
      */
-    inactiverSommet(ID_sommet: Identifiant<'sommet'>): void;
+    deconnecterSommet(ID_sommet: Identifiant<'sommet'>): void;
 
     /**
-     * Ajoute le sommet à la file. Méthode abstraite à implémenter 
-     * dans chaque classe concrète suivant les règles de priorité.
-     * Attention : 
-     * l'ajout de la file se fait alors que le sommet est encore
-     * considéré comme actif. Tout calcul de priorités dépendant 
-     * de la table d'adjacence et de la description des sommets 
-     * donne donc la priorité avant l'inactivation du sommet.  
-     * 
+     * Ajoute le sommet à la file des inactifs déconnectés. 
+     * Méthode abstraite à implémenter dans chaque classe concrète 
+     * suivant les règles de priorité.
+     * Cette méthode a aussi pour effet de modifier les priorités et 
+     * l'activité des sommets, d'une manière propre à chaque réseau.
+     * Précondition : le sommet est inactif.
      * @param ID_sommet identifiant de le sommet à ajouter à la file
      */
     ajouterSommetAFile(ID_sommet: Identifiant<'sommet'>): void;
@@ -290,12 +296,9 @@ export abstract class ReseauMutableParEnveloppe<
         return this.etat().sommets.selectionAssociationSuivantCritere((id, s) => !(s.actif)).estPresent();
     }
 
-    activerSommet(connexion: C): Identifiant<'sommet'> {
+    connecterSommet(connexion: C): Identifiant<'sommet'> {
         //Sélectionne le sommet le plus prioritaire et met à jour la file.
         const ID_sommet = this.retirerSommetDeFile();
-        // Active le sommet.
-        const sommet = this.etat().sommets.valeur(ID_sommet);
-        this.etat().sommets.modifier(ID_sommet, modificationActivite(sommet));
         // Enregistre la connexion.
         this.etat().connexions.ajouter(ID_sommet, connexion);
         return ID_sommet;
@@ -303,14 +306,14 @@ export abstract class ReseauMutableParEnveloppe<
 
     abstract retirerSommetDeFile(): Identifiant<'sommet'>;
 
-    inactiverSommet(ID_sommet: Identifiant<'sommet'>): void {
-        // Ajoute le sommet à la file des inactifs et met à jour la file.
-        this.ajouterSommetAFile(ID_sommet);
+    deconnecterSommet(ID_sommet: Identifiant<'sommet'>): void {
         // Inactive le sommet.
         const sommet = this.etat().sommets.valeur(ID_sommet);
         this.etat().sommets.modifier(ID_sommet, modificationActivite(sommet));
         // Retire la connexion associée au sommet.
         this.etat().connexions.retirer(ID_sommet);
+        // Ajoute le sommet à la file des inactifs déconnectés.
+        this.ajouterSommetAFile(ID_sommet);
     }
 
     abstract ajouterSommetAFile(ID_sommet: Identifiant<'sommet'>): void;

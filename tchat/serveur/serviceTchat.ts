@@ -21,7 +21,7 @@ import {
 
 import { traductionEnvoiEnAR, traductionEnvoiEnTransit } from './echangesServeurTchat';
 import { creerGenerateurReseau, ReseauMutableTchat } from './reseauTchat';
-import { avertissement, erreur, TypeMessage } from '../../bibliotheque/applications/message';
+import { avertissement, erreur, CanalGenerique } from '../../bibliotheque/communication/communicationGenerique';
 import {FormatMessageTchatValidator} from "./validation";
 
 /*
@@ -107,20 +107,20 @@ class ServiceTchat {
             const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
             logger.warn(desc);
             canal.envoyerJSON(
-                TypeMessage.AVERTISSEMENT,
+                CanalGenerique.AVERTISSEMENT,
                 avertissement(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
         // Envoi de la configuration initiale
-        const ID_util = this.reseau.activerSommet(canal);
+        const ID_util = this.reseau.connecterSommet(canal);
         const noeud = this.reseau.noeud(ID_util);
-        canal.envoyerJSON(TypeMessage.CONFIG, noeud);
+        canal.envoyerJSON(CanalGenerique.CONFIG, noeud);
         // Envoi de la nouvelle configuration aux voisins actifs
-        this.reseau.diffuserConfigurationAuxAutresUtilisateurs(ID_util);
+        this.reseau.mettreAJourConfigurationVoisinsActifs(ID_util);
         // Enregistrement du traitement lors de la déconnexion
         canal.enregistrerTraitementDeconnexion(() => {
-            this.reseau.inactiverSommet(ID_util);
-            this.reseau.diffuserConfigurationAuxAutresUtilisateurs(ID_util);
+            this.reseau.deconnecterSommet(ID_util);
+            this.reseau.mettreAJourConfigurationVoisinsActifs(ID_util);
         });
     }
 

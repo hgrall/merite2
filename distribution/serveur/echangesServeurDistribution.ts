@@ -1,20 +1,19 @@
-import { dateMaintenant } from "../../bibliotheque/types/date";
 import { EnsembleIdentifiants } from "../../bibliotheque/types/ensembleIdentifiants";
 import { Identifiant } from "../../bibliotheque/types/identifiant";
 import { rienOption, Option, option } from "../../bibliotheque/types/option";
-import { FormatMessageDistribution, messageTransit, TypeMessageDistribution } from "../commun/echangesDistribution";
+import { FormatMessageDistribution, messageTransit } from "../commun/echangesDistribution";
 
 export interface ReponsePOSTEnvoi {
     accuseReception: FormatMessageDistribution;
     utilisateursDestinataires: EnsembleIdentifiants<"sommet">
 }
 
-export interface FormatMessageAvecVerrou {
+export interface FormatMessageDistributionAvecVerrou {
     message: FormatMessageDistribution;
     verrou: Option<Identifiant<'sommet'>>;
 }
 
-export function messageAvecVerrouInitial(idMsg: Identifiant<'message'>, msg: FormatMessageDistribution): FormatMessageAvecVerrou {
+export function messageAvecVerrouInitial(idMsg: Identifiant<'message'>, msg: FormatMessageDistribution): FormatMessageDistributionAvecVerrou {
     return {
         message: messageTransit(msg,
             msg.corps.ID_utilisateur_emetteur, idMsg),
@@ -22,7 +21,7 @@ export function messageAvecVerrouInitial(idMsg: Identifiant<'message'>, msg: For
     };
 }
 
-export function verrouillage(msgVerrou : FormatMessageAvecVerrou, ID_util : Identifiant<'sommet'>) : FormatMessageAvecVerrou {
+export function verrouillage(msgVerrou : FormatMessageDistributionAvecVerrou, ID_util : Identifiant<'sommet'>) : FormatMessageDistributionAvecVerrou {
     return {
         message : msgVerrou.message,
         verrou : option(ID_util)

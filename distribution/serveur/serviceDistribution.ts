@@ -13,42 +13,61 @@ import { creerGenerateurIdentifiantParCompteur, GenerateurIdentifiants } from ".
 import { creerGenerateurReseauDistribution, ReseauMutableDistribution } from './reseauDistribution';
 import {
     estDomaine,
-    FormatConfigDistribution,
-    FormatMessageDistribution} from '../commun/echangesDistribution';
-import { avertissement, TYPE_CANAL } from '../../bibliotheque/applications/message';
-import { FormatMessageAvecVerrou, ReponsePOSTEnvoi, ReponsePOSTVerrou } from './echangesServeurDistribution';
+    FormatConfigurationDistribution,
+    FormatMessageDistribution,
+    CanalServeur} from '../commun/echangesDistribution';
+import { FormatMessageDistributionAvecVerrou, ReponsePOSTEnvoi, ReponsePOSTVerrou } from './echangesServeurDistribution';
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from '../../bibliotheque/types/tableIdentification';
 import { Envoyer, traitementPOSTEnvoyer, traitementPOSTVerrouiller, Verrouiller } from './traitementsPOST';
+import { avertissement, CanalGenerique } from '../../bibliotheque/communication/communicationGenerique';
 
-
-/*
-* Service de l'application.
+/** 
+* Service de l'application de distribution. Un jeu de distribution
+* correspond à une instance de la classe. Seule la fabrique est
+* publique.
 */
-
-
 class ServiceDistribution {
+    /**
+     * Réseau formé des domaines en anneau et des utilisateurs 
+     * en étoile autour de leur domaine.
+     */
     private reseau: ReseauMutableDistribution<ConnexionLongueExpress>;
+    /**
+     * Générateur d'identifiants de messages.
+     */
     private generateurIdentifiantsMessages:
         GenerateurIdentifiants<'message'>;
     /**
      * Table associant à tout identifiant de domaine une table.
      * La table image associe à un identifiant de message 
      * - un message en transit, dont l'utilisateur est l'émetteur
-     *  et non le destinataire (cas du client),
+     *  et non le destinataire (contrairement au cas du client),
      * - une option indiquant l'identité de l'utilisateur
      *  verrouillant le message.
+     * La table fait partie de la duplication de l'état des clients.
      */
     private messagesTransitParDomaine: TableIdentification<
         'sommet',
         TableIdentificationMutable<
             'message',
-            FormatMessageAvecVerrou
+            FormatMessageDistributionAvecVerrou
         >
     >;
+    /**
+     * Table d'identification associant à un utilisateur 
+     * le message initial qu'il a envoyé.
+     * La table fait partie de la duplication de l'état des clients.
+     */
     private messagesEnvoyesParUtilisateur: TableIdentificationMutable<
         'sommet',
         FormatMessageDistribution>;
+    /**
+     * Traitement d'un POST sur le canal 'envoyer'.
+     */
     private traitementPOSTEnvoyer: Envoyer;
+    /**
+     * Traitement d'un POST sur le canal 'verrouiller'.
+     */
     private traitementPOSTVerrouiller: Verrouiller;
     constructor(
         private config: ConfigurationJeuDistribution,
@@ -63,7 +82,7 @@ class ServiceDistribution {
             creerTableIdentificationMutableVide<'sommet',
                 TableIdentificationMutable<
                     'message',
-                    FormatMessageAvecVerrou
+                    FormatMessageDistributionAvecVerrou
                 >>('sommet');
         this.reseau.itererSommets((ID, s) => {
             if (estDomaine(s)) {
@@ -73,24 +92,17 @@ class ServiceDistribution {
         this.messagesTransitParDomaine = tableMessages;
         this.traitementPOSTEnvoyer
             = traitementPOSTEnvoyer(
-                this.config,
                 this.reseau,
                 this.messagesEnvoyesParUtilisateur,
                 this.messagesTransitParDomaine,
                 this.generateurIdentifiantsMessages);
         this.traitementPOSTVerrouiller
             = traitementPOSTVerrouiller(
-                this.config,
                 this.reseau,
-                this.messagesEnvoyesParUtilisateur,
                 this.messagesTransitParDomaine,
                 this.generateurIdentifiantsMessages);
 
     }
-
-
-
-
 
     /*
     * Service de connexion persistante pour permettre 
@@ -101,24 +113,24 @@ class ServiceDistribution {
             const desc = "La connexion est impossible : tous les utilisateurs sont actifs."
             logger.warn(desc);
             canal.envoyerJSON(
-                TYPE_CANAL.avertir,
+                CanalGenerique.AVERTISSEMENT,
                 avertissement(this.generateurIdentifiantsMessages.produire('message'), desc));
             return;
         }
-        const ID_util = this.reseau.activerSommet(canal);
-        const config: FormatConfigDistribution = this.reseau.configurationUtilisateur(ID_util);
+        const ID_util = this.reseau.connecterSommet(canal);
+        const config: FormatConfigurationDistribution = this.reseau.configurationUtilisateur(ID_util);
 
         // Envoi de la configuration initiale
-        canal.envoyerJSON(TYPE_CANAL.configurer, config);
+        canal.envoyerJSON(CanalGenerique.CONFIG , config);
         // Envoi de la nouvelle configuration aux voisins actifs
-        this.reseau.diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util);
-        this.reseau.diffuserConfigurationAuxUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
+        this.reseau.mettreAJourConfigurationAutresUtilisateursDuDomaine(ID_util);
+        this.reseau.mettreAJourConfigurationUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
 
         // Enregistrement du traitement lors de la déconnexion
         canal.enregistrerTraitementDeconnexion(() => {
-            this.reseau.inactiverSommet(ID_util);
-            this.reseau.diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util);
-            this.reseau.diffuserConfigurationAuxUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
+            this.reseau.deconnecterSommet(ID_util);
+            this.reseau.mettreAJourConfigurationAutresUtilisateursDuDomaine(ID_util);
+            this.reseau.mettreAJourConfigurationUtilisateursDesDomainesVoisins(this.reseau.domaine(ID_util));
         });
     }
 
@@ -137,7 +149,7 @@ class ServiceDistribution {
         >(
             this.config.prefixe,
             this.cleAcces,
-            chemin(this.config.suffixe, this.config.post.envoyer),
+            chemin(this.config.suffixe, CanalServeur.ENVOI),
             (entree) => this.traitementPOSTEnvoyer.traitementPOSTEnvoi(entree),
             (canal) => this.traitementPOSTEnvoyer.traductionEntreePostEnvoi(canal),
             (s, canal) => this.traitementPOSTEnvoyer.traduireSortiePOSTEnvoi(s, canal)
@@ -149,7 +161,7 @@ class ServiceDistribution {
         >(
             this.config.prefixe,
             this.cleAcces,
-            chemin(this.config.suffixe, this.config.post.verrouiller),
+            chemin(this.config.suffixe, CanalServeur.VERROU),
             (entree) => this.traitementPOSTVerrouiller.traitementPOSTVerrou(entree),
             (canal) => this.traitementPOSTVerrouiller.traductionEntreePostVerrou(canal),
             (s, canal) => this.traitementPOSTVerrouiller.traduireSortiePOSTVerrou(s, canal)
@@ -159,13 +171,19 @@ class ServiceDistribution {
             .specifierTraitementRequeteGETLongue(
                 this.config.prefixe,
                 this.cleAcces,
-                chemin(this.config.suffixe, this.config.getPersistant.chemin), (canal) => this.traiterGETpersistant(canal)
+                chemin(this.config.suffixe, this.config.getPersistant), (canal) => this.traiterGETpersistant(canal)
             );
 
     }
 
 }
 
+/**
+ * Fabrique d'un service de distribution.
+ * @param config configuration du jeu de distribution.
+ * @param cleAcces clé d'accès.
+ * @returns un service du jeu de dsitribution.
+ */
 export function creerServiceDistribution(
     config: ConfigurationJeuDistribution, cleAcces: string): ServiceDistribution {
     return new ServiceDistribution(config, cleAcces);

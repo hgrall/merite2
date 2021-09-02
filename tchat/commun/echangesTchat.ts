@@ -7,7 +7,7 @@ import {
     Identifiant, FormatIdentifiable} from "../../bibliotheque/types/identifiant";
 
 import { FormatNoeud, Noeud } from "../../bibliotheque/applications/noeud";
-import { FormatMessage } from "../../bibliotheque/applications/message";
+import { FormatMessage } from "../../bibliotheque/communication/communicationGenerique";
 import { FormatTableau } from "../../bibliotheque/types/tableau";
 
 /**

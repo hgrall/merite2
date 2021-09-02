@@ -19,7 +19,7 @@ import {
     formulaireMessage,
     MessageInformant,
     messageInformant, TypeMessageInformant,
-} from "./Helpers/typesInterface";
+} from "./utilitaire/typesInterface";
 import {
     creerTableIdentificationMutableVide,
     TableIdentification,
@@ -33,73 +33,85 @@ import {
 } from "../../bibliotheque/types/identifiant";
 import {option, Option, rienOption} from "../../bibliotheque/types/option";
 import {DateFr} from "../../bibliotheque/types/date";
-import {PanneauMessages} from "./Panneau/PanneauMessages";
-import {PanneauAdmin} from "./Panneau/PanneauAdmin";
+import {PanneauMessages} from "./panneau/panneauMessages";
+import {PanneauAdmin} from "./panneau/panneauAdmin";
 import {Col, Row} from "react-bootstrap";
-import {creerFluxDeEvenements, requetePOST} from "../../bibliotheque/communication/communicationServeur";
+import {creerFluxEvenements, enregistrerRequetePOST} from "../../bibliotheque/communication/communicationAvecServeur";
 import {AxiosError, AxiosResponse} from "axios";
 import {Map} from "immutable";
 import {
-    FormatConfigDistribution,
+    FormatConfigurationDistribution,
     FormatConsigne,
     FormatCorpsMessageDistribution,
     FormatDomaineDistribution,
     FormatMessageDistribution,
-    FormatNoeudDomaineDistribution,
+    FormatNoeudSommetDistribution,
     FormatUtilisateurDistribution,
     TypeMessageDistribution
 } from "../commun/echangesDistribution";
-import {TypeMessage, TYPE_CANAL} from "../../bibliotheque/applications/message";
+import {CanalGenerique } from "../../bibliotheque/communication/communicationGenerique";
 
-
+/**
+ * Propriétés du corps principal de l'interface.
+ * - vide.
+ * On indique cependant un attribut donnant le nom de la classe :
+ *  voir 
+ * - https://github.com/Microsoft/TypeScript/issues/8588
+ * qui date. Est-ce encore utile ? 
+ */
 interface ProprietesCorps {
-    // see https://github.com/Microsoft/TypeScript/issues/8588
     className?: string;
 }
 
-enum EtatInterfaceJeu1 {
+/**
+ * Les trois états de l'interface graphique.
+ * - INITIAL : au lancement, avant la réception de la configuration
+ * - NORMAL : après réception de la configuration initiale
+ * - ERRONE : après une erreur fatale
+ */
+enum EtatInterfaceJeuDistribution {
     INITIAL,
     NORMAL,
     ERRONE
 }
 
-/*
-  Etat contenant
+/** 
+  Etat du corps principal de l'interface.
   - les attributs susceptibles d'être modifiés par des sous-composants,
   - un indicateur de l'état de l'interface, chaque valeur étant associée
     à des attributs du composant, modifiés uniquement en interne
 */
 interface EtatCorps {
     selection: DomaineInterface;
-    etatInterface: EtatInterfaceJeu1;
+    etatInterface: EtatInterfaceJeuDistribution;
     informations: MessageInformant[]; // Identification par l'identifiant du message.
-    formulaireMessage: Option<FormulaireMessage>;
-    formulaireEssai: Option<FormulaireEssai>;
-    tailleDomain: number;
+    formulaireMessage: Option<FormulaireMessage>; // TODO utiliser le Format ?
+    formulaireEssai: Option<FormulaireEssai>; // TODO utiliser le Format ?
+    tailleDomaine: number;
     utilisateursActifsDomain: number;
     afficherAlerte: boolean;
     messageAlerte: string;
-    domainesVoisins: TableIdentificationMutable<"sommet", DomaineInterface>
+    domainesVoisins: TableIdentificationMutable<"sommet", DomaineInterface>; // TODO utiliser le Format ?
 }
 
-const ID_INCONNU: string = "?";
+const ID_INCONNU: string = "?"; // TODO utilité ?
 
 class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
-    private fluxDeEvenements: EventSource;
+    private fluxEvenements: EventSource;
 
     private utilisateur: FormatUtilisateurDistribution;
     private consigne: FormatConsigne;
     private domaineUtilisateur: DomaineInterface;
 
-    private domaineInconnu: DomaineInterface;
+    private domaineInconnu: DomaineInterface; // TODO utilité ? A remplacer par une option !
 
     private messageErreur: string;
     private generateur: GenerateurIdentifiants<'message'>;
     private urlEnvoi: string;
     private urlVerrou: string;
 
-    populationDomaine: TableIdentification<"sommet", FormatUtilisateurDistribution>;
+    private populationDomaine: TableIdentification<"sommet", FormatUtilisateurDistribution>; // TODO à intégrer dans l'état
 
     constructor(props: ProprietesCorps) {
         super(props);
@@ -107,9 +119,9 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         this.populationDomaine = creerTableIdentificationMutableVide("sommet");
 
         const url = window.location.href;
-        this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
-        this.urlEnvoi = `${url}/envoi`
-        this.urlVerrou = `${url}/verrou`
+        this.fluxEvenements = creerFluxEvenements(`${url}/reception`); // TODO reception := obtenu à partir de la configuration
+        this.urlEnvoi = `${url}/envoi` // TODO envoi : obtenu à partir de la configuration
+        this.urlVerrou = `${url}/verrou` // TODO verrou : obtenu à partir de la configuration
 
         this.domaineInconnu = {
             domaine: {
@@ -122,12 +134,12 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         };
 
         this.state = {
-            etatInterface: EtatInterfaceJeu1.INITIAL,
+            etatInterface: EtatInterfaceJeuDistribution.INITIAL,
             selection: this.domaineInconnu,
             informations: [],
             formulaireMessage: rienOption<FormulaireMessage>(),
             formulaireEssai: rienOption<FormulaireEssai>(),
-            tailleDomain: 0,
+            tailleDomaine: 0,
             utilisateursActifsDomain: 0,
             afficherAlerte: false,
             messageAlerte: "",
@@ -185,7 +197,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         const traitementErreur = (raison: AxiosError) => {
             console.log('- erreur POST message intial')
         }
-        requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
+        enregistrerRequetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     envoyerEssai(m: MessageInformant): void {
@@ -263,7 +275,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         const traitementErreur = (raison: AxiosError) => {
             console.log("- échec du verrouillage");
         }
-        requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlVerrou);
+        enregistrerRequetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlVerrou);
     }
 
     envoyerDemandeDeverrouillage(m: MessageInformant): void {
@@ -285,7 +297,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         const traitementErreur = (raison: AxiosError) => {
             console.log("- échec du deverrouillage");
         }
-        requetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
+        enregistrerRequetePOST<FormatMessageDistribution>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     transmettreMessage(m: MessageInformant, domaineDestination: DomaineInterface, d: DateFr): void {
@@ -329,7 +341,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         this.setState({selection: dom});
     }
 
-    modifierEtatInterface(etat: EtatInterfaceJeu1): void {
+    modifierEtatInterface(etat: EtatInterfaceJeuDistribution): void {
         this.setState({
             etatInterface: etat
         });
@@ -422,11 +434,11 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
 
     render(): JSX.Element {
         switch (this.state.etatInterface) {
-            case EtatInterfaceJeu1.INITIAL:
+            case EtatInterfaceJeuDistribution.INITIAL:
                 return (
                     <h1>Connexion au serveur pour l'initialisation</h1>
                 );
-            case EtatInterfaceJeu1.NORMAL:
+            case EtatInterfaceJeuDistribution.NORMAL:
                 return (
                     <div className={this.props.className}>
                         <Row>
@@ -466,7 +478,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                         </Row>
                     </div>
                 );
-            case EtatInterfaceJeu1.ERRONE:
+            case EtatInterfaceJeuDistribution.ERRONE:
                 return (
                     <div>
                         <h1>Fin de l'application après l'erreur suivante : </h1>
@@ -481,10 +493,10 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
     componentDidMount(): void {
         console.log("* Initialisation après montage du corps");
         // TYPE_CANAL.configurer
-        this.fluxDeEvenements.addEventListener(TypeMessage.CONFIG, (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener(CanalGenerique.CONFIG, (e: MessageEvent) => {
             console.log("- reception de la configuration");
-            const config: FormatConfigDistribution = JSON.parse(e.data);
-            const noeudDomaine: FormatNoeudDomaineDistribution = config.noeudDomaine;
+            const config: FormatConfigurationDistribution = JSON.parse(e.data);
+            const noeudDomaine: FormatNoeudSommetDistribution = config.noeudDomaine;
             this.utilisateur = config.utilisateur;
             this.generateur = creerGenerateurIdentifiantParCompteur(this.utilisateur.ID.val + "-MSG-");
             const formatVoisins = Map(config.domainesVoisins.identification);
@@ -509,7 +521,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             };
             this.setState({
                 tailleDomain: config.tailleDomaine,
-                utilisateursActifsDomain: config.utilisateursActifsDuDomaine,
+                utilisateursActifsDomain: config.nombreUtilisateursActifsDuDomaine,
                 domainesVoisins: nouveauxVoisins
             });
             const voisinSelection = this.state.domainesVoisins.selectionAssociationSuivantCritere((ID_sorte, x) => x.domaine.actif)
@@ -517,12 +529,12 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
                 const domaineSelection = voisinSelection.valeur()[1];
                 this.modifierSelection(domaineSelection);
             }
-            this.modifierEtatInterface(EtatInterfaceJeu1.NORMAL);
+            this.modifierEtatInterface(EtatInterfaceJeuDistribution.NORMAL);
             this.modifierFormulaireMessage(
                 formulaireMessage(this.utilisateur, this.domaineUtilisateur, this.state.selection, [], this.consigne));
         });
 
-        this.fluxDeEvenements.addEventListener(TypeMessageDistribution.TRANSIT, (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener(TypeMessageDistribution.TRANSIT, (e: MessageEvent) => {
             console.log("- reception d'un message de transit");
 
             const message: FormatMessageDistribution = JSON.parse(e.data);
@@ -534,7 +546,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             this.mettreAJourInformation(message, 'transit');
         })
 
-        this.fluxDeEvenements.addEventListener('INACTIF', (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener('INACTIF', (e: MessageEvent) => {
             const message: FormatMessageDistribution = JSON.parse(e.data);
             if ((this.domaineUtilisateur.domaine.ID.val !== message.corps.ID_destination.val)
                 || (!this.state.domainesVoisins.contient(message.corps.ID_origine))
@@ -545,7 +557,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
             this.mettreAJourInformation(message, 'inactif');
         })
 
-        this.fluxDeEvenements.addEventListener('distribution', (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener('distribution', (e: MessageEvent) => {
 
             //     case TypeMessageDistribution.AR_SUIVANT:
             //         if (
@@ -675,7 +687,7 @@ class CorpsBrut extends React.Component<ProprietesCorps, EtatCorps> {
         });
 
 
-        this.fluxDeEvenements.addEventListener('erreur', (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener('erreur', (e: MessageEvent) => {
             // switch (err.type) {
             //     case TypeErreurDistribution.NOM_CONNEXIONS:
             //         this.setState({messageAlerte: err.messageErreur, afficherAlerte: true})

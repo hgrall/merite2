@@ -1,7 +1,7 @@
 import * as React from "react";
-import {Individu, Message, ToutIndividu} from "./Helpers/typesInterface";
+import { Individu, Message, ToutIndividu } from "./typesUtiles/typesInterface";
 import {
-    creerTableIdentificationMutableVide, TableIdentification,TableIdentificationMutable
+    creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable
 } from "../../bibliotheque/types/tableIdentification";
 import {
     Couleur,
@@ -14,22 +14,23 @@ import {
     identifiant,
     Identifiant
 } from "../../bibliotheque/types/identifiant";
-import {dateEnveloppe, dateMaintenant} from "../../bibliotheque/types/date";
-import {creerFluxDeEvenements, requetePOST} from "../../bibliotheque/communication/communicationServeur";
-import {Col, Row} from "react-bootstrap";
-import {PanneauAdmin} from "./Panneau/PanneauAdmin";
-import {PanneauMessages} from "./Panneau/PanneauMessages";
+import { dateEnveloppe, dateMaintenant } from "../../bibliotheque/types/date";
+import { creerFluxEvenements as creerFluxEvenements, enregistrerRequetePOST } from "../../bibliotheque/communication/communicationAvecServeur";
+import { Col, Row } from "react-bootstrap";
+import { PanneauAdmin } from "./panneau/panneauAdmin";
+import { PanneauMessages } from "./panneau/panneauMessages";
 import styled from "styled-components";
-import {tableauDeNatif} from "../../bibliotheque/types/tableau";
-import {Noeud, noeud} from "../../bibliotheque/applications/noeud";
+import { tableauDeNatif } from "../../bibliotheque/types/tableau";
+import { Noeud, noeud } from "../../bibliotheque/applications/noeud";
 import {
     FormatMessageARTchat,
     FormatMessageEnvoiTchat,
     FormatMessageTransitTchat,
     FormatUtilisateurTchat,
+    TypeMessageTchat,
 } from "../commun/echangesTchat";
-import {AxiosError, AxiosResponse} from "axios";
-import {FormatMessageAvertissement, FormatMessageErreur} from "../../bibliotheque/applications/message";
+import { AxiosError, AxiosResponse } from "axios";
+import { FormatMessageAvertissement, FormatMessageErreur, CanalGenerique } from "../../bibliotheque/communication/communicationGenerique";
 
 
 enum EtatInterfaceTchat {
@@ -59,13 +60,13 @@ export class Corps extends React.Component<{}, Etat> {
     private individuSujet: Individu;
     private individuInconnu: Individu;
 
-    private fluxDeEvenements: EventSource;
+    private fluxEvenements: EventSource;
     private urlEnvoi: string;
 
     constructor(props: {}) {
         super(props);
         const url = window.location.href;
-        this.fluxDeEvenements = creerFluxDeEvenements(`${url}/reception`);
+        this.fluxEvenements = creerFluxEvenements(`${url}/reception`);
         this.urlEnvoi = `${url}/envoi`
         this.individuInconnu = {
             ID: identifiant('sommet', ID_INCONNU),
@@ -100,11 +101,11 @@ export class Corps extends React.Component<{}, Etat> {
     }
 
     masquerAlerte() {
-        this.setState({afficherAlerte: false})
+        this.setState({ afficherAlerte: false })
     }
 
     modifierSelection(i: Individu) {
-        this.setState({selection: i});
+        this.setState({ selection: i });
     }
 
     ajouterMessage(m: Message): void {
@@ -158,7 +159,7 @@ export class Corps extends React.Component<{}, Etat> {
             ID: m.ID,
             type: 'envoi',
             date: dateMaintenant().toJSON(),
-            corps: {ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON()}
+            corps: { ID_emetteur: m.emetteur.ID, contenu: m.contenu, ID_destinataires: destinataires.toJSON() }
         };
         this.ajouterMessage(m);
         const traitementEnvoiMessage = (reponse: AxiosResponse) => {
@@ -171,10 +172,10 @@ export class Corps extends React.Component<{}, Etat> {
                 console.log(`Erreur: ${erreur.corps.erreur}`);
             } else if (raison.response?.status == 500) {
                 this.messageErreur = raison.response?.data
-                this.setState({etatInterface: EtatInterfaceTchat.ERRONE});
+                this.setState({ etatInterface: EtatInterfaceTchat.ERRONE });
             }
         }
-        requetePOST<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
+        enregistrerRequetePOST<FormatMessageEnvoiTchat>(msg, traitementEnvoiMessage, traitementErreur, this.urlEnvoi);
     }
 
     remplirIndividuSujet(noeudSujet: Noeud<FormatUtilisateurTchat>) {
@@ -200,12 +201,12 @@ export class Corps extends React.Component<{}, Etat> {
                 fond: c.fond,
                 inactif: !voisin.actif
             })
-            if(voisin.actif){
+            if (voisin.actif) {
                 identifiantsVoisins.push(ID_sorte);
             }
         });
         const nouveauToutIndividu = {
-            IDVoisins: tableauDeNatif<Identifiant<"sommet">>( identifiantsVoisins),
+            IDVoisins: tableauDeNatif<Identifiant<"sommet">>(identifiantsVoisins),
             nom: "tous",
             fond: COUPLE_FOND_ENCRE_TOUS.fond,
             encre: COUPLE_FOND_ENCRE_TOUS.encre,
@@ -223,19 +224,19 @@ export class Corps extends React.Component<{}, Etat> {
             etatInterface: EtatInterfaceTchat.INITIAL
         });
         const self = this;
-        this.fluxDeEvenements.addEventListener('config', (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener(CanalGenerique.CONFIG, (e: MessageEvent) => {
             const noeudSujet = noeud<FormatUtilisateurTchat>(JSON.parse(e.data));
             this.remplirIndividuSujet(noeudSujet);
             this.remplirVoisins(noeudSujet.etat().voisins);
 
             self.setState({
-                nombreConnexions: noeudSujet.nombreVoisinsActifs() + 1,
+                nombreConnexions: noeudSujet.nombreVoisinsActifs(),
                 etatInterface: EtatInterfaceTchat.NORMAL,
-                nombreTotalConnexions: noeudSujet.etat().voisins.taille() + 1
+                nombreTotalConnexions: noeudSujet.etat().voisins.taille()
             });
         });
 
-        this.fluxDeEvenements.addEventListener('avertissement', (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener(CanalGenerique.AVERTISSEMENT, (e: MessageEvent) => {
             const avertissement: FormatMessageAvertissement = JSON.parse(e.data);
             console.log(`Avertissement: ${avertissement.corps.avertissement}`)
             this.setState({
@@ -244,7 +245,7 @@ export class Corps extends React.Component<{}, Etat> {
             })
         });
 
-        this.fluxDeEvenements.addEventListener('transit', (e: MessageEvent) => {
+        this.fluxEvenements.addEventListener(TypeMessageTchat.TRANSIT, (e: MessageEvent) => {
             let msg: FormatMessageTransitTchat = JSON.parse(e.data);
             if (!this.state.voisins.contient(msg.corps.ID_emetteur)) {
                 console.log("- message incohérent");
@@ -269,7 +270,7 @@ export class Corps extends React.Component<{}, Etat> {
     }
 
     componentWillUnmount() {
-        this.fluxDeEvenements.close()
+        this.fluxEvenements.close()
     }
 
     render() {
@@ -280,20 +281,20 @@ export class Corps extends React.Component<{}, Etat> {
                         <StyledRow>
                             <StyledAdminCol sm={12} md={3}>
                                 <PanneauAdmin sujet={this.individuSujet}
-                                              objets={this.state.voisins.image()}
-                                              tous={this.state.toutIndividu}
-                                              selection={this.state.selection}
-                                              modifSelection={this.modifierSelection}
-                                              nombreConnexions={this.state.nombreConnexions}
-                                              nombreTotalConnexions={this.state.nombreTotalConnexions}
+                                    objets={this.state.voisins.image()}
+                                    tous={this.state.toutIndividu}
+                                    selection={this.state.selection}
+                                    modifSelection={this.modifierSelection}
+                                    nombreConnexions={this.state.nombreConnexions}
+                                    nombreTotalConnexions={this.state.nombreTotalConnexions}
                                 />
                             </StyledAdminCol>
                             <StyledMessagesCol sm={12} md={9}>
                                 <PanneauMessages sujet={this.individuSujet} messages={this.state.messages}
-                                                 selection={this.state.selection} envoiMessage={this.envoyerMessage}
-                                                 afficherAlerte={this.state.afficherAlerte}
-                                                 messageAlerte={this.state.messageAlerte}
-                                                 masquerAlerte={this.masquerAlerte}/>
+                                    selection={this.state.selection} envoiMessage={this.envoyerMessage}
+                                    afficherAlerte={this.state.afficherAlerte}
+                                    messageAlerte={this.state.messageAlerte}
+                                    masquerAlerte={this.masquerAlerte} />
                             </StyledMessagesCol>
                         </StyledRow>
                     </CorpsContainer>
@@ -306,7 +307,7 @@ export class Corps extends React.Component<{}, Etat> {
                 return (
                     <div>
                         <h1>Fin de l'application après l'erreur suivante : </h1>
-                        <div style={{color: TEXTE_ERREUR}}>
+                        <div style={{ color: TEXTE_ERREUR }}>
                             {this.messageErreur}
                         </div>
                     </div>

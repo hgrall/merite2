@@ -1,4 +1,5 @@
 import { TypeTchat } from "../../accueil/commun/configurationJeux";
+import { CanalGenerique } from "../../bibliotheque/communication/communicationGenerique";
 import { GenerateurReseau, ReseauMutable, ReseauMutableParEnveloppe } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { creerEnsembleMutableIdentifiantsVide, EnsembleIdentifiants, EnsembleMutableIdentifiants } from "../../bibliotheque/types/ensembleIdentifiants";
@@ -28,16 +29,18 @@ interface GrapheReseauTchat {
      */
     nombreVoisinsInactifs(ID_sommet: Identifiant<"sommet">): number;
     /**
-     * Diffuse la configuration formée de la représentation JSON 
-     * du noeud aux autres utilisateurs du tchat. 
-     * @param ID_sommet sommet au centre du noeud 
+     * Met à jour la configuration des voisins actifs
+     * de l'utilisateur passé en argument. La configuration
+     * est formée de la représentation JSON du noeud associé au
+     * voisin. 
+     * @param ID_sommet identifiant du nouvel utilisateur.
      */
-    diffuserConfigurationAuxAutresUtilisateurs(ID_sommet: Identifiant<'sommet'>): void;
+    mettreAJourConfigurationVoisinsActifs(ID_sommet: Identifiant<'sommet'>): void;
 }
 
 /**
  * Réseau mutable de tchat. La priorité pour un sommet 
- * (correspondnant à un utilisateur du tchat) est donnée 
+ * (correspondant à un utilisateur du tchat) est déterminée 
  * par le nombre de sommets adjacents (voisins) inactifs. 
  */
 export class ReseauMutableTchat<
@@ -59,41 +62,66 @@ export class ReseauMutableTchat<
         return this.tailleCribleVoisins(ID_sommet, (ID, s) => !s.actif);
     }
 
-    diffuserConfigurationAuxAutresUtilisateurs(ID_sommet: Identifiant<'sommet'>): void {
+    mettreAJourConfigurationVoisinsActifs(ID_sommet: Identifiant<'sommet'>): void {
         this.voisins(ID_sommet).iterer((id) => {
             if (this.sommet(id).actif) {
                 const canalVoisin = this.connexion(id);
-                canalVoisin.envoyerJSON('config', this.noeud(id));
+                canalVoisin.envoyerJSON(CanalGenerique.CONFIG, this.noeud(id));
             }
         });
     }
 
     /**
-     * Initie la file des inactifs. La priorité est égale au nombre de voisins inactifs.
+     * Initie la file des inactifs. La priorité est déterminée par 
+     * le nombre de voisins inactifs.
      */
     initialiserFileDesInactifsDeconnectes(): void {
         // Tous les utilisateurs sont initialement inactifs.
         this.itererSommets((id, s) => {
-            const p = this.voisinsInactifs(id).taille();
+            const p = this.nombreVoisinsInactifs(id);
             this.etat().fileInactifsDeconnectes.ajouter(id, p);
         });
     }
-
+    /**
+     * Retire l'identifiant prioritaire de la file des inactifs
+     * déconnectés et le renvoie.
+     * La méthode a pour effet :
+     * - d'augmenter la priorité des utilisateurs inactifs 
+     * voisins de celui prioritaire, en diminuant de un leur
+     * classement,
+     * - de rendre actif l'utilisateur prioritaire. 
+     * @returns l'identifiant prioritaire.
+     */
     retirerSommetDeFile(): Identifiant<'sommet'> {
         const ID = this.etat().fileInactifsDeconnectes.retirer();
+        // Augmente la priorité des voisins inactifs.
         this.voisinsInactifs(ID).iterer((id) => {
-            const p = this.voisinsInactifs(id).taille();
+            const p = this.nombreVoisinsInactifs(id);
             this.etat().fileInactifsDeconnectes.modifier(id, p, p - 1);
         });
+        // Active le sommet prioritaire.
+        const sommet = this.etat().sommets.valeur(ID);
+        this.etat().sommets.modifier(ID, modificationActivite(sommet));
         return ID;
     }
+    /**
+     * Ajoute l'identifiant à la file des inactifs
+     * déconnectés. Sa priorité est déterminée par le nombre de
+     * voisins inactifs.
+     * La méthode a pour effet :
+     * - de diminuer la priorité des utilisateurs inactifs 
+     * voisins de celui ajouté, en augmentant de un leur
+     * classement.
+     * Précondition : l'utilisateur est inactif.
+     * @param ID_util identifiant de l'utilisateur.
+     */
     ajouterSommetAFile(ID_util: Identifiant<'sommet'>): void {
         const voisinsInactifs = this.voisinsInactifs(ID_util);
-        const pID = voisinsInactifs.taille();
+        const pID = this.nombreVoisinsInactifs(ID_util);
         this.etat().fileInactifsDeconnectes.ajouter(ID_util, pID);
-        this.voisinsInactifs(ID_util).iterer((id) => {
-            const p = voisinsInactifs.taille();
-            this.etat().fileInactifsDeconnectes.modifier(id, p, p + 1);
+        voisinsInactifs.iterer((id) => {
+            const p = this.nombreVoisinsInactifs(id);
+            this.etat().fileInactifsDeconnectes.modifier(id, p - 1, p);
         });
     }
 
@@ -125,7 +153,6 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
     engendrer(): ReseauMutableTchat<C> {
         const tailleTchat = this.noms.length;
         const utilisateurs: TableIdentificationMutable<'sommet', FormatUtilisateurTchat> = creerTableIdentificationMutableVide('sommet');
-        const fileInactifs: FileMutableIdentifiantsPrioritaires<'sommet'> = creerFileMutableVideIdentifiantsPrioritaires('sommet');
 
         const adjacence:
             TableIdentificationMutable<'sommet', EnsembleIdentifiants<'sommet'>> = creerTableIdentificationMutableVide('sommet');
@@ -156,13 +183,6 @@ class GenerateurReseauAnneau<C extends CanalPersistantEcritureJSON> implements G
 
         return creerReseauMutableTchat(utilisateurs, adjacence);
     }
-}
-
-function creerGenerateurReseauAnneau<C extends CanalPersistantEcritureJSON>(
-    code: string,
-    nombreTchats: number,
-    noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
-    return new GenerateurReseauAnneau<C>(code, nombreTchats, noms);
 }
 
 class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>>{
@@ -215,12 +235,6 @@ class GenerateurReseauEtoile<C extends CanalPersistantEcritureJSON> implements G
     }
 }
 
-function creerGenerateurReseauEtoile<C extends CanalPersistantEcritureJSON>(
-    code: string,
-    nombreTchats: number,
-    noms: ReadonlyArray<string>): GenerateurReseau<FormatUtilisateurTchat, C, ReseauMutableTchat<C>> {
-    return new GenerateurReseauEtoile<C>(code, nombreTchats, noms);
-}
 
 export function creerGenerateurReseau<C extends CanalPersistantEcritureJSON>(
     type : TypeTchat, 

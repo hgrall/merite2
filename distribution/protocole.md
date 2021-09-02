@@ -2,11 +2,11 @@ Jeu de distribution - Description de la structure générale et du protocole de 
 
 # Consigne
 
-- adresse du domaine
+- adresse du domaine destinataire
 - utilisateur destinataire
 - mot binaire à envoyer (le premier et le dernier étant des zéros pour rendre flou les limites)
 - taille de la trame : 
-      taille(|domaine|) + Max(taille(|utilisateursParDomaine|)) 
+      Max(taille(|domaine|)) + Max(taille(|utilisateursParDomaine|)) 
     + INUTILES_TRAME + COEUR_TRAME, soit TRAME bits
 
 # Réseau
@@ -62,22 +62,22 @@ Fournis
 - ok `inactiver[idUtil](idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu)`
 - ok `libérer[idUtil](idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)`
 - ok `informerTransmission(idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu)`
-- ok? `gagner(idMsg, idEmetteur, idDomOrigine, idDomVerrouilleur, interprétation)`
-- ok? `perdre(idMsg, idEmetteur, idDomOrigine, idDomVerrouilleur, essaiInterprétation)`
+- ok `gagner(idMsg, idEmetteur, idDomOrigine, idDomVerrouilleur, interprétation)`
+- ok `perdre(idMsg, idEmetteur, idDomOrigine, idDomVerrouilleur, essaiInterprétation)`
 
 Requis
 - ok `envoyer(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)`
 - ok `verrouiller(idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu)`
 - ok `déverrouiller(idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu)`
 - ok `transmettre(idMsg, idVerrouilleur, idDomVerrouilleur, idDomDest, contenu)`
-- ok? `vérifier(idMsg, idVerrouilleur, idDomOrigine, idDomVerrouilleur, contenu)`
+- ok `vérifier(idMsg, idVerrouilleur, idDomOrigine, idDomVerrouilleur, contenu)`
 
 ### Etat
 
 Compteur pour l'identification des messages
 - `IdentificationMsg(n, idMsg)` : `idMsg` identifie le `n`-ième message.
 
-Identité de l'utilisateur et de son domaine
+Association entre l'utilisateur et son domaine
 - `!Utilisateur(idUtil, idDom)` 
 
 Ensemble de messages avec des statuts différents 
@@ -88,9 +88,9 @@ Ensemble de messages avec des statuts différents
 - ok `Transmis(idMsg, idUtil, idDomOrigine, idDomDest, contenu)*` 
 - ok `Envoi(idMsgClient, idUtil, idDomOrigine, idDomDest, contenu)`
 - ok `AREnvoi(idMsgServeur, idUtil, idDomOrigine, idDomDest, contenu)`
-- ok? `Essai(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)*`
-- ok? `Gain(idMsg, idGagnant, idDomOrigine, idDomGagnant, interprétationCorrecte)*`
-- ok? `Perte(idMsg, idPerdant, idDomOrigine, idDomPerdant, interprétationIncorrecte)*`
+- ok `Essai(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)*`
+- ok `Gain(idMsg, idGagnant, idDomOrigine, idDomGagnant, interprétationCorrecte)*`
+- ok `Perte(idMsg, idPerdant, idDomOrigine, idDomPerdant, interprétationIncorrecte)*`
 
 Actions sur les messages
 - état `Actif` : 
@@ -98,15 +98,15 @@ Actions sur les messages
   - vérifier (après interprétation)
   - déverrouiller
 - état `Transit` :
-  - ok verrouiller
+  - verrouiller
 - état `Verrouillable` : 
-  - ok aucune action
+  - aucune action
 - état `Inactif`:
-  - ok aucune action
+  - aucune action
 - états `Envoi`, `AREnvoi`:
-  - ok aucune action
+  - aucune action
 - états `Transmis, Gain, Parte, Essai` :
-  - omettre  
+  - TODO omettre  
   
 ### Entrées
 
@@ -116,9 +116,9 @@ interactions avec l'utilisateur
 - ok `EntréeVerrouillage(idMsg)`
 - ok `EntréeDéverrouillage(idMsg)`
 - ok `EntréeTransmission(idMsg, idDomDest)`
-- ok? `EntréeInterprétation(idMsg, contenu)`
+- ok `EntréeInterprétation(idMsg, contenu)`
 
-- `EntréeIgnorer(idMsg)`
+- TODO `EntréeOmettre(idMsg)`
 
 ### Règles
 
@@ -241,7 +241,7 @@ ok Vérifié - Vérifier - Envoyer au serveur une interprétation.
     & Essai(idMsg, idEmetteur, idDomOrigine, idDom, contenu) 
 ```
 
-ok Vérifié? - Vérifier - Gagner par une interprétation correcte.
+ok Vérifié - Vérifier - Gagner par une interprétation correcte.
 ```
       gagner(idMsg, idEmetteur, idDomOrigine, idDom, interprétation)
     & !Essai(idMsg, idEmetteur, idDomOrigine, idDom, contenu) 
@@ -249,7 +249,7 @@ ok Vérifié? - Vérifier - Gagner par une interprétation correcte.
   ->  Gain(idMsg, idUtil, idDomOrigine, idDom, interprétation) 
 ```
 
-ok Vérifié? - Vérifier - Informer les autres du gain.
+ok Vérifié - Vérifier - Informer les autres du gain.
 ```
       gagner(idMsg, idEmetteur, idDomOrigine, idDom, interprétation)
     & Inactif(idMsg, idVerrouilleur, idDomOrigine, idDom, contenu) 
@@ -257,7 +257,7 @@ ok Vérifié? - Vérifier - Informer les autres du gain.
     & Gain(idMsg, idVerrouilleur, idDomOrigine, idDom, interprétation) 
 ```
 
-ok Vérifié? - Vérifier - Perdre par une interprétation incorrecte.
+ok Vérifié - Vérifier - Perdre par une interprétation incorrecte.
 ```
       perdre(idMsg, idEmetteur, idDomOrigine, idDom, interprétation)
     & Essai(idMsg, idEmetteur, idDomOrigine, idDom, contenu) 
@@ -266,7 +266,7 @@ ok Vérifié? - Vérifier - Perdre par une interprétation incorrecte.
     & Transit(idMsg, idEmetteur, idDomOrigine, idDom, contenu)  
 ```
 
-ok Vérifié? - Vérifier - Informer les autres de la perte.
+ok Vérifié - Vérifier - Informer les autres de la perte.
 ```
       perdre(idMsg, idEmetteur, idDomOrigine, idDom, interprétation)
     & Inactif(idMsg, idVerrouilleur, idDomOrigine, idDom, contenu) 
@@ -361,7 +361,6 @@ ok Vérifié - Verrouiller - Accuser l'échec
     & !TableMessages(idDomDest, idMsg, Transit, idEmetteur, idDomOrigine, idDomDest, contenu, idVerrouilleur)
     & (idVerrouilleur != PERSONNE)
   ->  accuserEchecVerrouiller[idCandidatVerrouilleur](idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu)
-    & Diffusion[inactiver](idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu, crible(lu, (u => u != idVerrouilleur)))
 ```
 
 ok Vérifié - Déverrouiller - Diffuser aux autres utilisateurs pour libérer (aucun accusé).

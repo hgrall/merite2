@@ -23,6 +23,9 @@
         "brouillon",
         "obsolete",
         "prototype",
-        "distribution_vx"
+        "distribution_vx",
+        "distribution_juliana",
+        "distribution",
+        "tsconfig.json"
     ]
 }

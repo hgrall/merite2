@@ -1,3 +1,4 @@
+import { CanalGenerique } from "../../bibliotheque/communication/communicationGenerique";
 import { GenerateurReseau, ReseauMutable, ReseauMutableParEnveloppe } from "../../bibliotheque/applications/reseau";
 import { CanalPersistantEcritureJSON } from "../../bibliotheque/communication/connexion";
 import { binaire, FormatBinaire, mot, Mot, motAleatoire, tailleEnBinaire } from "../../bibliotheque/types/binaire";
@@ -8,14 +9,14 @@ import { creerTableauMutableVide, TableauMutable } from "../../bibliotheque/type
 import { creerTableIdentificationMutableVide, TableIdentification, TableIdentificationMutable } from "../../bibliotheque/types/tableIdentification";
 import { modificationActivite } from "../../bibliotheque/types/typesAtomiques";
 import {
-    COEUR_TRAME, configuration,
+    COEUR_TRAME, configurationDistribution,
     estDomaine,
-    estUtilisateur, FormatConfigDistribution,
+    estUtilisateur, FormatConfigurationDistribution,
     FormatConsigne,
     FormatDomaineDistribution,
     FormatSommetDistribution,
     FormatUtilisateurDistribution,
-    INUTILES_TRAME, NoeudDomaineDistribution
+    INUTILES_TRAME, NoeudSommetDistribution
 } from "../commun/echangesDistribution";
 
 /**
@@ -29,13 +30,27 @@ interface GrapheReseauDistribution {
      */
     domaine(ID_util: Identifiant<"sommet">): Identifiant<'sommet'>;
     /**
+     * Table décrivant les domaines voisins.
+     * @param ID_dom identifiant de domaine.
+     * @returns une table d'identification donnant
+     *  la description de chaque domaine voisin.
+     */
+     domainesVoisins(ID_dom: Identifiant<"sommet">): TableIdentificationMutable<"sommet", FormatSommetDistribution>;
+    /**
+     * Ensemble des utilisateurs du domaine spécifié par
+     * l'identifiant.
+     * @param ID_Dom identifiant du domaine.
+     * @returns ensemble des identifiants des utilisateurs. 
+     */
+    utilisateursDansDomaine(ID_Dom: Identifiant<"sommet">): EnsembleIdentifiants<"sommet">;
+    /**
      * Utilisateurs inactifs voisins d'un utilisateur donné.
      * @param ID_util identifiant de l'utilisateur.
      * @returns ensemble des utilisateurs inactifs appartenant au même domaine que l'utilisateur identifié par ID_util et distincts de celui-ci. 
      */
     utilisateursInactifsVoisins(ID_util: Identifiant<"sommet">): EnsembleIdentifiants<"sommet">;
     /**
-     * Nombre des utilisateurs actifs à 'intérieur du domaine d'un
+     * Nombre des utilisateurs actifs à l'intérieur du domaine d'un
      *  utilisateur donné.
      * @param ID_util identifiant de l'utilisateur.
      * @returns taille de l'ensemble des utilisateurs actifs appartenant au domaine de l'utilisateur ID_util. 
@@ -48,16 +63,23 @@ interface GrapheReseauDistribution {
      */
     consigneParDestination(ID_dest: Identifiant<'sommet'>): FormatConsigne;
     /**
-     * Diffuse la configuration aux autres utilisateurs du domaine.
-     * @param ID_util identifiant d'un utilisateur
+     * Configuration de l'utilisateur dont l'identifiant est
+     * spécifié.
+     * @param ID_util identifiant de l'utilisateur.
      */
-    diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util: Identifiant<'sommet'>): void;
+    configurationUtilisateur(ID_util: Identifiant<'sommet'>): FormatConfigurationDistribution;
     /**
-     * Diffuse la configuration aux utilisateurs des domaines voisins.
+     * Met à jour la configuration des autres utilisateurs 
+     * du domaine de l'utilisateur passé en argument. 
+     * @param ID_sommet identifiant du nouvel utilisateur.
+     */
+    mettreAJourConfigurationAutresUtilisateursDuDomaine(ID_util: Identifiant<'sommet'>): void;
+    /**
+     * Met à jour la configuration aux utilisateurs des 
+     * domaines voisins.
      * @param ID_sommet identifiant du domaine
      */
-    diffuserConfigurationAuxUtilisateursDesDomainesVoisins(ID_domaine: Identifiant<'sommet'>): void;
-
+    mettreAJourConfigurationUtilisateursDesDomainesVoisins(ID_domaine: Identifiant<'sommet'>): void;
 }
 
 /**
@@ -82,22 +104,42 @@ export class ReseauMutableDistribution<
     /**
      * Domaine de l'utilisateur.
      * @param ID_util identifiant de l'utilisateur.
+     * @returns identifiant du domaine.
      */
     domaine(ID_util: Identifiant<"sommet">): Identifiant<'sommet'> {
         return this.etat().adjacence.valeur(ID_util).selectionIdentifiant().valeur(); // 1 seul sommet adjacent : le domaine.
     }
+    /**
+     * Ensemble des utilisateurs du domaine spécifié par
+     * l'identifiant.
+     * @param ID_Dom identifiant du domaine.
+     * @returns ensemble des identifiants des utilisateurs du domaine. 
+     */ 
+    utilisateursDansDomaine(ID_Dom: Identifiant<"sommet">): EnsembleIdentifiants<"sommet"> {
+        return this.cribleVoisins(ID_Dom, (ID, s) => estUtilisateur(s))
+    }
+
+    /**
+     * Ensemble des utilisateurs inactifs du domaine de l'utilisateur
+     * dont l'identifiant est spécifié.
+     * @param ID_util identifiant de l'utilisateur. 
+     * @returns ensemble des identifiants des utilisateurs 
+     * inactifs voisins. 
+     */
     utilisateursInactifsVoisins(
         ID_util: Identifiant<"sommet">): EnsembleIdentifiants<"sommet"> {
         const ID_dom = this.domaine(ID_util);
         return this.cribleVoisins(ID_dom, (ID, s) => estUtilisateur(s) && !s.actif && !sontIdentifiantsEgaux(ID, ID_util));
     }
+    /**
+     * Nombre des utilisateurs actifs à l'intérieur du domaine d'un
+     *  utilisateur donné.
+     * @param ID_util identifiant de l'utilisateur.
+     * @returns nombre d'utilisateurs actifs appartenant au domaine de l'utilisateur ID_util. 
+     */
     nombreUtilisateursActifsDeSonDomaine(ID_util: Identifiant<"sommet">): number {
         const ID_dom = this.domaine(ID_util);
         return this.tailleCribleVoisins(ID_dom, (ID, s) => estUtilisateur(s) && s.actif);
-    }
-
-    utilisateursDansDomaine(ID_Dom: Identifiant<"sommet">): EnsembleIdentifiants<"sommet"> {
-        return this.cribleVoisins(ID_Dom, (ID, s) => estUtilisateur(s))
     }
 
     /**
@@ -113,15 +155,31 @@ export class ReseauMutableDistribution<
             }
         });
     }
-
+    /**
+     * Retire l'utilisateur prioritaire de la file des utilisateurs 
+     * inactifs et déconnectés et renvoie son identifiant.
+     * La méthode a aussi pour effet :
+     * - de diminuer la priorité des utilisateurs inactifs 
+     * déconnectés appartenant au domaine de l'utilisateur 
+     * prioritaire, en augmentant de un leur classement,
+     * - d'activer l'utilisateur prioritaire,
+     * - d'activer le domaine, un domaine devenant actif 
+     * dès qu'il possède un utilisateur actif (variante : si tous ses * utilisateurs sont actifs).
+     * @returns identifiant de l'utilisateur prioritaire.
+     */
     retirerSommetDeFile(): Identifiant<'sommet'> {
         const ID_util = this.etat().fileInactifsDeconnectes.retirer();
+        // Diminue la priorité des utilisateurs déconnectés et 
+        //inactifs voisins. 
         const p = this.nombreUtilisateursActifsDeSonDomaine(ID_util);
         this.utilisateursInactifsVoisins(ID_util).iterer((ID) => {
             this.etat().fileInactifsDeconnectes.modifier(ID, p, p + 1);
         });
-        // Active le domaine s'il est inactif.
-        if (this.nombreUtilisateursActifsDeSonDomaine(ID_util) === 0) {
+        // Active l'utilisateur prioritaire.
+        const sommet = this.etat().sommets.valeur(ID_util);
+        this.etat().sommets.modifier(ID_util, modificationActivite(sommet));
+        // Active le domaine s'il était inactif.
+        if (this.nombreUtilisateursActifsDeSonDomaine(ID_util) === 1) {
             const ID_dom = this.domaine(ID_util);
             const dom = this.sommet(ID_dom);
             this.etat().sommets.modifier(
@@ -129,14 +187,24 @@ export class ReseauMutableDistribution<
         }
         return ID_util;
     }
+    /**
+     * Ajoute l'utilisateur déconnecté et inactif à la file, avec pour prorité le nombre d'utilisateurs actifs dans son domaine.
+     * La méthode a aussi pour effet :
+     * - d'augmenter la priorité des autres utilisateurs inactifs
+     *  et déconnectés, en diminuant de un leur classement,
+     * - de désactiver le domaine s'il n'a plus d'utilisateurs actifs
+     *  (variante : s'il possède un utilisateur inactif).
+     * @param ID_util identifiant de l'utilisateur déconnecté.
+     */
     ajouterSommetAFile(ID_util: Identifiant<'sommet'>): void {
         const p = this.nombreUtilisateursActifsDeSonDomaine(ID_util);
-        this.etat().fileInactifsDeconnectes.ajouter(ID_util, p - 1);
+        this.etat().fileInactifsDeconnectes.ajouter(ID_util, p);
+        // Augmente la priorité des voisins dans la file.
         this.utilisateursInactifsVoisins(ID_util).iterer((ID) => {
-            this.etat().fileInactifsDeconnectes.modifier(ID, p, p - 1);
+            this.etat().fileInactifsDeconnectes.modifier(ID, p + 1, p);
         });
-        // Désactive le domaine s'il devient inactif.
-        if (p === 1) {
+        // Désactive le domaine s'il n'a plus d'utilisateurs actifs.
+        if (p === 0) {
             const ID_dom = this.domaine(ID_util);
             const dom = this.sommet(ID_dom);
             this.etat().sommets.modifier(
@@ -152,11 +220,22 @@ export class ReseauMutableDistribution<
     consigneParDestination(ID_dest: Identifiant<'sommet'>): FormatConsigne {
         return this.consignesParDestination.valeur(ID_dest);
     }
-
+    /**
+     * Nombre d'utilisateurs du domaine de l'utilisateur dont
+     * l'identifiant est spécifié.
+     * @param ID_util identifiant de l'utilisateur.
+     * @returns Taille de son domaine (nombre d'utilisateurs).
+     */
     tailleDeSonDomaine(ID_util: Identifiant<"sommet">): number {
         const ID_dom = this.domaine(ID_util);
         return this.tailleCribleVoisins(ID_dom, (ID, s) => estUtilisateur(s));
     }
+    /**
+     * Table décrivant les domaines voisins.
+     * @param ID_dom identifiant de domaine.
+     * @returns une table d'identification donnant
+     *  la description de chaque domaine voisin.
+     */
     domainesVoisins(ID_dom: Identifiant<"sommet">): TableIdentificationMutable<"sommet", FormatSommetDistribution> {
         const id_voisins = this.cribleVoisins(ID_dom, (ID, s) => estDomaine(s))
         let voisins = creerTableIdentificationMutableVide<"sommet", FormatSommetDistribution>("sommet");
@@ -165,7 +244,31 @@ export class ReseauMutableDistribution<
         })
         return voisins;
     }
-    diffuserConfigurationAuxAutresUtilisateursDuDomaine(ID_util: Identifiant<'sommet'>): void {
+    /**
+     * Configuration associée à l'utilisateur dont l'identifant est 
+     * spécifié. Le configuration contient :
+     * - l'identifiant de l'utilisateur,
+     * - la description du noeud associé à son domaine
+     *  (domaine et tous ses voisins, utilisateurs comme domaines),
+     * - le nombre d'utilisateurs actifs de son domaine,
+     * - la taille du domaine (soit le nombre d'utilisateurs).
+     * @param ID_util identifiant de l'utilisateur.
+     * @returns la configuration au format.
+     */
+    configurationUtilisateur(ID_util: Identifiant<'sommet'>): FormatConfigurationDistribution {
+        const ID_domaine = this.domaine(ID_util);
+        const noeudDomaine = this.noeud(ID_domaine);
+        const nombreActifsDomaine = this.nombreUtilisateursActifsDeSonDomaine(ID_util);
+        const tailleDomaine = this.tailleDeSonDomaine(ID_util);
+        return configurationDistribution(ID_util, noeudDomaine.toJSON(), nombreActifsDomaine, tailleDomaine);
+    }
+    /**
+     * Met à jour la configuration des autres utilisateurs actifs 
+     * du domaine.
+     * @param ID_util identifiant de l'utilisateur nouvellement
+     *  connecté.
+     */
+    mettreAJourConfigurationAutresUtilisateursDuDomaine(ID_util: Identifiant<'sommet'>): void {
         this
             // sélection des autres utilisateurs actifs du même domaine
             .cribleVoisins(
@@ -175,12 +278,16 @@ export class ReseauMutableDistribution<
             .iterer((id) => {
                 const canalVoisin = this.connexion(id);
                 const config = this.configurationUtilisateur(id);
-                canalVoisin.envoyerJSON('config', config);
+                canalVoisin.envoyerJSON(CanalGenerique.CONFIG, config);
             }
             );
     }
-
-    diffuserConfigurationAuxUtilisateursDesDomainesVoisins(ID_domaine: Identifiant<'sommet'>): void {
+    /**
+     * Met à jour la configuration des utilisateurs actifs des
+     *  domaines voisins actifs.
+     * @param ID_domaine identifiant du domaine.
+     */
+    mettreAJourConfigurationUtilisateursDesDomainesVoisins(ID_domaine: Identifiant<'sommet'>): void {
         this
             // Sélection des domaines voisins
             .domainesVoisins(ID_domaine)
@@ -197,23 +304,24 @@ export class ReseauMutableDistribution<
                     .iterer((idUA) => {
                         const canalVoisin = this.connexion(idUA);
                         const config = this.configurationUtilisateur(idUA);
-                        canalVoisin.envoyerJSON('config', config);
+                        canalVoisin.envoyerJSON(CanalGenerique.CONFIG, config);
                     })
             });
     }
-
-    configurationUtilisateur(ID_util: Identifiant<'sommet'>): FormatConfigDistribution {
-        const sommetUtilisateur = this.sommet(ID_util) as FormatUtilisateurDistribution;
-        const ID_domaine = this.domaine(ID_util);
-        const noeudDomaine = this.noeud(ID_domaine) as NoeudDomaineDistribution;
-        const nombreActifsDomaine = this.nombreUtilisateursActifsDeSonDomaine(ID_util);
-        const tailleDomaine = this.tailleDeSonDomaine(ID_util);
-        const domainesVoisins = this.domainesVoisins(ID_domaine);
-        return configuration(noeudDomaine.toJSON(), sommetUtilisateur, nombreActifsDomaine, tailleDomaine, domainesVoisins.toJSON())
-    }
 }
 
-export function creerReseauMutableDistribution<
+/**
+ * Fabrique un réseau mutable de distribution. 
+ * @param sommets table d'identification décrivant 
+ * les sommets du réseau (utilisateurs et domaines).
+ * @param adjacence table d'identification associant 
+ * à un sommet un ensemble de sommets. 
+ * @param consignesParDestination table d'identification
+ *  associant à un utilisateur la consigne dont il est 
+ * le destinataire.
+ * @returns un réseau mutable de distribution. 
+ */
+function creerReseauMutableDistribution<
     C extends CanalPersistantEcritureJSON>
     (
         sommets: TableIdentificationMutable<'sommet', FormatSommetDistribution>,
@@ -225,6 +333,14 @@ export function creerReseauMutableDistribution<
     return new ReseauMutableDistribution(sommets, adjacence, consignesParDestination);
 }
 
+/**
+ * Classe décrivant un générateur d'un réseau de distribution. 
+ * Un générateur permet d'engendrer :
+ * - les domaines en anneau,
+ * - les utilisateurs en étoile,
+ * - les consignes,
+ * - finalement, le réseau.
+ */
 class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implements GenerateurReseau<FormatSommetDistribution, C, ReseauMutableDistribution<C>>{
 
     private generateurIdentifiantsDomaine
@@ -350,14 +466,14 @@ class GenerateurReseauDistribution<C extends CanalPersistantEcritureJSON> implem
         return creerReseauMutableDistribution(this.sommets, this.adjacence, this.consignesParDestination);
     }
 
-    /*TODO test(reseau : ReseauMutableDistribution<C>, ID_util : Identifiant<'sommet'>) : Noeud<FormatSommetDistribution> {
-        let ID_dom = reseau.domaine(ID_util);
-        return reseau.noeud(ID_dom);
-    }*/
-
-
 }
-
+/**
+ * Fabrique un générateur de réseaux de distribution.
+ * @param cleAcces clé d'accès.
+ * @param nombreDomaines nombre total de domaines
+ * @param effectifParDomaine nombre total d'utilisateurs par domaine.
+ * @returns un générateur de réseau.
+ */
 export function creerGenerateurReseauDistribution<C extends CanalPersistantEcritureJSON>(
     cleAcces: string,
     nombreDomaines: number,
@@ -372,7 +488,7 @@ export function creerGenerateurReseauDistribution<C extends CanalPersistantEcrit
  * complété à gauche et à droite par un zéro.
  * @returns mot binaire de taille 't + 2', commençant et finissant par 0, d'intérieur aléatoire.
  */
-export function generationAleatoireMotConsigne(): Mot {
+function generationAleatoireMotConsigne(): Mot {
     let m = motAleatoire(COEUR_TRAME - 2).tableauBinaire();
     let res = [0];
     for (let j of m) {

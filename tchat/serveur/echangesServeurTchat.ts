@@ -1,4 +1,4 @@
-import { FormatMessageAvertissement, FormatMessageErreur } from "../../bibliotheque/applications/message";
+import { FormatMessageAvertissement, FormatMessageErreur } from "../../bibliotheque/communication/communicationGenerique";
 import { dateMaintenant } from "../../bibliotheque/types/date";
 import { Identifiant } from "../../bibliotheque/types/identifiant";
 import { Tableau } from "../../bibliotheque/types/tableau";

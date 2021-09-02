@@ -23,7 +23,7 @@ describe('Réseau distribution', () => {
     let genR = creerGenerateurReseauDistribution<ConnexionFictive>("code", 5, [3, 3, 3, 3, 3]);
     let r: ReseauMutableDistribution<ConnexionFictive>
         = genR.engendrer();
-    const id1 = r.activerSommet(cf(17));
+    const id1 = r.connecterSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "utilisateur actif - 1 voisin actif (le domaine)",
@@ -47,7 +47,7 @@ describe('Réseau distribution', () => {
     );
 
     for (let i = 0; i < 4; i++) {
-        const idi = r.activerSommet(cf(18 + i));
+        const idi = r.connecterSommet(cf(18 + i));
         const ni = r.noeud(idi);
         testUnitaireJsonJson(
             "utilisateur actif - 1 voisin actif (le domaine)",
@@ -73,7 +73,7 @@ describe('Réseau distribution', () => {
     );
 
     for (let i = 0; i < 5; i++) {
-        const idi = r.activerSommet(cf(22 + i));
+        const idi = r.connecterSommet(cf(22 + i));
         const ni = r.noeud(idi);
         testUnitaireJsonJson(
             "utilisateur actif - 1 voisin actif (le domaine)",
@@ -88,7 +88,7 @@ describe('Réseau distribution', () => {
     }
 
     for (let i = 0; i < 5; i++) {
-        const idi = r.activerSommet(cf(22 + i));
+        const idi = r.connecterSommet(cf(22 + i));
     }
     testUnitaireJsonJson(
         "nombre d'actifs",

@@ -5,6 +5,9 @@ import { pseudos } from "../../tchat/serveur/pseudos";
 
 export type TypeTchat = 'etoile' | 'anneau';
 
+/**
+ * TODO à revoir comme distribution. A Commenter !!!
+ */
 export interface ConfigurationJeuTchat {
     readonly prefixe: string;
     readonly suffixe: string;
@@ -22,19 +25,7 @@ export type TypeDistribution = 'anneau_etoile';
 export interface ConfigurationJeuDistribution {
     readonly prefixe: string;
     readonly suffixe: string;
-    readonly post: {
-        readonly envoyer: string;
-        readonly verrouiller: string;
-        readonly deverrouillageTODO: string;
-    };
-    readonly getPersistant: {
-        readonly chemin : string;
-        readonly accuserEnvoi : string;
-        readonly recevoir : string;
-        readonly accuserSuccesVerrouiller : string;
-        readonly accuserEchecVerrouiller : string;
-        readonly inactiver : string;
-    };
+    readonly getPersistant: string;
     readonly type: TypeDistribution;
     readonly nombreDomaines: number;
     readonly effectifParDomaine: ReadonlyArray<number>
@@ -81,19 +72,7 @@ export function configurationClassiqueJeux(): ConfigurationJeux {
         distribution: {
             prefixe: 'jeu',
             suffixe: 'distribution',
-            post: {
-                envoyer: "envoi",
-                verrouiller: "verrou",
-                deverrouillageTODO: "deverrouiller",
-            },
-            getPersistant:  {
-                chemin : "reception",
-                accuserEnvoi : "arenvoi",
-                recevoir : "transit",
-                accuserSuccesVerrouiller : "succesVerrou",
-                accuserEchecVerrouiller : "echecVerrou",
-                inactiver : "verrou"
-            },
+            getPersistant: "reception",
             type: "anneau_etoile",
             nombreDomaines: 5,
             effectifParDomaine: [3, 3, 3, 3, 3]

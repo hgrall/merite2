@@ -8,10 +8,10 @@
 
 import { FormatNoeud, Noeud } from "../../bibliotheque/applications/noeud";
 import { FormatBinaire } from "../../bibliotheque/types/binaire";
-import { FormatMessage } from "../../bibliotheque/applications/message";
-import {FormatTableIdentification} from "../../bibliotheque/types/tableIdentification";
-import {FormatIdentifiable, Identifiant} from "../../bibliotheque/types/identifiant";
-import {Activable, Deux} from "../../bibliotheque/types/typesAtomiques";
+import { FormatMessage } from "../../bibliotheque/communication/communicationGenerique";
+import { FormatTableIdentification } from "../../bibliotheque/types/tableIdentification";
+import { FormatIdentifiable, Identifiant } from "../../bibliotheque/types/identifiant";
+import { Activable, Deux } from "../../bibliotheque/types/typesAtomiques";
 import { dateMaintenant } from "../../bibliotheque/types/date";
 
 /**
@@ -100,14 +100,6 @@ export function utilisateurDistribution(
         consigne: consigne
     };
 }
-/** 
- * Noeud pour un utilisateur.
-*/
-export type NoeudUtilisateurDistribution = Noeud<FormatUtilisateurDistribution>;
-/**
- * Format d'un noeud pour un utilisateur.
- */
-export type FormatNoeudUtilisateurDistribution = FormatNoeud<FormatUtilisateurDistribution>;
 
 /**
  * Format JSON pour un domaine du réseau de distribution.
@@ -136,14 +128,6 @@ export function domaineDistribution(
         domaine: domaine
     };
 }
-/** 
- * Noeud pour un domaine.
-*/
-export type NoeudDomaineDistribution = Noeud<FormatDomaineDistribution>;
-/**
- * Format d'un noeud pour un domaine.
- */
-export type FormatNoeudDomaineDistribution = FormatNoeud<FormatDomaineDistribution>;
 
 /**
  * Type des sommets pour la distribution.
@@ -160,49 +144,60 @@ export function estUtilisateur(s: FormatSommetDistribution): s is FormatUtilisat
     return ("utilisateur" in s);
 }
 
+/**
+ * Teste si le sommet est un domaine.
+ * @param s sommet au format.
+ * @returns un prédicat de typage.
+ */
 export function estDomaine(s: FormatSommetDistribution): s is FormatDomaineDistribution {
     return !estUtilisateur(s);
 }
 
+/** 
+ * Noeud pour un sommet de distribution.
+*/
+export type NoeudSommetDistribution = Noeud<FormatSommetDistribution>;
+/**
+ * Format d'un noeud pour un sommet de distribution.
+ */
+export type FormatNoeudSommetDistribution = FormatNoeud<FormatSommetDistribution>;
+
+
+
 /**
  * Type des messages pour la distribution.
- * - Canaux du serveur (S)
- *   - initier : INIT
- *   - verrouiller : VERROU
- *   - transmettre : SUIVANT
- *   - verifier : ESSAI
- *   - deverrouiller : LIBE
- * - Canaux du client (C)
- *   - accuserInitier : INIT (AR)
- *   - recevoir : TRANSIT
- *   - activer : ACTIF
- *   - gagner : GAGNE
- *   - perdre : PERDU
- *   - detruire : DESTRUCT
+ * - Transit(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)
+ * - Verrouillable(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)
+ * - Actif(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)
+ * - Inactif(idMsg, idVerrouilleur, idDomOrigine, idDomDest, contenu
+ * - Transmis(idMsg, idUtil, idDomOrigine, idDomDest, contenu)
+ * - Envoi(idMsgClient, idUtil, idDomOrigine, idDomDest, contenu)
+ * - AREnvoi(idMsgServeur, idUtil, idDomOrigine, idDomDest, contenu)
+ * - Essai(idMsg, idEmetteur, idDomOrigine, idDomDest, contenu)
+ * - Gain(idMsg, idGagnant, idDomOrigine, idDomGagnant, interprétationCorrecte)
+ * - Perte(idMsg, idPerdant, idDomOrigine, idDomPerdant, interprétationIncorrecte)
  */
 export enum TypeMessageDistribution {
-    ENVOI = "envoi", // ok - S - C (AR)
-    AREnvoi = "AREnvoi",
-    TRANSIT = "transit", // ok - C
-    VERROUILLABLE = "verrouillable", // ok - C - S
-    ACTIF = "actif", // ok
-    INACTIF = "inactif", // ok
-    //SUIVANT, // ok - S
-    //AR_SUIVANT,
-    //ESSAI, // ok - S
-    LIBE= 'libe', // ok - S
-
-    //ACTIF, // ok - C
-    //GAIN, // ok - C
-    //PERTE, // ok - C
-    //DESTRUCT, // ok - C
-    //ECHEC_VERROU, // ok - C
-    //INFO
+    TRANSIT = "transit",
+    VERROUILLABLE = "verrouillable",
+    ACTIF = "actif",
+    INACTIF = "inactif",
+    TRANSMIS = "transmis",
+    ENVOI = "envoi",
+    AR_ENVOI = "arEnvoi",
+    ESSAI = "essai",
+    GAIN = "gain",
+    PERTE = "perte"
 }
 
 /**
  * Corps d'un message pour la distribution.
- * TODO   
+ * - utilisateur émetteur
+ * - domaine d'origine
+ * - domaine de destination
+ * - contenu (binaire)
+ * Remarque : l'interprétation des champs peut varier. 
+ * Voir le protocole pour ces variations.
  */
 export interface FormatCorpsMessageDistribution {
     readonly ID_utilisateur_emetteur: Identifiant<'sommet'>;
@@ -220,6 +215,14 @@ export interface FormatCorpsMessageDistribution {
 */
 export type FormatMessageDistribution = FormatMessage<TypeMessageDistribution, FormatCorpsMessageDistribution>;
 
+/**
+ * Fabrique d'un message en transit.
+ * TODO 
+ * @param e 
+ * @param ID_util_dest 
+ * @param ID_msg 
+ * @returns 
+ */
 export function messageTransit(
     e: FormatMessageDistribution,
     ID_util_dest: Identifiant<'sommet'>,
@@ -237,7 +240,12 @@ export function messageTransit(
     };
 }
 
-
+/**
+ * Fabrique d'un message verrouillable (transitoire).
+ * TODO
+ * @param msg 
+ * @returns 
+ */
 export function messageVerrou(
     msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
@@ -248,6 +256,12 @@ export function messageVerrou(
     };
 }
 
+/**
+ * Fabrique d'un message actif.
+ * TODO
+ * @param msg 
+ * @returns 
+ */
 export function messageActif(
     msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
@@ -258,6 +272,11 @@ export function messageActif(
     };
 }
 
+/**
+ * Fabrique d'un message inactif.
+ * @param msg 
+ * @returns 
+ */
 export function messageInactif(
     msg: FormatMessageDistribution): FormatMessageDistribution {
     return {
@@ -268,27 +287,53 @@ export function messageInactif(
     };
 }
 
-
-export interface FormatConfigDistribution {
-    readonly utilisateur: FormatUtilisateurDistribution;
-    readonly noeudDomaine: FormatNoeudDomaineDistribution;
-    readonly utilisateursActifsDuDomaine: number;
+/**
+ * Format d'une configuration de distribution.
+ * - utilisateur : identité de l'utilisateur 
+ * - noeud associé au domaine de l'utilisateur : domaine, domaines voisins, utilisateurs du domaine
+ * - nombre d'utilisateurs actifs dans le domaine,
+ * - nombre total d'utilisateurs dans le domaine.
+ */
+export interface FormatConfigurationDistribution {
+    readonly utilisateur: Identifiant<'sommet'>;
+    readonly noeudDomaine: FormatNoeudSommetDistribution;
+    readonly nombreUtilisateursActifsDuDomaine: number;
     readonly tailleDomaine: number;
-    readonly domainesVoisins: FormatTableIdentification<"sommet", FormatSommetDistribution>
+}
+/**
+ * Fabrique d'une configuration.
+ * @param utilisateur 
+ * @param noeudDomaine 
+ * @param nombreUtilisateursActifsDuDomaine 
+ * @param tailleDomain 
+ * @returns 
+ */
+export function configurationDistribution(
+    utilisateur: Identifiant<'sommet'>,
+    noeudDomaine: FormatNoeudSommetDistribution,
+    nombreUtilisateursActifsDuDomaine: number,
+    tailleDomaine: number,
+): FormatConfigurationDistribution {
+    return {
+        utilisateur: utilisateur,
+        noeudDomaine: noeudDomaine,
+        nombreUtilisateursActifsDuDomaine: nombreUtilisateursActifsDuDomaine,
+        tailleDomaine: tailleDomaine,
+    }
 }
 
-export function configuration(
-    noeudDomaine: FormatNoeudDomaineDistribution,
-    utilisateur: FormatUtilisateurDistribution,
-    utilisateursActifsDuDomaine: number,
-    tailleDomain: number,
-    domainesVoisins:  FormatTableIdentification<"sommet", FormatSommetDistribution>
-): FormatConfigDistribution {
-    return {
-        noeudDomaine: noeudDomaine,
-        utilisateur: utilisateur,
-        utilisateursActifsDuDomaine: utilisateursActifsDuDomaine,
-        tailleDomaine: tailleDomain,
-        domainesVoisins: domainesVoisins
-    }
+/**
+ * Type des canaux fournis par le serveur du jeu de distribution.
+ */
+ export enum CanalServeur {
+    ENVOI = "envoyer",
+    VERROU = "verrouiller"
+}
+
+/**
+ * Type des canaux fournis par le client du jeu de distribution.
+ */
+ export enum CanalClient {
+    RECEPTION = "recevoir",
+    INACTIVATION = "inactiver"
 }

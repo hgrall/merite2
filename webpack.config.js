@@ -6,9 +6,8 @@ const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
 var config = {
     entry: {
         tchatReact: "./build/tchat/client/renduTchat.js",
-        accueilReact: "./build/accueil/client/Accueil/renduAccueil.js",
-        connexionReact: "./build/accueil/client/Connexion/renduConnexion.js",
-        distributionReact:"./build/distribution/client/renduDistribution.js"
+        accueilReact: "./build/accueil/client/accueil/renduAccueil.js",
+        connexionReact: "./build/accueil/client/connexion/renduConnexion.js",
     }, // Les clés remplacent name ci-dessous.
     output: {
         path: __dirname + "/build",
@@ -64,12 +63,6 @@ var config = {
             template: 'site/interfaceTemplate.html',
             filename: "interfaceConnexion.html",
             chunks: ['connexionReact']
-        }),
-        new HtmlWebpackPlugin({
-            title: 'Distribution',
-            template: 'site/interfaceTemplate.html',
-            filename: "interfaceDistribution.html",
-            chunks: ['distributionReact']
         }),
         new CopyPlugin({
             patterns: [

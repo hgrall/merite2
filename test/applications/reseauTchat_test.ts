@@ -20,7 +20,7 @@ function cf(n : number) : ConnexionFictive {
 describe('Réseau tchat étoile', () => {
     let genR = creerGenerateurReseau<ConnexionFictive>("etoile", "code", 2, ["coco", "lulu", "zaza"]);
     let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
-    const id1 = r.activerSommet(cf(17));
+    const id1 = r.connecterSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -43,7 +43,7 @@ describe('Réseau tchat étoile', () => {
         1,
         r.etat().fileInactifsDeconnectes.etat().prioriteMaximale
     );
-    const id2 = r.activerSommet(cf(19));
+    const id2 = r.connecterSommet(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -56,7 +56,7 @@ describe('Réseau tchat étoile', () => {
         true,
         r.sontVoisins(id1, identifiant('sommet', id2.val))
     );
-    const id3 = r.activerSommet(cf(22));
+    const id3 = r.connecterSommet(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
@@ -69,7 +69,7 @@ describe('Réseau tchat étoile', () => {
         true,
         r.sontVoisins(id1, identifiant('sommet', id3.val))
     );    
-    const id4 = r.activerSommet(cf(24));
+    const id4 = r.connecterSommet(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -86,7 +86,7 @@ describe('Réseau tchat étoile', () => {
         24,
         r.connexion(id4)
     );
-    r.inactiverSommet(id4);
+    r.deconnecterSommet(id4);
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre inactif - 0 voisin actif",
@@ -99,7 +99,7 @@ describe('Réseau tchat anneau', () => {
     let genR = creerGenerateurReseau<ConnexionFictive>("anneau", "code", 2, ["coco", "lulu", "momo", "zaza"]);
     let r: ReseauMutableTchat<ConnexionFictive> = genR.engendrer();
     
-    const id1 = r.activerSommet(cf(17));
+    const id1 = r.connecterSommet(cf(17));
     let n = r.noeud(id1);
     testUnitaireJsonJson(
         "centre actif - 0 voisin actif",
@@ -122,7 +122,7 @@ describe('Réseau tchat anneau', () => {
         1,
         r.etat().fileInactifsDeconnectes.etat().prioriteMaximale
     );
-    const id2 = r.activerSommet(cf(19));
+    const id2 = r.connecterSommet(cf(19));
     n = r.noeud(id2);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -134,7 +134,7 @@ describe('Réseau tchat anneau', () => {
         true,
         r.sontVoisins(id1, identifiant('sommet', id2.val))
     );
-    const id3 = r.activerSommet(cf(22));
+    const id3 = r.connecterSommet(cf(22));
     n = r.noeud(id3);
     testUnitaireJsonJson(
         "centre actif - 1 voisin actif",
@@ -147,7 +147,7 @@ describe('Réseau tchat anneau', () => {
         r.sontVoisins(id1, identifiant('sommet', id3.val)) 
         || r.sontVoisins(id2, identifiant('sommet', id3.val)) 
     );    
-    const id4 = r.activerSommet(cf(24));
+    const id4 = r.connecterSommet(cf(24));
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre actif - 2 voisins actifs",
@@ -166,7 +166,7 @@ describe('Réseau tchat anneau', () => {
         r.connexion(id4)
     ); 
     
-    r.inactiverSommet(id4);
+    r.deconnecterSommet(id4);
     n = r.noeud(id4);
     testUnitaireJsonJson(
         "centre inactif - 2 voisins actifs",
