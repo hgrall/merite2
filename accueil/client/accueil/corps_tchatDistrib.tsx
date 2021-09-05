@@ -31,6 +31,15 @@ function ChoixJeux(props: PropsChoixJeux) {
                     }
                 </ContenuMenuDeroulant>
             </MenuDeroulant>
+            <MenuDeroulant>
+                <BoutonAccueil> Jeux de distribution</BoutonAccueil>
+                <ContenuMenuDeroulant>
+                    {props.jeuxDistribution.map(jeu => {
+                        const urlJeu = `${domain}/${jeu.prefixe}/${props.cle}/${jeu.suffixe}`
+                        return <a href={urlJeu}>Jeu de distribution de type {jeu.type} avec {jeu.nombreDomaines} domaines</a>
+                    })}
+                </ContenuMenuDeroulant>
+            </MenuDeroulant>
             <BoutonRetour onClick={props.revenir}>Entrez une autre clé d'accès.</BoutonRetour>
         </Enveloppe>
     );

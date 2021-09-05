@@ -15,7 +15,23 @@ import { cleAccesAleatoire, configurationJeuxParNom, nomConfigurationJeuxParCode
 import { creerServiceTchat } from '../../tchat/serveur/serviceTchat';
 import {creerServiceDistribution} from "../../distribution/serveur/serviceDistribution";
 
-const serveurApplications: ServeurApplications<express.Request, express.Response> = creerServeurApplicationsExpress(8080);
+/**
+ * Port égal :
+ * - soit à celui attribué par l'environnement Heroku,
+ * - soit à 8080 en local.
+ */
+
+ function calculPort() : number{
+    try{
+      return Number(process.env.PORT) || 8080;
+    }catch(e){
+      return 8080;
+    }
+} 
+
+export const port: number = calculPort(); 
+
+const serveurApplications: ServeurApplications<express.Request, express.Response> = creerServeurApplicationsExpress(port);
 
 
 

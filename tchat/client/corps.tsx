@@ -65,9 +65,9 @@ export class Corps extends React.Component<{}, Etat> {
 
     constructor(props: {}) {
         super(props);
-        const url = window.location.href;
-        this.fluxEvenements = creerFluxEvenements(`${url}/reception`);
-        this.urlEnvoi = `${url}/envoi`
+        const urlRacine = window.location.href;
+        this.fluxEvenements = creerFluxEvenements(`${urlRacine}/reception`);
+        this.urlEnvoi = `${urlRacine}/envoi`
         this.individuInconnu = {
             ID: identifiant('sommet', ID_INCONNU),
             nom: "inconnu",
