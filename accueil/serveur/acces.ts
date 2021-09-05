@@ -9,10 +9,17 @@ import { entierAleatoire, normalisationNombre } from "../../bibliotheque/types/n
 import { configurationClassiqueJeux, ConfigurationJeux } from "../commun/configurationJeux";
 
 function initialisationNomConfigurationParCodeAcces(): { [code: string]: string } {
-    return {
-        'a100bc': 'classique',
-        'b100bc': 'classique'
-    }; // TODO sur Heroku, utiliser une variable d'environnement
+    let r : { [code: string]: string } = {};
+    if (process.env.CODES != null){
+        let codesValides = process.env.CODES.split(",");
+        if (process.env.CONFIGS != null){
+            let configs = process.env.CONFIGS.split(",");
+            for(let i = 0; i < codesValides.length; i++){
+                r[codesValides[i]] = configs[i];
+            }
+        }
+    }
+    return r;
 }
 
 export const nomConfigurationJeuxParCodeAcces
