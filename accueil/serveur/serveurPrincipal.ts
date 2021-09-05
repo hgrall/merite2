@@ -13,7 +13,6 @@ import { ENVOI_DISTRIB, PREFIXE_ACCES, PREFIXE_ACCUEIL, PREFIXE_CONNEXION, RECEP
 import { ConfigurationJeux } from '../commun/configurationJeux';
 import { cleAccesAleatoire, configurationJeuxParNom, nomConfigurationJeuxParCodeAcces } from './acces';
 import { creerServiceTchat } from '../../tchat/serveur/serviceTchat';
-import {creerServiceDistribution} from "../../distribution/serveur/serviceDistribution";
 
 /**
  * Port égal :
@@ -74,7 +73,7 @@ function initialiserJeux(codeAcces: string, cleAcces: string) {
     // initialiser les jeux.
     creerServiceTchat(config.tchat_anneau, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html");
     creerServiceTchat(config.tchat_etoile, cleAcces).servirTchat(serveurApplications, repertoireHtml, "interfaceTchat.html");
-    creerServiceDistribution(config.distribution, cleAcces).servirDistribution(serveurApplications, repertoireHtml, "interfaceDistribution.html");
+
 }
 
 function traitementConnexion(codeAcces: string)
